@@ -1,0 +1,1 @@
+{"schema":{"properties":{"target_version":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Target Version"},"cleanup_failed":{"type":"boolean","title":"Cleanup Failed","default":true},"reason":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Reason"}},"type":"object","title":"AgentRollbackRequest"},"schemaType":"response"}

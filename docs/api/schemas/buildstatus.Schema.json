@@ -1,0 +1,1 @@
+{"schema":{"type":"string","enum":["queued","building","success","failed"],"title":"BuildStatus"},"schemaType":"response"}

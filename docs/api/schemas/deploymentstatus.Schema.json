@@ -1,0 +1,1 @@
+{"schema":{"type":"string","enum":["starting","running","stopped","failed"],"title":"DeploymentStatus"},"schemaType":"response"}

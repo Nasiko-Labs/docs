@@ -1,0 +1,1 @@
+{"parameters":[{"name":"start_time","in":"query","required":false,"schema":{"anyOf":[{"type":"string"},{"type":"null"}],"description":"Start time for filtering sessions (ISO datetime format)","title":"Start Time"},"description":"Start time for filtering sessions (ISO datetime format)"}]}

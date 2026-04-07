@@ -1,0 +1,1 @@
+{"parameters":[{"name":"agent_id","in":"path","required":true,"schema":{"type":"string","description":"Agent ID","title":"Agent Id"},"description":"Agent ID"}]}

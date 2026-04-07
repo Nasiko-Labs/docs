@@ -1,0 +1,44 @@
+:root {
+  --ifm-color-primary: #ba8f07;
+  --ifm-color-primary-dark: #a37d06;
+  --ifm-color-primary-darker: #9a7606;
+  --ifm-color-primary-darkest: #7f6105;
+  --ifm-color-primary-light: #c9a93a;
+  --ifm-color-primary-lighter: #d0b652;
+  --ifm-color-primary-lightest: #dec983;
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme='dark'] {
+  --ifm-color-primary: #d1b14a;
+  --ifm-color-primary-dark: #c3a035;
+  --ifm-color-primary-darker: #ba992f;
+  --ifm-color-primary-darkest: #9a7c21;
+  --ifm-color-primary-light: #d9bf60;
+  --ifm-color-primary-lighter: #dec871;
+  --ifm-color-primary-lightest: #e9daa3;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+  --ifm-background-color: #0f0f1a;
+  --ifm-navbar-background-color: #13131f;
+}
+
+/* HTTP method badges */
+.badge--get { background: #10b981; color: white; border: none; }
+.badge--post { background: var(--ifm-color-primary); color: white; border: none; }
+.badge--put { background: #f59e0b; color: white; border: none; }
+.badge--delete { background: #ef4444; color: white; border: none; }
+
+/* Endpoint header */
+.endpoint-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--ifm-code-background);
+  border-radius: 6px;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 1rem;
+  border-left: 3px solid var(--ifm-color-primary);
+}

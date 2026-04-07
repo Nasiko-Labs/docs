@@ -1,0 +1,1 @@
+{"parameters":[{"name":"agent_id","in":"path","required":true,"schema":{"type":"string","title":"Agent Id"}},{"name":"start_time","in":"query","required":true,"schema":{"type":"string","description":"Start time for filtering stats (ISO datetime format)","title":"Start Time"},"description":"Start time for filtering stats (ISO datetime format)"}]}

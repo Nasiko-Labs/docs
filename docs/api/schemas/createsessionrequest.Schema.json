@@ -1,0 +1,1 @@
+{"schema":{"properties":{"agent_id":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Agent Id","description":"Optional agent ID to associate with session"},"agent_url":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Agent Url","description":"Optional agent URL for direct communication"}},"type":"object","title":"CreateSessionRequest"},"schemaType":"response"}

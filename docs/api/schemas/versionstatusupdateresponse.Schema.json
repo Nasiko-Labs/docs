@@ -1,0 +1,1 @@
+{"schema":{"properties":{"agent_name":{"type":"string","title":"Agent Name"},"status":{"type":"string","title":"Status"},"status_code":{"type":"integer","title":"Status Code"},"message":{"type":"string","title":"Message"}},"type":"object","required":["agent_name","status","status_code","message"],"title":"VersionStatusUpdateResponse"},"schemaType":"response"}

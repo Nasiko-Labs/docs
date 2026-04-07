@@ -1,0 +1,1 @@
+{"parameters":[{"name":"agent_id","in":"query","required":true,"schema":{"type":"string","description":"Agent ID","title":"Agent Id"},"description":"Agent ID"},{"name":"semantic_version","in":"query","required":true,"schema":{"type":"string","description":"Semantic version (e.g., v1.0.0)","title":"Semantic Version"},"description":"Semantic version (e.g., v1.0.0)"}]}

@@ -1,0 +1,1 @@
+{"title":"Body","body":{"content":{"application/json":{"schema":{"additionalProperties":true,"type":"object","title":"User Data"}}},"required":true}}

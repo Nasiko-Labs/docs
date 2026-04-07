@@ -1,0 +1,1 @@
+{"schema":{"properties":{"upload_type":{"type":"string","title":"Upload Type"},"upload_status":{"type":"string","title":"Upload Status"}},"type":"object","required":["upload_type","upload_status"],"title":"UploadInfoResponse"},"schemaType":"response"}

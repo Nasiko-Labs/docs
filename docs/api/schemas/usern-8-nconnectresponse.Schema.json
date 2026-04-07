@@ -1,0 +1,1 @@
+{"schema":{"properties":{"data":{"additionalProperties":true,"type":"object","title":"Data"},"status_code":{"type":"integer","title":"Status Code"},"message":{"type":"string","title":"Message"}},"type":"object","required":["data","status_code","message"],"title":"UserN8NConnectResponse","description":"Simplified response for N8N connect endpoint"},"schemaType":"response"}

@@ -1,0 +1,75 @@
+---
+id: get-span-details-api-v-1-observability-span-span-id-get
+title: "Get Span Details"
+description: "Get span details from observability service with parsed JSON attributes"
+sidebar_label: "Get Span Details"
+hide_title: true
+hide_table_of_contents: true
+api: eJzlVU1v2zAM/SuCLlsBo266XWagh+4DXYd1LZpsl7YIFJtx1DqSKsnZAsP/faQsp3azDth5vlgfpPhIvic13IvS8eyG64UDuxELWUm/5XcJL8DlVhovteIZPwPPnBGKFeCFrBxbWr1mIydGY5kD+yn9ihlhHRTsy/TyGxPeW7moPbhbdatObemyW8XwoxPnssjYlI5WugB2/pG9hsPyMGGvvr95v1rc68nFz5OTVwfkeg2+tqr3ng7x7AWVytQ+1bXHXzKAkDDYgPL4F0ppLyjBMCnYGtAodzzh2oANO+cFJl+CnweoMdhcGDnfTOaj9DuLeUxpPkcnPMhBXluqaHbT8M+z2dV7EBYsTu9aLDICFhgVrAsGCicYL56B7pJqb4Rf4djCYy0tICBva8Cj8xWsBc8a7rcmuCF6VaKll76ihVAgzKClUBacwUzBkcfx0RH9xj2e1nkOzi3ril1HYzws18pjvchcGFPJPNQlvXfk0+yj0It7yCl1URSSTEV1ZameXlLsDnuPsI/DiF8B7sfYz1Mj2Y8JuxwxLFiwmBYjJ8ytbRP+9vh4P58fopJFQMs+WavtvyRjBpDpXAJFI+lh7fYNKp2PdoXaXi5DS8e9aZPdikQkJTKhvUP8cU1YK7aDBn7VHUD042tX/q3XF9g5UQLfHfayaSgGm9FuSxRDgQTzuH0eFnAn97/+1Nfe7gPV8hd1INmzeeLqTahNBz/a3T2d8dSirkMvl6LjxR+D9SYkr70DO34QiXqR1RY7yVfemyxNEZyoVtr57N0ENUFCQT2udJQ9Tzr1ZTxFzaebSTrSfEpKTZuo13ag9ykxqePGUPW7alJ4HjVM80Vn0IaGLPWwH9+Ekw+anV6d8+e3cr9VIqdRs6XEXm+7q3B8nyec0u+cjg6PDidUaYNpr0Ugfrx4nqvwecDmSUD/24sQ+0aMT00lZNBkoFITKXKDV4qkSk/oAXlWfsoLf1l/tSPPiHXk1TQL4eC7rdqWlh9rsPRc4HAjrBQLIgHStpCOxkjMpagc/KUzr6+j+g7YS8B7kalADVHVNMPhA2wH70+4mlYgivBgNXH3FF8J4wd+ezfpSEVnn2b0GNRUoh39I92TfjC4KceYsDjBYqYfQLXtDqKnOQFs29/9iwPp
+sidebar_class_name: "get api-method"
+info_path: api/nasiko-api
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+import Translate from "@docusaurus/Translate";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Get Span Details"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/api/v1/observability/span/{span_id}"}
+  context={"endpoint"}
+>
+  
+</MethodEndpoint>
+
+
+
+Get span details from observability service with parsed JSON attributes
+
+Args:
+    span_id: Span node ID (e.g., 'U3Bhbjo1Mw==')
+
+Returns:
+    Span details with parsed JSON input/output, attributes, events, annotations, and metrics
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+>
+  <Translate id="theme.openapi.request.title">Request</Translate>
+</Heading>
+
+<ParamsDetails
+  {...require("./get-span-details-api-v-1-observability-span-span-id-get.ParamsDetails.json")}
+>
+  
+</ParamsDetails>
+
+<RequestSchema
+  {...require("./get-span-details-api-v-1-observability-span-span-id-get.RequestSchema.json")}
+>
+  
+</RequestSchema>
+
+<StatusCodes
+  {...require("./get-span-details-api-v-1-observability-span-span-id-get.StatusCodes.json")}
+>
+  
+</StatusCodes>
+
+
+      

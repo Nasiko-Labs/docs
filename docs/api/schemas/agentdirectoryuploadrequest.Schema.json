@@ -1,0 +1,1 @@
+{"schema":{"properties":{"directory_path":{"type":"string","title":"Directory Path"},"agent_name":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Agent Name"}},"type":"object","required":["directory_path"],"title":"AgentDirectoryUploadRequest"},"schemaType":"response"}

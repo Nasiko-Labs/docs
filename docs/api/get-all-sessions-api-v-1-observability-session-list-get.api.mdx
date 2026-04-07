@@ -1,0 +1,75 @@
+---
+id: get-all-sessions-api-v-1-observability-session-list-get
+title: "Get All Sessions"
+description: "Get sessions from all agents/projects the user has access to"
+sidebar_label: "Get All Sessions"
+hide_title: true
+hide_table_of_contents: true
+api: eJztVVFv2zYQ/isEX7ICbiS720P15q5FG6BdgsbrQ5NAOEtnmQ0tqiTl1RD033dHSbZsJ8CG7bF+sUge747f991dIz0UTiZ30iwd2i0slVZ+Jx8mMkeXWVV5ZUqZyPfohUPnaOXEypqNAK0FFFh6F1XWfMPMO+HXKGryI9bgBGQZXRDe3Jf35dwWLrkvBf2cB+tTrzaYiOvgH7S4ur0WOXjkbbKwqizEylixUtpjWO2j/4KXxeVEXMzi2W8vp7OXr+LF9HXyKk7i+DKO468XLzjgZ/S1LYeY86KwWJD//IlXcMYXQ75qqbF/l/hL+bVwJTximoFDSgZ1LkrYoJMTaSq0wOlf5QRQgT4lZ+ngPoVKpdtpeoTrcJpq5XxKV8iNw6y2jHly18gPi8XNGwSLlpYPLdFQgaV4hIELBhycoh0wJA+KCfpeo93RwuL3WlmklFagHZL/bI0bkEkjodxdr4IXv6s6L4ysbCf7nbLWWrZn7N9yOBG4eY6UIwLJaAP+BaXjlde497DghNv/yzvnadFVZEGE0ANnccx/J97rwOuq1uJzb0x5Zab0xHGApaq0ygKT0TfHd5oRaD0wZskKp4uQ56rT7I1lBXjFsb2t8fDYIY7gqpmTwm6Hh8wrJb5MxfVYFMOp+Eii4Cuypd9E/jqbnb/mC2iVh1zFO2uN/TdPqUYJs18PSvOX8rhx5wbaZEen/0A+ijIpSLvtA+Xf74G1sBsp4aPpEmQdbFwxwrj3dzD9RMBQKcq9s+dNAxhiwactV0RVB0CG46uwQSeZ//EUq4Pd74zlD2ZgcmZzqKy7gE2Xfm/3cPBxoKhj6Hko3nYUPBVsMOGGcOaw0wdLaGgLtSUm5dr7KokiSg702jifvJ5SRXCZUAdZm75NSW4qfk2LiHpUtJ1GRz0q6qsu4h416k+3rKNOGeMutceSg8u+3fB62Rm0gY6VGbPxBzj1aMT85kqe9oLhiBsw1WtBOdhd14iPJ9RE8uO7S9T3L6eMc0WP3kCQfd8oTyvwNGBzKJ+fM+58xvXcck1ElQYVqjaIrelFdEdNRzEbUx6JJxT1edBXEBMJkWXJl5pmSdH+tLptebubXqzkXDmg9A7z61m6/sNQeupVj7g7Haxb0DUbhhLaglWcWRjM9BCEPEzppr85J2grP7p11oyPCvH9uwVPk5ox3NdQXzOT4WPUbKn7jnwTfMFiYR6xJAiH9D2vuf227d/lXWfd
+sidebar_class_name: "get api-method"
+info_path: api/nasiko-api
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+import Translate from "@docusaurus/Translate";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Get All Sessions"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/api/v1/observability/session/list"}
+  context={"endpoint"}
+>
+  
+</MethodEndpoint>
+
+
+
+Get sessions from all agents/projects the user has access to
+
+Args:
+    start_time: Optional ISO datetime string for filtering sessions (e.g., '2025-12-30T19:30:00.000Z')
+
+Returns:
+    Aggregated sessions from all user's accessible agents with snake_case field names
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+>
+  <Translate id="theme.openapi.request.title">Request</Translate>
+</Heading>
+
+<ParamsDetails
+  {...require("./get-all-sessions-api-v-1-observability-session-list-get.ParamsDetails.json")}
+>
+  
+</ParamsDetails>
+
+<RequestSchema
+  {...require("./get-all-sessions-api-v-1-observability-session-list-get.RequestSchema.json")}
+>
+  
+</RequestSchema>
+
+<StatusCodes
+  {...require("./get-all-sessions-api-v-1-observability-session-list-get.StatusCodes.json")}
+>
+  
+</StatusCodes>
+
+
+      

@@ -1,0 +1,1 @@
+{"schema":{"properties":{"username":{"type":"string","title":"Username"},"email":{"type":"string","title":"Email"},"is_super_user":{"anyOf":[{"type":"boolean"},{"type":"null"}],"title":"Is Super User","default":false}},"type":"object","required":["username","email"],"title":"UserRegistrationRequest"},"schemaType":"response"}

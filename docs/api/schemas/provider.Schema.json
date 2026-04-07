@@ -1,0 +1,1 @@
+{"schema":{"properties":{"organization":{"type":"string","title":"Organization"},"url":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Url"}},"type":"object","required":["organization"],"title":"Provider"},"schemaType":"response"}

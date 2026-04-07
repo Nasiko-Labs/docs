@@ -1,0 +1,75 @@
+---
+id: get-session-details-api-v-1-observability-session-session-id-get
+title: "Get Session Details"
+description: "Get session details from observability service"
+sidebar_label: "Get Session Details"
+hide_title: true
+hide_table_of_contents: true
+api: eJzlVU1v2zAM/SuCLtsAo26ybmt96z6wFdhH0Wa7tEXA2LSj1ZY9Se4aGP7vI2U7jpt2wM7LJZJMUuR7j1QjHWRWRleyXFk0d7BSuXIbeRPIBG1sVOVUqWUkP6ITFq2lnUjQgcqtSE1ZiImf4LWK8Vpf61OT2ehaC/r1jkuVROKyD3L2XlhnlM7EczzIDgLxLIaXr4/SV7jC4+OjV/ASTuBNOo/T18cnR8fxPH32gsNeoKuNHiIvDGiblqbAZEwPHIjfyq1FnCNo4QzEaAMRl5ZqqIsCzCYQrrxFLWoLGQYCdCIqyJQGLlconZYykGWFxh+cJYRAhm45FNIjsIRKLe9mywkGW6PlWPZySd4U0WJcG8Y3umrkp8Xi/C2CQUPbm5Ygr8BAgQ6N9QaaNnTxGIYiKCajAremtcFftTJIyTlTI0WP11iAjBrpNpX39ACTpVMu54Mt+Ils+UKDtio1XcBO88ND/pvyflnHBJ5N61xc9MYULy61Q+3YHKoqV7GHKfxp2afZT6Rc/cSYAYAkUWwK+blheJ3iu7v0hySHewRrbsj4fa+500qJHzPxbaK6wWgUVyLYm4ps20Aezef7hf2AXCUd3R+MKc2/VFXt5M5xOTVeKYeF3TfIy3jyFfTmW+oZnvLUBtsTRZlkJIz2hvLvz8AY2OyQ+bnsEiQ/Wdjsb7x/IVxI6HIb7GlTD4ZY8NeW5VbVHpDh85k/oC+xu3+M4MHuHWN5zwwEezajbq88Nl36vd3NGGOkqGPoaSg6dTx62WDC3bYXsNMHS2noudoQk3LtXBWFISUH+ZrGRnQyo+bgjqH2XJf9OJBB14mRDGkQhHezcDIIwr5xw2bs4HZnCFyynjqF7I6CLaachOy7mverzqD1tNCA2mHlK1h1W4rT8zP5cHAPnzJSNrVwpojxTTcepyM/kAxC53R4cHgwY7wrKr4AL/9+Gj3SlA/vbMZO+i/fjZ4/1n9Y5aB8h3phNb1grmjAKEZ8xs/MAxr6fGgV7Yx+0h4rkX2bZgUWv5u8bfn4V42GXxRa3oFRsGJJkJQTZXlNYk0ht/gXkp5f9B35QjyV/tB42gsF8pp3tLzFzfSJ8hNrjZD4Z63pDU7pFancjuvegJ0018cPC34sasZq2w+9/oNhsTNAp2kRPt5iwVS17TZLTx0n2LZ/APtWGAk=
+sidebar_class_name: "get api-method"
+info_path: api/nasiko-api
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+import Translate from "@docusaurus/Translate";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Get Session Details"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/api/v1/observability/session/{session_id}"}
+  context={"endpoint"}
+>
+  
+</MethodEndpoint>
+
+
+
+Get session details from observability service
+
+Args:
+    session_id: Session ID string (e.g., 'ca364f5ebe8845a3a9a7f2cf68948c2f')
+
+Returns:
+    Transformed session data with clean traces, cost summary, token usage, and pagination info
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+>
+  <Translate id="theme.openapi.request.title">Request</Translate>
+</Heading>
+
+<ParamsDetails
+  {...require("./get-session-details-api-v-1-observability-session-session-id-get.ParamsDetails.json")}
+>
+  
+</ParamsDetails>
+
+<RequestSchema
+  {...require("./get-session-details-api-v-1-observability-session-session-id-get.RequestSchema.json")}
+>
+  
+</RequestSchema>
+
+<StatusCodes
+  {...require("./get-session-details-api-v-1-observability-session-session-id-get.StatusCodes.json")}
+>
+  
+</StatusCodes>
+
+
+      
