@@ -6,8 +6,11 @@ const config: Config = {
   title: 'Nasiko',
   tagline: 'Agent Registry & Observability Platform',
   favicon: 'img/favicon.ico',
-  url: 'https://docs.nasiko.com',
-  baseUrl: '/',
+  url: 'https://nasiko-labs.github.io',
+  baseUrl: '/docs/',
+  organizationName: 'Nasiko-Labs',
+  projectName: 'docs',
+  trailingSlash: false,
   onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
   i18n: {
