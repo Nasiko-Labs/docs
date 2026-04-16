@@ -2,6 +2,8 @@ import {themes as prismThemes} from 'prism-react-renderer';
 import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
+const algoliaIndexName = 'docs';
+
 const config: Config = {
   title: 'Nasiko',
   tagline: 'Agent Registry & Observability Platform',
@@ -12,7 +14,11 @@ const config: Config = {
   projectName: 'docs',
   trailingSlash: false,
   onBrokenLinks: 'warn',
-  onBrokenMarkdownLinks: 'warn',
+  markdown: {
+    hooks: {
+      onBrokenMarkdownLinks: 'warn',
+    },
+  },
   i18n: {
     defaultLocale: 'en',
     locales: ['en'],
@@ -53,9 +59,29 @@ const config: Config = {
         },
       },
     ],
+    function polyfillPlugin() {
+      return {
+        name: 'node-polyfills',
+        configureWebpack() {
+          return {
+            resolve: {
+              fallback: {
+                path: require.resolve('path-browserify'),
+              },
+            },
+          };
+        },
+      };
+    },
   ],
   themes: ['docusaurus-theme-openapi-docs'],
   themeConfig: {
+    algolia: {
+      appId: 'L6GWJXQQFU',
+      apiKey: 'e52477c9c58af4d263d072aaf1976d5b',
+      indexName: algoliaIndexName,
+      contextualSearch: false,
+    },
     colorMode: {
       defaultMode: 'dark',
       disableSwitch: false,
@@ -78,6 +104,12 @@ const config: Config = {
           sidebarId: 'openApiSidebar',
           position: 'left',
           label: 'API Reference',
+        },
+        {
+          type: 'docSidebar',
+          sidebarId: 'cliSidebar',
+          position: 'left',
+          label: 'CLI',
         },
         {
           href: 'https://github.com/nasiko-labs',
