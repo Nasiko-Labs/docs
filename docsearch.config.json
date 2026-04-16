@@ -1,0 +1,61 @@
+{
+  "index_name": "docs",
+  "start_urls": [
+    "https://docs.nasiko.com/"
+  ],
+  "sitemap_urls": [
+    "https://docs.nasiko.com/sitemap.xml"
+  ],
+  "stop_urls": [
+    ".*\\?[^#]*$"
+  ],
+  "selectors": {
+    "lvl0": {
+      "selector": ".menu__link--sublist.menu__link--active, .menu__list-item--collapsed .menu__link--active, .navbar__link--active",
+      "default_value": "Documentation"
+    },
+    "lvl1": "article h1, header h1",
+    "lvl2": "article h2",
+    "lvl3": "article h3",
+    "lvl4": "article h4",
+    "lvl5": "article h5",
+    "lvl6": "article h6",
+    "text": "article .theme-doc-markdown p, article .theme-doc-markdown li, article .theme-doc-markdown td, article .theme-api-markdown p, article .theme-api-markdown li, article .theme-api-markdown td"
+  },
+  "selectors_exclude": [
+    ".hash-link",
+    ".menu__link",
+    ".table-of-contents",
+    ".breadcrumbs",
+    ".pagination-nav",
+    ".theme-code-block"
+  ],
+  "custom_settings": {
+    "searchableAttributes": [
+      "unordered(hierarchy.lvl1)",
+      "unordered(hierarchy.lvl2)",
+      "unordered(hierarchy.lvl3)",
+      "unordered(hierarchy.lvl4)",
+      "unordered(hierarchy.lvl5)",
+      "unordered(hierarchy.lvl6)",
+      "unordered(content)",
+      "unordered(hierarchy.lvl0)"
+    ],
+    "attributesToSnippet": [
+      "content:24"
+    ],
+    "snippetEllipsisText": "…",
+    "attributesForFaceting": [
+      "type",
+      "lang"
+    ],
+    "attributesToRetrieve": [
+      "hierarchy",
+      "content",
+      "anchor",
+      "url",
+      "url_without_anchor",
+      "type"
+    ]
+  }
+}

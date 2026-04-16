@@ -100,6 +100,32 @@ const sidebars: SidebarsConfig = {
       ],
     },
   ],
+  cliSidebar: [
+    'cli/overview',
+    'cli/authentication-and-configuration',
+    'cli/command-reference',
+    {
+      type: 'category',
+      label: 'Command Groups',
+      collapsed: false,
+      items: [
+        'cli/commands/auth',
+        'cli/commands/cluster',
+        'cli/commands/setup',
+        'cli/commands/agent',
+        'cli/commands/github',
+        'cli/commands/n8n',
+        'cli/commands/chat',
+        'cli/commands/search',
+        'cli/commands/observe',
+        'cli/commands/access',
+        'cli/commands/user',
+        'cli/commands/local',
+        'cli/commands/images',
+      ],
+    },
+    'cli/setup-and-local-operations',
+  ],
   openApiSidebar: openApiSidebarItems,
 };
 
