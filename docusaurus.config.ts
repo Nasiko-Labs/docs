@@ -91,6 +91,8 @@ const config: Config = {
       logo: {
         alt: 'Nasiko Logo',
         src: 'img/logo.svg',
+        href: 'https://nasiko.com',
+        target: '_self',
       },
       items: [
         {
