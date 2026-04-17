@@ -4,8 +4,8 @@
   <ShortName>Nasiko</ShortName>
   <Description>Search Nasiko</Description>
   <InputEncoding>UTF-8</InputEncoding>
-  <Image width="16" height="16" type="image/x-icon">https://nasiko-labs.github.io/docs/img/favicon.ico</Image>
-  <Url type="text/html" method="get" template="https://nasiko-labs.github.io/docs/search?q={searchTerms}"/>
-  <Url type="application/opensearchdescription+xml" rel="self" template="https://nasiko-labs.github.io/docs/opensearch.xml" />
-  <moz:SearchForm>https://nasiko-labs.github.io/docs/</moz:SearchForm>
+  <Image width="16" height="16" type="image/x-icon">https://docs.nasiko.com/img/favicon.ico</Image>
+  <Url type="text/html" method="get" template="https://docs.nasiko.com/search?q={searchTerms}"/>
+  <Url type="application/opensearchdescription+xml" rel="self" template="https://docs.nasiko.com/opensearch.xml" />
+  <moz:SearchForm>https://docs.nasiko.com/</moz:SearchForm>
 </OpenSearchDescription>
