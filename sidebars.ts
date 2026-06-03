@@ -23,6 +23,7 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Agent Upload',
       items: [
+        'upload/adapt-existing-agent',
         'upload/upload-zip',
         'upload/upload-directory',
         'upload/download-agent',
