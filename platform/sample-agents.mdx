@@ -1,0 +1,119 @@
+---
+title: "Sample agents"
+description: "The curated example agents shipped alongside the platform — what each one demonstrates, and how to deploy one yourself."
+---
+
+Nasiko ships a set of ready-to-deploy example agents — small, standalone A2A containers, each doing
+one clear thing, meant to be read as reference implementations or deployed as-is to try the platform
+end to end. A handful of them can be auto-deployed at startup; the rest are pulled and deployed the
+same way you'd deploy your own agent.
+
+## Domain and utility agents
+
+Each of these is a focused, single-purpose agent calling a real public API (no key required unless
+noted), written as a minimal example of the [A2A protocol](/guides/a2a-agents-and-frameworks) in
+either Rust or Go:
+
+| Agent | What it demonstrates |
+| --- | --- |
+| `weather` | Current conditions and a 3-day forecast for any city, via Open-Meteo |
+| `hackernews` | Browsing and searching Hacker News — top stories and discussion |
+| `books` | Searching Open Library for books, authors, and editions |
+| `github` (Go example) | Searching public GitHub repositories and browsing their contents |
+| `nutrition` | Looking up nutrition facts for foods |
+| `finance-agent` | Exchange rates and cryptocurrency price/market data |
+| `legal-agent` | Full-text search across SEC EDGAR filings (10-K, 10-Q, 8-K, and more) |
+| `hr-agent` | Public holiday lookups and business-day calculations between two dates |
+| `paper` | Searching arXiv and Semantic Scholar for academic papers |
+| `docs` | Searching crates.io for Rust crate info, versions, and documentation links |
+| `devops-agent` | Pulling GitHub repo metadata and recent CI/CD workflow run history |
+| `repo-watch-agent` | Reports on GitHub repo activity over a time window and automatically deep-dives risky commits |
+| `currency-agent` | A minimal currency converter with no LLM or outbound HTTP calls at all — the simplest possible A2A agent |
+| `coding` | Runs an inline ReAct loop (reason, call a tool, observe, repeat) over an OpenAI-compatible model, with coding tools confined to a sandboxed workspace |
+| `assistant-agent` | An orchestrating A2A agent that discovers peer agents via the platform registry, delegates to them, and synthesizes their results — a worked example of one agent calling others |
+
+## Framework-integration demos
+
+The same small task — answering a question by searching Wikipedia, or a comparable minimal task —
+implemented once per major agent framework, to show that A2A and Nasiko's zero-code instrumentation
+work regardless of what you built your agent with:
+
+| Agent | Framework |
+| --- | --- |
+| `claude-sdk` | Claude Agent SDK |
+| `langchain` | LangChain |
+| `google-adk` | Google Agent Development Kit |
+| `openai` | OpenAI Agents SDK |
+| `langgraph` | LangGraph — a currency-conversion agent instead, showcasing multi-turn dialogue and streaming |
+| `crewai` | CrewAI — an image-generation and editing agent instead of the Wikipedia demo |
+
+Reach for these when you're deciding which framework to build your own agent in — each one is a
+complete, deployable reference for wiring that framework up to the A2A protocol.
+
+## Test fixtures
+
+A few agents exist purely to support testing rather than as usage references — worth knowing about,
+not worth modeling your own agent on:
+
+- `simulated-agent` — randomized-latency, lorem-ipsum responses, built for control-plane benchmarking
+- `summarizer` / `translator` — minimal agents used to verify zero-code OTel instrumentation applies
+  correctly regardless of agent logic
+- `test-agent`, `seed-py` — protocol-conformance fixtures for automated tests
+
+## Reusable skill snippets
+
+Separate from full agents, the example set also includes small, single-capability building blocks —
+`arxiv-search`, `http-request`, `tmdb-search`, `web-search`, `wikipedia-search` — meant to be
+copied into an agent you're writing rather than deployed on their own.
+
+## Auto-deploying a set at startup: `SEED_AGENTS`
+
+`SEED_AGENTS` is a space-separated list of image references, read **once at server boot**:
+
+```sh
+SEED_AGENTS="nasiko/weather nasiko/finance-agent:v2"
+```
+
+On startup, the control plane checks each listed image against its own agent records: registers it
+if it's new, redeploys it if the image reference changed, and leaves it alone if it's already
+running the same image. This all happens as a background task — it doesn't block the server from
+becoming ready, and a seeding failure for one image doesn't stop the others from being tried.
+
+<Warning>
+  `SEED_AGENTS` is read once at process start, not watched for changes. Editing it in your
+  environment and expecting already-running agents to pick up the new list without a restart won't
+  work — the control plane needs to restart to re-read it. Setting `SEED_FORCE_PULL` forces a
+  redeploy of every listed image on the next boot even if its reference didn't change, useful when
+  you've pushed a new build under the same tag.
+</Warning>
+
+## Deploying one yourself
+
+Any curated agent — seeded or not — is deployed the same way you'd deploy your own image, once
+you've pulled or built it:
+
+```sh
+nasiko registry pull nasiko/weather
+nasiko deploy nasiko/weather
+```
+
+See the [Agent Development Lifecycle](/guides/adlc/overview) for the full deploy-and-manage
+workflow, and the [artifact registry guide](/guides/artifact-registry) for browsing everything
+published there beyond this curated set.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Agent Development Lifecycle" href="/guides/adlc/overview">
+    Scaffold, run locally, and deploy your own agent using these as references.
+  </Card>
+  <Card title="A2A agents and frameworks" href="/guides/a2a-agents-and-frameworks">
+    What makes an agent discoverable and routable on the platform.
+  </Card>
+  <Card title="Artifact registry" href="/guides/artifact-registry">
+    Browse and publish agents, skills, and templates beyond the curated set.
+  </Card>
+  <Card title="Agent runtime reference" href="/platform/agent">
+    How a pulled image actually becomes a running container.
+  </Card>
+</CardGroup>

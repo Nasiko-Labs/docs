@@ -1,0 +1,104 @@
+---
+title: "Versions and lifecycle"
+description: "How the version in AgentCard.json maps to a running deployment, and how artifacts published to a shared registry age over time."
+---
+
+"Version" means two related but distinct things on Nasiko, depending on which layer you're looking
+at: the image tag behind a single deployed agent on your cluster, and the version history of an
+artifact you've published to a shared registry for others to reuse. This page covers both.
+
+## Deployed-agent versions
+
+The `version` field in `AgentCard.json` is the image tag Nasiko uses when it builds and pushes your
+agent — the deployed image is tagged `name:version`. There's no separate versioning system to learn:
+bump the field, redeploy, and the new tag is what gets built, pushed, and run.
+
+```json AgentCard.json
+{
+  "name": "code-reviewer",
+  "version": "0.2.0"
+}
+```
+
+Agent names are unique per cluster. Deploying the same name again — whether or not you changed the
+version — updates the existing agent in place rather than creating a second one; `nasiko restart`
+recreates the container from whatever image and secrets are currently associated with it, without a
+rebuild. There's no built-in rollback command: rolling back means redeploying an older version tag
+yourself.
+
+## Registry artifacts: versions and lifecycle status
+
+If you publish an agent, skill, or template to a shared [artifact registry](/guides/artifact-registry)
+for others to discover and scaffold from, each publish creates a new, independent version row under
+that artifact's name — this is separate from, and doesn't require, deploying anything to a cluster.
+
+<Note>
+  Registry artifact versions are free-text strings, not enforced semver — `1.2.0`, a git SHA, or
+  any other scheme all work. The registry doesn't do semver comparison anywhere: "latest" isn't the
+  highest version number, it's simply the most recently published, non-yanked version. Keep your own
+  version strings monotonic if you want "latest" to mean what you expect.
+</Note>
+
+### Lifecycle status
+
+Every published version carries a lifecycle status, starting at `preview` and settable by a registry
+administrator to one of three values:
+
+| Status | Meaning |
+| --- | --- |
+| `preview` | Default for a newly published version |
+| `stable` | Promoted by an administrator once it's considered production-ready |
+| `verified` | The highest administrator-assigned confidence label |
+
+These three are informational labels your organization can define its own conventions around — the
+registry doesn't change how an artifact behaves based on which one it carries, only what it displays
+and how it can be filtered.
+
+Administrators update status — along with an artifact's description, tags, license, framework, and
+other catalog metadata — through a partial update: send only the fields you want to change, and
+everything else on that version keeps its current value.
+
+### Yanking a version
+
+Yanking is a distinct, separate action from setting a lifecycle status — it's the destructive path,
+so it isn't available through the same partial-update mechanism. A yanked version:
+
+- Disappears from browsing, listing, and search results
+- Remains individually resolvable — a consumer that already pinned that exact `owner/name/version`
+  can still fetch and download it directly, and it still shows up in that artifact's full version
+  history
+
+That combination means yanking is safe to use for "stop recommending this version to new consumers"
+without silently breaking anyone already depending on it by exact version.
+
+### Artifact type
+
+Published artifacts are categorized so consumers can filter by what they're looking for:
+
+```sh
+nasiko registry search "code review"     # search by keyword across all types
+nasiko registry search -t agent          # filter to a specific type
+```
+
+The recognized types are **skill**, **agent**, **tool**, **mcp** (an MCP server), and
+**executable** (a standalone binary or CLI, as opposed to a runnable agent container) — each type
+constrains which packaging formats are valid for it (for example, a skill ships as source or an
+open-standard package, while an agent or MCP artifact can ship as source, a Dockerfile, a compose
+file, a pre-built image, or an external card reference).
+
+### Publishing
+
+Publishing new versions to a shared registry is an administrator action, authenticated separately
+from your regular platform login — see [the artifact registry](/guides/artifact-registry) for how
+publishing and admin credentials work end to end.
+
+## Where to go next
+
+<CardGroup cols={2}>
+  <Card title="Artifact registry" href="/guides/artifact-registry">
+    Browsing, searching, and publishing shared agents, skills, and templates.
+  </Card>
+  <Card title="Deploy and manage" href="/guides/adlc/deploy-and-manage">
+    Push, upload, and operate a specific agent deployment.
+  </Card>
+</CardGroup>

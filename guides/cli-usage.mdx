@@ -1,0 +1,135 @@
+---
+title: "CLI usage reference"
+description: "Full command reference for the nasiko developer CLI, grouped by workflow: setup, create, test, operate, and integrations."
+---
+
+`nasiko` is the agent-developer CLI: build, test, deploy, and monitor agents against a Nasiko
+control plane. It's a synchronous binary (no async runtime), so it starts instantly and has no
+background processes of its own. See [CLI installation](/guides/quickstart/cli-installation) if
+you haven't installed it, and the [quickstart](/guides/quickstart/overview) for a walkthrough of
+the core workflow.
+
+State lives in `~/.nasiko/config.json` (registered clusters, active cluster, auth tokens) and
+`~/.nasiko/.env` (local-stack configuration).
+
+<Note>
+  Every `nasiko` command operates against the **active cluster** — the one selected with
+  `nasiko use <name>`. Run `nasiko <command> --help` for the full flag list on any command.
+</Note>
+
+## Setup
+
+Register and authenticate against a control plane.
+
+| Command | Purpose |
+| --- | --- |
+| `nasiko up` | Start a full local platform (infra + control plane) |
+| `nasiko down` | Stop the local platform |
+| `nasiko connect <url> [--name <name>]` | Register a control plane by URL |
+| `nasiko use <name>` | Switch the active cluster |
+| `nasiko clusters` | List registered control planes |
+| `nasiko status` | Active cluster's health and metrics |
+| `nasiko auth login` / `status` / `logout` / `whoami` | Authentication |
+
+```bash
+nasiko connect https://nasiko.example.com --name prod
+nasiko use prod
+nasiko auth login
+```
+
+## Create
+
+Scaffold a new agent project.
+
+| Command | Purpose |
+| --- | --- |
+| `nasiko new [template] [name]` | Scaffold a new agent project (interactive if template is omitted) |
+| `nasiko skill add/remove/list/search/info` | Manage agent skills (tools) attached to a project |
+| `nasiko card [--description <text>] [dir]` | Generate or update `AgentCard.json` |
+| `nasiko validate [dir]` | Check `AgentCard.json`, `Dockerfile`, and `src/` are in order |
+
+```bash
+nasiko new                          # interactive: pick a framework
+nasiko new openai my-agent          # skip the prompts
+nasiko validate ./my-agent
+```
+
+## Test
+
+Run an agent locally and talk to it before deploying.
+
+| Command | Purpose |
+| --- | --- |
+| `nasiko build [dir] [--tag <tag>] [--platform <platform>]` | Build the agent's Docker image |
+| `nasiko run [dir] [--port <port>]` | Build and run the agent locally (default port `8000`) |
+| `nasiko chat [target] [message] [--agent <name>] [--tui] [--session-id <id>] [--resume <id>]` | Send an A2A message |
+| `nasiko sessions` / `create-session` / `history` / `delete-session` | Manage chat sessions |
+
+```bash
+nasiko run .                                   # build + run on :8000
+nasiko chat http://localhost:8000 "hello"      # talk to the local instance directly
+nasiko chat --tui                              # full-screen chat TUI
+```
+
+`nasiko chat`'s target can be a full URL, an agent name/UUID (resolved against the active
+cluster's registry), or `orchestrator`; omit it to talk to the active cluster's routing engine. A
+lone argument containing whitespace is treated as the message, not the target.
+
+## Operate
+
+Deploy and manage agents on the active cluster.
+
+| Command | Purpose |
+| --- | --- |
+| `nasiko push <image> [--name <name>]` | Build + push an image to the cluster registry (no deploy) |
+| `nasiko deploy <image-or-dir> [--name <name>] [--port <port>] [--env-file <file>] [-e KEY=VALUE]` | Build + push + deploy |
+| `nasiko upload [source] [--name <name>] [--version <v>] [--port <port>]` | Upload source; the server builds and deploys it |
+| `nasiko ps` | List running agents |
+| `nasiko logs <agent> [-n <count>] [-f]` | Stream agent logs (`-f` live-tails via SSE) |
+| `nasiko stop/start/restart <agent>` | Lifecycle control (`restart` picks up new secrets/env) |
+| `nasiko scale <agent> <replicas>` | Scale to N replicas |
+| `nasiko rm <agent>` | Terminate and deregister |
+| `nasiko secrets set/get/ls/rm [--agent <name>]` | Encrypted secrets (vault-wide, or per agent) |
+| `nasiko observe sessions/session/trace-detail/span/...` | Traces, tokens, and cost |
+
+```bash
+nasiko deploy . --port 8000 -e LOG_LEVEL=debug
+nasiko logs my-agent -f
+nasiko scale my-agent 3
+nasiko secrets set OPENAI_API_KEY sk-... --agent my-agent
+nasiko observe session <session-id>
+```
+
+`nasiko deploy <image>` skips the build step when you pass an existing image reference instead of
+a directory. `nasiko push` runs the build-and-push steps only, without registering or starting the
+container — useful for staging an image before deploying it.
+
+## Integrations
+
+Browse agents, GitHub repos, and registries beyond the active cluster.
+
+| Command | Purpose |
+| --- | --- |
+| `nasiko agents ls/get/deploy/search/info/frameworks/list-uploaded/chat` | Agent registry + lifecycle operations |
+| `nasiko github status/repos/connect/disconnect/clone` | GitHub OAuth connection + clone-to-deploy |
+| `nasiko registry connect/disconnect/status/search/list` | Connect to and browse the artifact registry |
+| `nasiko mcp catalog/connect/connections/disconnect/connector/credential/oauth/agent-tools` | MCP Gateway connector and tool-permission management |
+
+```bash
+nasiko github clone myorg/my-agent-repo
+nasiko registry search "invoice processing"
+nasiko mcp catalog
+nasiko mcp connect --toolkit <name>       # from the catalog output
+```
+
+## Reference: architecture
+
+| Entity | What it is |
+| --- | --- |
+| Control plane | The server that deploys agents, routes queries, proxies A2A traffic, and serves the observability and registry APIs |
+| Embedded OCI registry | The control plane's own `/v2/*` endpoint — stores your deployed agent images |
+| Artifact registry | A separate service for agent templates and skills, used by `nasiko new`, `nasiko skill search`, and `nasiko registry ...` |
+
+See the [architecture overview](/guides/architecture/overview) for how these pieces connect, and
+[access control](/guides/acl/overview) for what each command requires permission-wise — the
+developer CLI only ever operates on agents you own or have been granted access to.

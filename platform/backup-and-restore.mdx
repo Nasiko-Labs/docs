@@ -1,0 +1,63 @@
+---
+title: "Backup and restore"
+description: "What state the platform holds where, and what's on you to back up — there's no built-in backup tooling today."
+---
+
+<Note>
+  There is no Nasiko-specific backup or restore command, scheduled snapshot job, or disaster-recovery
+  runbook shipped with the platform today. This page is deliberately short: it tells you what state
+  exists and where, so you can back it up the same way you'd back up any other stateful service —
+  not a Nasiko-specific procedure, because none currently exists.
+</Note>
+
+## Where state actually lives
+
+The control plane itself holds no durable state in the process — everything survives a restart of
+the server binary because it lives in one of three external stores:
+
+| Store | Holds | Loss impact |
+| --- | --- | --- |
+| **Postgres** | Users, agents, access grants, sessions, MAF workflow definitions and execution history, connector registry and permissions, router decision logs, model pricing — effectively all platform records | Total: this is the platform's source of truth. Losing it without a backup means losing every account, agent record, and grant, even if the underlying containers and images still exist. |
+| **S3 (or MinIO for a self-hosted stack)** | Agent image layers pushed to the embedded registry, and build contexts staged for in-cluster Kubernetes builds | Agent images become unrecoverable unless you still have the original source or a copy of the built image elsewhere — the platform doesn't keep a second copy. |
+| **Redis** | Flow-guard cascade-limit state, MCP gateway permission/session/manifest caches, and the MAF execution queue | Mostly safe to lose: flow-guard and MCP cache state is short-TTL and derived — it rebuilds itself from Postgres on the next request with no data actually lost. The MAF execution queue is the exception — see below. |
+
+The server applies its own database migrations at startup, so a Postgres instance restored from a
+backup at an older schema version will be brought up to date automatically the next time the server
+connects to it — you don't need to replay migrations by hand as a separate restore step.
+
+<Warning>
+  Redis isn't purely disposable cache. Flow-guard and MCP permission state genuinely are — they
+  expire on their own short TTLs and are recomputed from Postgres on demand. But the MAF worker
+  queues executions on a Redis stream; an execution that's been queued but not yet claimed by a
+  worker has no second copy anywhere else. If you're running MAF workflows in production, size your
+  Redis durability accordingly rather than treating it as fully stateless.
+</Warning>
+
+## What to actually do
+
+Back these up the way you'd back up any equivalent stateful service running outside Nasiko:
+
+- **Postgres** — standard `pg_dump`/point-in-time-recovery, or your cloud provider's managed
+  database snapshots if you're not self-hosting it.
+- **S3 / MinIO** — your object storage provider's own replication or versioning, or a managed
+  bucket with cross-region replication if you're self-hosting MinIO.
+- **Redis** — if you rely on MAF, treat it with the durability of a job queue (AOF persistence or a
+  managed Redis with replication), not a pure cache you're comfortable losing.
+
+If you provisioned Postgres and MinIO through the platform's own self-hosted Helm chart, both run
+as single-replica StatefulSets backed by a `PersistentVolumeClaim` with no accompanying backup
+CronJob or snapshot policy — the PVC's durability is whatever your cluster's storage class provides,
+and nothing beyond that is automated for you. For production deployments, prefer a managed database
+service specifically because it gives you backups, replication, and failover without having to build
+that yourself on top of a self-managed PVC.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Architecture overview" href="/guides/architecture/overview">
+    Where Postgres, Redis, and S3 sit relative to the control plane.
+  </Card>
+  <Card title="Agent runtime reference" href="/platform/agent">
+    The two runtimes and what each one expects from underlying storage.
+  </Card>
+</CardGroup>

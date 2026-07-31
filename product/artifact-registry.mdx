@@ -1,0 +1,104 @@
+---
+title: "Artifact registry"
+description: "Browse, inspect, and publish agents, skills, and other artifacts through the registry's own web app."
+---
+
+The artifact registry has its own web app for browsing and publishing shared agents, skills, and
+other artifacts — separate from the control-plane UI covered in the rest of the Product section.
+It's a distinct site with its own navigation and its own sign-in, not a screen inside the main
+sidebar. For the CLI and HTTP-API side of the same registry, see
+[Artifact registry](/guides/artifact-registry) in Guides; for a curated set of artifacts you'll
+actually find in it, see [Sample agents](/platform/sample-agents).
+
+<Note>
+  Open whatever address your organization has given you for the registry — this page describes
+  the screens you'll find there, not a fixed hostname.
+</Note>
+
+## A separate app
+
+The registry's web app lives entirely apart from the control plane you use for chat, agents, and
+administration. It has its own two-item navigation — **Artifacts** and **Publish** — rather than
+the broader sidebar described in [Product overview](/product/overview). Signing in here (see
+**Admin sign-in** below) is also separate from your main Nasiko login: it's a scoped credential for
+this registry instance only.
+
+## Browsing artifacts
+
+The landing page is a card grid of everything published to the registry. Above the grid, a row of
+type tabs lets you narrow the view to **All**, **Agents**, **Skills**, **MCP**, or
+**Miscellaneous** — each tab shows a count, and **Miscellaneous** (which groups any type outside
+those headline three) only appears once there's actually something in it.
+
+Below the tabs, a search box does live, debounced search as you type. Next to it, up to two facet
+dropdowns — **Framework** and **Format** — let you filter further; each one only appears once the
+catalog actually has two or more distinct values to choose from, so a small or young registry
+doesn't clutter the toolbar with filters that couldn't narrow anything down.
+
+Each card in the grid shows:
+
+- The artifact's type icon, owner, and name
+- A type badge, plus a status badge if the latest version isn't `stable` (for example `preview`,
+  `verified`, or `yanked`)
+- Its description (or "No description provided" if none was set)
+- Up to three tags, with a "+N" badge for any more
+- Its latest version, version count, size, and when it was last updated
+
+Clicking a card opens that artifact's detail page. If nothing matches your search, tab, or facet
+selection, the page shows an empty state suggesting you adjust the filters — or, if the whole
+catalog is empty, a hint to push an artifact with `oras`, `docker`, or `nasiko-ee`.
+
+## Artifact detail
+
+The detail page for a single artifact shows:
+
+- Its owner, name, type, and status badges, along with its description
+- License, framework, packaging format, and when it was last updated
+- Stat tiles for latest version, version count, size, and when it was first published
+- A ready-to-copy pull command — `docker pull` for a Docker-image-packaged artifact, `oras pull`
+  otherwise — plus, where applicable, a second command: `nasiko skill add <name>` for a skill, or
+  the OCI reference to import an agent straight into the control plane
+- An **Overview** tab with tags and a details grid (type, format, license, framework, first
+  published date, latest digest, and any custom metadata fields), plus — for agents — a copyable
+  link to that agent's `.well-known/agent.json` agent card
+- A **Versions** tab listing every published version with its digest, size, age, and (for
+  non-yanked versions) a lifecycle status badge
+
+## Publishing
+
+The **Publish** screen is a form for owner, name, version, type (**Agent**, **Skill**, or
+**Tool**), framework, description, tags, license, and a `.tar.gz` archive you drag-and-drop or
+select. Submitting calls the registry's publish API and reports success or failure inline.
+
+This screen isn't in the registry's main navigation — its `Publish` entry is marked hidden — so you
+won't see it listed alongside **Artifacts**. You reach it through a direct link to `publish.html`
+rather than by clicking through the nav.
+
+## Admin sign-in and edits
+
+Some actions on the detail page require signing in as a registry admin: a separate username/password
+form (distinct from your main Nasiko login) that validates against the registry itself before
+anything else on the page unlocks. Once signed in, an admin can:
+
+- **Edit an artifact's details** — description, tags, license, framework, custom metadata, and
+  even reclassify its type (useful for an artifact that landed as `unknown` or the wrong type from
+  an unannotated push)
+- **Change a version's lifecycle status** between `preview`, `stable`, and `verified` from a
+  dropdown on each version row
+- **Yank a version** — a confirmed, deliberate action that hides it from search and installs,
+  separate from ordinary status changes
+
+Browsing, searching, and downloading stay open to anyone who can reach the registry; only these
+edit, status-change, and yank actions require the admin sign-in.
+
+<CardGroup cols={2}>
+  <Card title="Artifact registry (Guides)" href="/guides/artifact-registry">
+    The CLI and HTTP-API side of this same registry — publishing, pulling, and the MCP interface.
+  </Card>
+  <Card title="Sample agents" href="/platform/sample-agents">
+    Curated, ready-to-deploy agents you'll find in the registry.
+  </Card>
+  <Card title="Product overview" href="/product/overview">
+    The main control-plane web app this registry app is separate from.
+  </Card>
+</CardGroup>

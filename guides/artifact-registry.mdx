@@ -1,0 +1,157 @@
+---
+title: "Artifact registry"
+description: "Push, pull, and browse agents, skills, tools, and other artifacts through Nasiko's built-in artifact registry."
+---
+
+The artifact registry is Nasiko's OCI-compliant store for everything you build with the
+platform — agents, skills, tools, MCP servers, and even standalone binaries. It speaks the same
+protocol as `docker`, `podman`, and `oras`, and adds a metadata and search layer on top so artifacts
+are actually discoverable, not just storable.
+
+You can reach a deployed registry three ways: its own hosted web UI (a browsable catalog site),
+the `nasiko` and `nasiko-ee` CLIs, or the `/v1` (metadata) and `/v2` (OCI) HTTP APIs directly.
+
+## Artifact types
+
+| Type | What it is |
+| --- | --- |
+| `agent` | A runnable A2A agent |
+| `skill` | A reusable skill bundle |
+| `tool` | A tool/function artifact |
+| `mcp` | An MCP server package |
+| `executable` | A standalone binary or CLI (this is how the platform CLI itself is distributed) |
+
+Packaging is a separate concern from type — an artifact can ship as plain source, a
+Dockerfile/Compose build recipe, a full multi-layer OCI image (pulled the normal `docker pull` way),
+or, for something that's already running elsewhere, an external reference card with no blob at all.
+
+## Publishing an artifact
+
+Two paths lead to the registry:
+
+**The registry publish command** auto-detects agents (an `AgentCard.json` at the directory root)
+and skills (`skill.json`). For anything else, pass `--type` along with an `artifact.json` manifest:
+
+```sh
+nasiko-ee registry publish ./my-agent --owner myorg
+```
+
+If the path you pass isn't a directory that exists locally, it's treated as an already-built image
+reference and pushed as real OCI image layers instead.
+
+**A standard OCI push** — `docker push`, `podman push`, or `oras push` — works against the
+registry's `/v2` endpoint with any OCI-compliant client, no Nasiko-specific tooling required. When
+you push this way (bypassing `registry publish`), the registry still classifies the artifact into
+its browse catalog, best-effort and never rejecting the push:
+
+1. An explicit `org.nasiko.type` annotation, if you set one:
+   ```sh
+   oras push registry.example.com/myorg/my-cli:v1 ./nasiko-ee \
+     --annotation "org.nasiko.type=executable"
+   ```
+2. Otherwise, inference from OCI media types — for example an OCI 1.1 `artifactType`, or a Helm
+   chart's config media type.
+3. Otherwise `unknown`, grouped under the catalog's "Miscellaneous" tab.
+
+A mis-typed or mis-described artifact isn't stuck that way — an admin can correct its type,
+description, tags, license, or framework afterward (see **Lifecycle and admin edits** below) without
+re-publishing.
+
+## Pulling and downloading
+
+- Image-packaged artifacts: `docker pull` / `podman pull` / `oras pull` against
+  `registry.example.com/{owner}/{repo}:{tag}`, same as any OCI registry.
+- Single-blob artifacts (source, open-standard bundles): download directly from
+  `/v1/artifacts/{owner}/{name}/{version}/download`.
+- From the developer CLI:
+
+  ```sh
+  nasiko registry connect https://registry.example.com
+  nasiko registry search "nutrition planning" --type agent
+  nasiko registry list --type skill
+  ```
+
+  `nasiko registry` also supports `disconnect`, `status`, and `--json` output on both `search`
+  (alias `discover`, with `--framework`, `--top`, and `--min-score` filters) and `list`.
+
+## Browsing and searching the catalog
+
+The registry's web UI presents artifacts as a card grid with type tabs — **All**, **Agents**,
+**Skills**, **MCP**, and **Miscellaneous** (the last one only appears once there's actually an
+uncategorized artifact to show). Facet filters for framework and packaging format sit alongside the
+tabs and hide themselves automatically when they wouldn't narrow anything down. Every card shows a
+type badge, and clicking through opens a detail page for that artifact's versions.
+
+Search accepts a natural-language query and ranks results semantically when the registry has an
+embeddings provider configured; without one, it falls back to keyword search transparently — same
+API, same UI, no error.
+
+## Lifecycle and admin edits
+
+Each artifact version carries a lifecycle status: `preview`, `stable`, or `verified`. An admin sets
+these through the registry UI's edit-details view (behind a simple login-modal sign-in) or directly
+via the metadata API:
+
+```sh
+curl -X PATCH https://registry.example.com/v1/artifacts/myorg/my-agent/v1 \
+  -u admin:secret \
+  -H "Content-Type: application/json" \
+  -d '{"status": "verified", "tags": ["nlp", "customer-support"]}'
+```
+
+`yanked` isn't one of the settable statuses — removing a version is a deliberate, separate action
+(`nasiko-ee registry yank <name> <version>`), not something you toggle. Reads (browsing, searching,
+downloading) stay open to anyone who can reach the registry; only publish/yank/edit actions require
+admin credentials.
+
+## Connecting an MCP client
+
+The registry also exposes an MCP server (Streamable HTTP transport) so MCP-capable clients can
+browse and act on it through natural language, without a dedicated Nasiko client:
+
+| Tool | Auth | Purpose |
+| --- | --- | --- |
+| `list_artifacts`, `search_artifacts`, `get_artifact`, `list_versions`, `get_version`, `list_facets`, `download_artifact` | none | Browse, filter, and download |
+| `publish_artifact`, `yank_artifact` | admin | Publish or remove a version |
+
+```sh
+claude mcp add --transport http nasiko-registry https://registry.example.com/mcp \
+  --header "Authorization: Basic $(printf 'admin:secret' | base64)"
+```
+
+Reads work with no credentials at all; only add the `Authorization` header if you also want the
+client to be able to publish or yank on your behalf.
+
+## Deploying and managing a registry
+
+Stand up a registry instance and keep it current with the platform admin CLI:
+
+```sh
+nasiko-ee registry init \
+  --host <server-ip> \
+  --domain registry.example.com \
+  --admin-password <password>
+
+nasiko-ee registry status            # list all registries you manage and their state
+nasiko-ee registry upgrade --tag <tag>   # pull a new image and restart
+nasiko-ee registry logs --tail 50        # tail the running container's logs
+```
+
+Access to a deployed registry's pulls and pushes is governed by the credentials and access tokens
+you configure for that deployment — `nasiko-ee activate <token>` saves registry pull credentials
+for a cluster that consumes images from a gated registry.
+
+<CardGroup cols={2}>
+  <Card title="Agent Development Lifecycle" href="/guides/adlc/overview">
+    Where publishing to the registry fits into building and shipping an agent.
+  </Card>
+  <Card title="A2A agents and frameworks" href="/guides/a2a-agents-and-frameworks">
+    What makes an agent a valid, discoverable artifact in the first place.
+  </Card>
+  <Card title="Sample agents" href="/platform/sample-agents">
+    Curated, ready-to-deploy agents you can pull straight from the registry.
+  </Card>
+  <Card title="Architecture overview" href="/guides/architecture/overview">
+    How the registry fits into the rest of the platform.
+  </Card>
+</CardGroup>

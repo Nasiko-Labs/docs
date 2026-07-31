@@ -1,0 +1,135 @@
+---
+title: "Observability"
+description: "Review past conversations, trace every agent hop behind an answer, follow a multi-agent flow step by step, and track token usage and cost — all in the web UI."
+---
+
+Every conversation you have through [Chat](/product/chat) leaves a trail: a saved session you can
+reopen, a trace of every hop that went into the answer, and — when more than one agent was
+involved — a flow you can step through hop by hop. The web UI gives you four screens over that
+trail: **Sessions**, **Session Trace**, **Flows**, and **Usage**. This page walks through what you
+see on each one.
+
+A quick note on vocabulary, since it explains why these screens are organized the way they are: a
+**session** is one query, grouped by that query's own conversation context — it's the row you see
+in the session list. A **trace** is every hop that went into answering that one query — the
+agent's own LLM calls, plus any agent-to-agent calls it made along the way — linked together
+because each hop shares the same underlying identifier. A **flow** is that same hop chain, viewed
+as a step-by-step timeline instead of a session's message history. That's why Session Trace and
+Flow Detail below end up showing much the same information from two different angles. For how
+that linkage actually works under the hood — instrumentation, `traceparent` propagation, the
+Tempo/Loki backends — see [Observability internals](/platform/observability); this page sticks to
+what you see and click.
+
+## Sessions: your chat history
+
+**Sessions** is your list of past conversations, whether they started in Orchestrator or in a
+direct agent [Chat](/product/chat). Each row shows:
+
+- A colored avatar with the agent's initial, and the agent's name (or **Orchestrator** if the
+  conversation wasn't tied to one specific agent).
+- A message count badge and a short preview of the last message.
+- How long ago the conversation was last active (for example *"2h ago"*), with rows grouped under
+  headers — **Today**, **Yesterday**, **This Week**, **Older**.
+
+A search box at the top filters the list by agent name or message text as you type. A **New
+Chat** button starts a fresh conversation, and a trash icon on each row lets you remove that
+session from your history.
+
+Clicking a session opens its full message thread in Chat, picking up right where the conversation
+left off. From there, an assistant reply that's finished streaming carries a small trace icon next
+to its **Copy** button (see [Chat](/product/chat)) — that's the doorway into the next screen: click
+it to open that specific reply's full hop-by-hop trace in Session Trace.
+
+## Session trace: every hop behind one answer
+
+Session Trace shows the complete trace for a single query: every span that contributed to the
+answer, in order, including nested agent-to-agent calls. At the top, a stats row summarizes the
+whole trace:
+
+- **Spans** — the total number of spans recorded.
+- **Duration** — total wall-clock time, shown in milliseconds or seconds.
+- **Tokens** — combined input and output tokens across every span in the trace.
+- **Cost** — the dollar cost of the trace, when cost data is available.
+- **Session** — the underlying session identifier, shown when present.
+
+Below that is the span list itself, indented to show nesting — a top-level call with the
+agent-to-agent or LLM calls it triggered indented underneath it. Each span shows its name, the
+model it used (for LLM calls), that span's own token count, and its duration; a red dot marks a
+span that errored. Click any span to expand a detail panel with its kind, span ID, status, start
+and end times, model, and the input/output token split.
+
+<Note>
+  If you open a trace right after a conversation finishes, you may briefly see a message that the
+  trace isn't available yet. Traces can take a few seconds to finish indexing — give it a moment
+  and refresh.
+</Note>
+
+## Flows: the multi-agent call chain
+
+**Flows** lists every multi-agent interaction the platform has recorded — cases where answering a
+query involved more than one agent call — as a searchable, sortable table. Each row shows:
+
+- The **flow ID**, linking to that flow's detail page.
+- The **query** that started the flow.
+- The originating **agent**.
+- A **status** badge — completed, running, failed, or timeout.
+- **Calls** — how many agent invocations happened in the flow.
+- **Duration** and when the flow **started**.
+
+The search box filters by agent name or query text.
+
+### Flow detail
+
+Opening a flow shows a row of summary cards — **Status**, **Root Agent**, **Duration** (or *"In
+progress"* if the flow hasn't finished), **Started**, **Steps**, and the originating **Query** —
+followed by a **Trace** section that lays out each step as a timeline. Every step shows:
+
+- A status badge for that step.
+- The **agent** it called, with a short preview of what was sent to it (hover to see the full
+  text).
+- A horizontal bar positioned and sized to show when that step ran and how long it took relative
+  to the whole flow, so you can see at a glance which hop was the slow one.
+- That step's own duration.
+
+If a flow has no recorded agent calls, this section just says so rather than showing an empty
+timeline.
+
+<Note>
+  Flows relate closely to [multi-agent workflows](/guides/maf) — if you're designing a fixed,
+  multi-step sequence across agents rather than reviewing one that already ran, that guide is the
+  place to start.
+</Note>
+
+## Usage: tokens and cost
+
+**Usage** is the cost and consumption dashboard. Four stat cards at the top summarize your recent
+activity:
+
+- **Total Tokens**, with input/output split shown underneath.
+- **Total Cost**, labeled with the period it covers (30 days by default).
+- **Requests**, with the average latency shown underneath.
+- **Avg Latency** per request.
+
+Below the stat cards, a **Daily Usage** bar chart plots total tokens per day over the last seven
+days, including days with no activity, so you can spot a spike or a quiet stretch at a glance.
+
+Underneath the chart, two tabs — **By Agent** and **By Model** — switch a searchable, paginated
+table between the two breakdowns: request count, tokens, cost, and average latency, grouped either
+by which agent handled the request or by which model answered it.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Chat" icon="messages" href="/product/chat">
+    Where sessions and traces come from — talking to the orchestrator or a specific agent.
+  </Card>
+  <Card title="Agents" icon="layers" href="/product/agents">
+    Browse the agent catalog and manage the agents you've deployed.
+  </Card>
+  <Card title="Observability internals" icon="chart-line" href="/platform/observability">
+    The instrumentation, trace/session/flow data model, and API surface behind these screens.
+  </Card>
+  <Card title="Multi-agent workflows" icon="diagram-project" href="/guides/maf">
+    Design a fixed, multi-step sequence across agents instead of reviewing one that already ran.
+  </Card>
+</CardGroup>

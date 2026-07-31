@@ -1,0 +1,115 @@
+---
+title: "Access control internals"
+description: "How the two independent ACL layers are actually enforced, the role hierarchy, and org-scoped visibility."
+---
+
+The [access control guide](/guides/acl/overview) covers the model from a configuration point of
+view: roles, grants, and allowlists. This page covers how those checks are actually wired into the
+request path — where each one runs, what happens when a check is skipped entirely, and the
+role hierarchy's exact capability thresholds.
+
+## Two layers, checked in different places
+
+Nasiko separates "can this person reach this agent" from "can this agent call that agent" — they're
+backed by different tables, checked by different code paths, and one never substitutes for the
+other.
+
+### User → agent
+
+Every route that touches a specific agent — proxying a chat request to it, updating it, deleting
+it, reading or rotating its secrets — resolves access through one function that honors: ownership,
+team ownership, the agent's `is_public` flag, or an explicit `agent_grants` row (which can target a
+user, a team, or a department). A soft-deleted agent is denied to everyone unconditionally,
+regardless of any of the above.
+
+Mutating operations (update, delete, secrets, ACL changes) are gated by a **stricter** check than
+viewing or chatting: neither a public agent nor an invoke-only grant confers the right to modify or
+destroy it — only ownership or superuser status does. This distinction matters specifically because
+view-level access is much more commonly granted than manage-level access; conflating the two would
+let a public agent's `is_public` flag silently double as a management grant, which it was never
+meant to be.
+
+### Agent → agent
+
+Once a user's request is already authorized to reach an agent, a separate question applies whenever
+that agent calls *another* agent during a multi-agent conversation: is this specific hop allowed?
+This is governed by the `agent_acl` table — one row per `(caller_agent_id, target_agent_id)` pair
+that's explicitly permitted.
+
+<Warning>
+  **Agent-to-agent access is default-deny, unconditionally.** An agent with zero rows in
+  `agent_acl` cannot call any other agent at all — there is no "unrestricted until the first rule
+  is added" state. Every hop requires an explicit allow row for that exact caller/target pair; the
+  management API's own ACL-listing response documents this directly, returning `unrestricted: false`
+  always. If you deploy an agent that needs to call another agent as part of its own logic, you
+  must add that pairing to `agent_acl` before the first call — it will fail otherwise.
+</Warning>
+
+This check runs immediately before the platform actually invokes the target agent, as one of two
+things a call guard verifies on every hop: the ACL pair, and the [flow guard's](/platform/orchestrator#the-flow-guard)
+cascade limits (depth, fan-out, cycle detection, token budget, timeout) in the same pass. A rejection
+from either one aborts the call before it reaches the target agent's container.
+
+<Note>
+  ACL enforcement applies to hops the platform's own orchestrator makes on an agent's behalf during
+  a multi-agent conversation. A [MAF workflow's](/platform/maf) step-to-agent calls are a distinct
+  code path with different guarantees — see that page for what does and doesn't apply there.
+</Note>
+
+Manage an agent's outbound allowlist through `GET`/`POST /api/agents/{id}/acl` and
+`DELETE /api/agents/{id}/acl/{target_id}` — the same manage-level check gates all three (owner or
+superuser, mirroring the mutating user→agent checks above).
+
+## Role hierarchy and what each tier actually unlocks
+
+Every user has one role from a five-level hierarchy, ranked strictly: `admin` >
+`department_manager` > `team_lead` > `team_member` > `member`. An unrecognized role value ranks
+below all five, i.e. it's treated as having no elevated capability at all rather than defaulting to
+trusted.
+
+Three platform-wide capabilities are gated by a **minimum** role — anyone at or above the threshold
+qualifies, not only that exact tier:
+
+| Capability | Minimum role | Notes |
+| --- | --- | --- |
+| Deploy and run agents | `member` | The baseline for every authenticated user — deploying is the platform's core action, deliberately not restricted further |
+| Manage an agent's secrets | `team_lead` | Viewing which secrets are set, rotating, or injecting new ones |
+| Manage platform users | `admin` | Creating accounts, changing roles, moving people between teams |
+
+Role and the superuser flag are independent. A superuser bypasses organization-visibility scoping
+entirely and unlocks platform-wide administrative routes regardless of their `role` value;
+promoting someone's `role` to `admin` does not by itself grant superuser status.
+
+<Note>
+  A role is a capability tier, not a grant on any specific agent. Meeting a capability's role
+  threshold says you're allowed to *attempt* that class of action at all — whether you can act on a
+  *particular* agent is still decided separately, by the ownership/grant model above. A `team_lead`
+  can manage secrets only on agents they can already manage in the first place.
+</Note>
+
+## Org-scoped visibility
+
+Beyond agent access, the platform scopes which *users* a given caller can see at all. A
+non-superuser's visible user set is bounded by their position in the org hierarchy — broadly,
+someone with a management role sees the people within their own scope (their team, or their
+department and everything under it), while a baseline user's visibility is limited to themselves
+and whatever their role otherwise entitles them to. Superusers see everyone, unconditionally. This
+is what keeps user-listing and user-search endpoints from leaking the full roster of every
+organization on a shared platform to every signed-in account.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Access control overview" href="/guides/acl/overview">
+    The configuration-facing model: roles, grants, and allowlists.
+  </Card>
+  <Card title="User → agent access" href="/guides/acl/user-agent">
+    Ownership, public flags, and grants in day-to-day terms.
+  </Card>
+  <Card title="Orchestrator internals" href="/platform/orchestrator">
+    The flow guard that's checked alongside agent ACL on every hop.
+  </Card>
+  <Card title="MCP gateway internals" href="/platform/mcp-gateway">
+    A parallel, separately-scoped permission model for tool access rather than agent access.
+  </Card>
+</CardGroup>

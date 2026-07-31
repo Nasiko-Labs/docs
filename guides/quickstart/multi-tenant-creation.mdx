@@ -1,0 +1,132 @@
+---
+title: "Setting up an organization"
+description: "Model your organization as departments and teams, add users, and grant them access to agents using the platform admin CLI."
+---
+
+Nasiko models an organization as a hierarchy — **departments** contain **teams**, teams contain
+**users**, and users hold a **role** that determines what they can do. On top of that, **agent
+grants** control which specific agents a user, team, or department can reach. This page walks
+through setting all of it up with the platform admin CLI (`nasiko-ee`).
+
+<Note>
+  This uses the platform admin CLI, distinct from the developer CLI (`nasiko`) agent developers
+  use day to day. See [CLI installation](/guides/quickstart/cli-installation) if you haven't
+  installed it yet, and [access control overview](/guides/acl/overview) for the underlying
+  permission model.
+</Note>
+
+## Role hierarchy
+
+Roles rank from most to least privileged:
+
+| Role | Typical scope |
+| --- | --- |
+| `admin` | Manages users, teams, departments across the whole organization |
+| `department_manager` | Manages teams and members within their department |
+| `team_lead` | Manages secrets and membership within their team |
+| `team_member` | Regular contributor on a team |
+| `member` | Baseline authenticated user; can deploy and operate agents, and can be granted specific agents |
+
+Deploy permission (`can_deploy`) only requires `member` — any authenticated user; managing secrets
+requires at least `team_lead`; managing users requires `admin`.
+
+If you're managing multiple provisioned control planes, most commands below accept
+`--deployment <name>` to target a specific one — omit it when only one is tracked, or set a
+default with `nasiko-ee use <name>`.
+
+<Steps>
+  <Step title="Create a department">
+    ```bash
+    nasiko-ee department create --name Engineering --description "Product engineering"
+    ```
+
+    This prints the new department's ID — you'll need it for the next steps. Assign a manager
+    later with:
+
+    ```bash
+    nasiko-ee department update <dept-id> --manager <user-id>
+    ```
+  </Step>
+
+  <Step title="Create a team within the department">
+    ```bash
+    nasiko-ee team create --name Backend --dept <dept-id> --description "Backend services team"
+    ```
+
+    Add `--lead <user-id>` once you have a user to promote to team lead, or set it later with
+    `nasiko-ee team update <team-id> --lead <user-id>`.
+  </Step>
+
+  <Step title="Create users">
+    ```bash
+    nasiko-ee users create \
+      --username alice \
+      --email alice@example.com \
+      --role team_lead \
+      --team <team-id>
+    ```
+
+    `--role` accepts `admin`, `department_manager`, `team_lead`, `team_member`, or `member`
+    (default `member`). Placing a user into `--team` also sets their department to that team's
+    department; use `--dept <dept-id>` instead to place someone in a department without a team.
+
+    There's no `--password` flag: the control plane generates a one-time access key/secret pair
+    and prints it once — the secret doubles as the user's initial login password. Capture it now;
+    it isn't retrievable later.
+
+    Move a user between teams or departments afterward with `nasiko-ee users place <username>
+    --team <team-id>` (or `--dept`, or `--clear` to unassign).
+  </Step>
+
+  <Step title="Grant agent access">
+    Access to a specific agent is separate from org placement — a user's role and team membership
+    don't automatically grant them any agent. Grant explicitly:
+
+    ```bash
+    # grant to a specific user
+    nasiko-ee access grant <agent-id> --user alice
+
+    # grant to an entire team or department
+    nasiko-ee access grant <agent-id> --team <team-id>
+    nasiko-ee access grant <agent-id> --dept <dept-id>
+
+    # or make it public to everyone on the platform
+    nasiko-ee access grant <agent-id> --public
+    ```
+
+    All three grant types (`--user`, `--team`, `--dept`) accept multiple values and can be combined
+    in one call. Revoke the same way with `nasiko-ee access revoke`.
+
+    You can also assign an agent's *owning* team/department (distinct from a grant) so it shows up
+    under that org unit by default:
+
+    ```bash
+    nasiko-ee access org <agent-id> --team <team-id> --dept <dept-id>
+    ```
+  </Step>
+</Steps>
+
+## Checking what's set up
+
+```bash
+nasiko-ee department ls                    # list departments
+nasiko-ee department members <dept-id>     # who's in a department
+nasiko-ee team ls --dept <dept-id>         # teams in a department
+nasiko-ee team members <team-id>           # who's on a team
+nasiko-ee access ls <agent-id>             # resolved users + grants for an agent
+nasiko-ee access visibility <agent-id>     # is it public? every raw grant row
+nasiko-ee access my-agents                 # agents the current user can access
+```
+
+## Doing this from the UI or API instead
+
+Everything above is also available through the admin UI and the `/api` org routes (departments,
+teams, grants, org users) for teams that prefer a UI-driven or automated setup rather than the
+CLI. See [user management](/guides/acl/user-management) and
+[user-to-agent access](/guides/acl/user-agent) for the underlying API-level model.
+
+<Tip>
+  Need to bring in users from an existing identity provider instead of creating them one at a
+  time? See [Entra ID secrets and SSO setup](/guides/secrets/entra-id) for directory sync and OIDC
+  group mappings.
+</Tip>

@@ -1,0 +1,126 @@
+---
+title: "Quickstart"
+description: "Go from zero to a running, chattable agent in a few commands using the nasiko CLI."
+---
+
+This walks you through the fastest path to a working setup: install the CLI, start a local
+control plane, scaffold an agent, deploy it, and chat with it.
+
+<Steps>
+  <Step title="Install the CLI">
+    Build the developer CLI (`nasiko`) from source:
+
+    ```bash
+    git clone https://github.com/nasiko-ai/nasiko-rs.git
+    cd nasiko-rs
+    cargo install --path cli --force
+    ```
+
+    See [CLI installation](/guides/quickstart/cli-installation) for other install options,
+    including the platform admin CLI used for provisioning and organization setup.
+  </Step>
+
+  <Step title="Start a local control plane">
+    ```bash
+    nasiko up
+    ```
+
+    On first run, `nasiko up` walks you through `~/.nasiko/.env` (Docker Hub org, your
+    `OPENAI_API_KEY`, model overrides), starts the local infra stack (Postgres, Redis, S3-compatible
+    storage) via Docker Compose, pulls the control plane binary out of its Docker image, and runs it
+    natively on `:8080`. The CLI automatically connects to it as cluster `local`.
+
+    Stop it later with `nasiko down`.
+  </Step>
+
+  <Step title="Log in">
+    ```bash
+    nasiko auth login
+    ```
+
+    Prompts for a username and password and stores the resulting token in
+    `~/.nasiko/config.json`, scoped to the active cluster. Check who you're logged in as with
+    `nasiko auth whoami`.
+  </Step>
+
+  <Step title="Scaffold an agent">
+    ```bash
+    nasiko new
+    ```
+
+    Runs an interactive wizard that picks a framework (from the connected artifact registry) and
+    writes a project directory with an `AgentCard.json`, a `Dockerfile`, and starter source. To skip
+    the prompts, pass a template and project name directly:
+
+    ```bash
+    nasiko new openai my-agent
+    ```
+  </Step>
+
+  <Step title="Run it locally">
+    ```bash
+    cd my-agent
+    nasiko run .
+    ```
+
+    Builds the agent's Docker image and runs it on `localhost:8000` (override with `--port`). Talk
+    to it directly with the CLI's A2A chat client:
+
+    ```bash
+    nasiko chat http://localhost:8000 "hello"
+    ```
+  </Step>
+
+  <Step title="Deploy it to your cluster">
+    ```bash
+    nasiko deploy .
+    ```
+
+    Builds the image, pushes its layers and manifest to the control plane's embedded OCI registry,
+    then registers and starts the agent container. This writes `.nasiko/agent.json` in your project
+    directory, binding it to the deployed agent's ID.
+
+    Don't have Docker locally, or want the server to build it instead? Use `nasiko upload .` — it
+    zips your source, uploads it, and the control plane's build worker builds and deploys it for
+    you (no local Docker required).
+  </Step>
+
+  <Step title="Chat with the deployed agent">
+    ```bash
+    # ask the routing engine to pick an agent
+    nasiko chat "what can you help me with?"
+
+    # or talk to your agent directly by name
+    nasiko chat my-agent "hello"
+
+    # full-screen terminal UI
+    nasiko chat --tui
+    ```
+
+    With no target, `nasiko chat` sends the message to the active cluster's routing engine, which
+    selects the best agent for the query. Pass an agent name or ID (or `--agent <name>`) to bypass
+    routing and talk to that agent directly.
+  </Step>
+</Steps>
+
+## Check on things
+
+```bash
+nasiko ps                  # list running agents
+nasiko logs my-agent -f    # stream logs
+nasiko status              # control plane health + metrics
+```
+
+## What just happened
+
+Every command above talked to the same control plane — the sole ingress that deployed your
+agent's container, proxied your chat message to it, and (once you send more traffic) will let you
+inspect the resulting trace under `nasiko observe`. See the [architecture overview](/guides/architecture/overview)
+for how these pieces fit together, or dive into the [full CLI reference](/guides/cli-usage) for
+everything else `nasiko` can do.
+
+<Tip>
+  Setting this up for a team rather than solo? See
+  [setting up an organization](/guides/quickstart/multi-tenant-creation) for departments, teams,
+  and access grants.
+</Tip>

@@ -1,0 +1,83 @@
+---
+title: "Chat"
+description: "Two ways to talk to an agent in the web UI: let the platform pick the right agent, or open a direct conversation with one you already know."
+---
+
+The web UI gives you two chat surfaces. **Orchestrator** is the main entry point — you type a
+question without naming an agent, and the platform figures out how to answer it. **Chat** is a
+direct, one-on-one conversation with a specific agent, bypassing agent selection entirely. Both
+are ordinary conversations under the hood, and both show up afterward in
+[Sessions](/product/observability).
+
+## The Orchestrator screen
+
+Orchestrator is the platform's home screen for chat — the page titled **Orchestrator** in the
+navigation. It's built for the common case: you have a question and don't know or care which
+agent should answer it.
+
+The screen opens with a single prompt, **What can I help you with?**, and one input box with the
+placeholder text *"Ask anything — the orchestrator will find the best agent..."*. From that box
+you can:
+
+- Type a message and submit it.
+- Record voice input instead of typing — click the microphone button (or press **F8** / **Alt+R**)
+  to start and stop recording; your audio is transcribed automatically before it's sent.
+- Attach a file alongside your message.
+
+Below the input, a **Recent agents** section shows cards for agents currently running, so you can
+jump straight into a direct conversation with one of them instead of going through the
+orchestrator — see [the direct Chat screen](#the-direct-chat-screen) below.
+
+### What happens when you send a message
+
+Submitting a message starts a new session and streams the response back live:
+
+1. A **Working…** indicator appears immediately, showing step-by-step activity as the platform
+   consults one or more agents to answer your question — expand it to see what's happening as it
+   happens.
+2. As soon as an answer starts arriving, the indicator collapses and the response renders
+   underneath — with full markdown support, so lists, tables, and syntax-highlighted code blocks
+   (each with its own **Copy** button) display properly rather than as raw text.
+3. Once the response finishes, a small toolbar appears above it with a **Copy** button for the
+   whole reply and, when the interaction produced a trace, a **view trace** link into that trace's
+   detail page.
+4. A **Continue in chat** link appears below the response, taking you into the full [Chat
+   screen](#the-direct-chat-screen) for the same session so you can keep the conversation going.
+
+You never have to name an agent on this screen — that's the point. Behind the scenes, your
+message is dispatched to the platform's routing engine rather than to a specific agent's
+container; see [A2A agents and frameworks](/guides/a2a-agents-and-frameworks) if you want to
+understand that dispatch mechanism. If your task is really a fixed sequence of steps across
+several agents rather than a single question, a [multi-agent flow](/guides/maf) is a more
+structured way to chain agents than one-shot orchestration.
+
+## The direct Chat screen
+
+Chat is a conversation with one agent you've already identified, with no routing decision in the
+way. You typically land here by clicking **Chat** on an agent's detail page, or **Start** on an
+agent's card, or by clicking one of the cards in Orchestrator's **Recent agents** list — each of
+these takes you to `chat.html` with that agent's ID already filled in.
+
+The screen shows a header with the agent's name and a **Running** status indicator, plus a link
+icon to that agent's card if you want to check its description or skills. If you're starting a
+fresh conversation, you'll see a welcome state with the agent's name and a few suggested prompt
+chips you can click to fill the input instead of typing from scratch.
+
+Sending a message here works the same way as Orchestrator — the same input box with voice
+recording and file attachment, and the same live streaming display of step-by-step activity
+followed by a markdown-rendered answer. The difference is what happens underneath: your message is
+addressed to that agent specifically, so it's proxied straight to its container instead of being
+routed. Each assistant reply also gets a **Retry** action, which resends your last message if you
+want another attempt at the same question.
+
+Opening a chat with a `session_id` already in the URL — for example, from **Continue in chat** on
+the Orchestrator screen, or from revisiting a session in Sessions — reloads that conversation's
+prior messages instead of starting fresh.
+
+## Sessions tie it together
+
+Every conversation you start — whether through Orchestrator or a direct agent Chat — is saved as
+a session the moment you send the first message. Nothing about how you got there changes how it's
+recorded afterward: it shows up alongside every other conversation in
+[Sessions](/product/observability), where you can revisit the message history and drill into the
+underlying trace.

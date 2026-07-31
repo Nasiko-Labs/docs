@@ -1,0 +1,206 @@
+---
+title: "Connect an external MCP server"
+description: "Register a Composio-managed toolkit or your own already-running MCP server, share it, and configure its credentials or OAuth 2.1 flow."
+---
+
+If a tool your agents need already exists — a SaaS integration Composio manages, or an MCP server
+you or a third party already runs somewhere — you connect it rather than build anything new. This
+page covers registering a **custom MCP server** by URL, probing it to detect what auth it needs,
+connecting your own credential, sharing it with others, and OAuth 2.1 where the server requires it.
+
+If instead you have source code for an MCP server and want Nasiko to build and run it for you, see
+[Deploy your own server](/guides/mcp/internal-mcp-deployment) instead — this page is about
+connecting a server that's already reachable at a URL.
+
+<Note>
+  Every user who connects to a shared connector uses **their own credential or their own OAuth
+  grant** — sharing a connector never hands over the owner's login. A custom MCP server is also
+  invisible to everyone but its owner until it's explicitly shared.
+</Note>
+
+## Probe a server before registering it
+
+Before registering a URL, probe it to see what authentication it expects:
+
+<CodeGroup>
+```bash CLI
+nasiko mcp connector probe https://mcp.example.com/mcp
+```
+
+```bash REST
+curl -X POST https://your-control-plane/api/mcp/connectors/probe \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://mcp.example.com/mcp"}'
+```
+</CodeGroup>
+
+The probe first checks for standard OAuth discovery metadata, then falls back to a live
+`initialize` handshake if the server doesn't publish it. A server that supports OAuth with
+automatic client registration comes back like this:
+
+```json
+{
+  "data": {
+    "url": "https://mcp.example.com/mcp",
+    "auth_type": "oauth2",
+    "requires": "oauth_flow",
+    "supports_dcr": true,
+    "hint": "This server supports OAuth 2.1 with automatic client registration — no client credentials needed."
+  },
+  "status_code": 200,
+  "message": "Connector probed successfully"
+}
+```
+
+If `supports_dcr` comes back `false`, you'll need to supply your own OAuth client ID and secret
+when you register the connector. A server that just wants a bearer token or API key instead
+reports `"auth_type": "bearer"`.
+
+## Register the connector
+
+<CodeGroup>
+```bash CLI — bearer token
+nasiko mcp connector register my-internal-api https://mcp.example.com/mcp \
+  --auth-type bearer \
+  --description "Internal ticketing API"
+```
+
+```bash CLI — OAuth 2.1
+nasiko mcp connector register my-internal-api https://mcp.example.com/mcp \
+  --auth-type oauth2 \
+  --oauth-client-id "$CLIENT_ID" \
+  --oauth-client-secret "$CLIENT_SECRET"
+```
+
+```json REST
+POST /api/mcp/connectors
+{
+  "name": "my-internal-api",
+  "url": "https://mcp.example.com/mcp",
+  "transport": "streamable_http",
+  "auth_type": "bearer",
+  "description": "Internal ticketing API"
+}
+```
+</CodeGroup>
+
+Supported auth types and what each one injects on every forwarded call:
+
+| `auth_type` | Injection | Notes |
+| --- | --- | --- |
+| `none` | Nothing | — |
+| `bearer` | `Authorization: Bearer <token>` (or a custom header via `--credential-header-name`) | Auto-prefixed with `Bearer` if the stored value omits it |
+| `basic` | `Authorization: Basic <base64(user:pass)>` | Encoded automatically when you connect |
+| `url_param` | `?<param>=<value>` appended to the request URL | Set the parameter name with `--url-param-name` |
+| `oauth2` | `Authorization: Bearer <access_token>` | Refreshed automatically from the stored refresh token as it nears expiry |
+
+Repeat `--header "Key: Value"` to send extra static headers on every request to the server (useful
+for a tenant ID or API version header the server itself requires).
+
+<Warning>
+  Registering a connector validates the URL against private, loopback, link-local, and cloud
+  metadata address ranges before it's ever saved, and the outbound client re-resolves and re-checks
+  the address at connect time as well — a hostname that resolves to a public address at
+  registration and a private one later is still rejected. Custom MCP servers must be reachable at a
+  public address.
+</Warning>
+
+## Connect your own credential
+
+Registering a connector doesn't connect anyone to it — each person who wants to use it connects
+with their own credential:
+
+<CodeGroup>
+```bash CLI
+nasiko mcp connect --connector-id <connector-id> --value "$MY_API_TOKEN"
+```
+
+```bash REST
+curl -X POST https://your-control-plane/api/mcp/connect \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"connector_id": "<connector-id>", "credentials": {"value": "'"$MY_API_TOKEN"'"}}'
+```
+</CodeGroup>
+
+For a `none`/`bearer`/`basic`/`url_param` connector this connects immediately. For an `oauth2`
+connector it instead kicks off the OAuth flow (below). You can manage a stored credential directly
+too:
+
+```bash
+nasiko mcp credential set <connector-id> "$MY_API_TOKEN"
+nasiko mcp credential status <connector-id>
+nasiko mcp credential delete <connector-id>
+```
+
+Credential endpoints are write-only — `credential status` reports only whether a value is stored,
+never the value itself, and no API response ever echoes a stored credential back.
+
+## OAuth 2.1 flow
+
+For a connector registered with `auth_type oauth2`, connecting means authorizing in a browser:
+
+```bash
+nasiko mcp oauth authorize <connector-id>
+# → opens (or prints) an authorization URL; complete the consent screen,
+#   then the platform's OAuth callback exchanges the code and stores your token
+
+nasiko mcp oauth status <connector-id>
+nasiko mcp oauth revoke <connector-id>
+```
+
+```json REST — begin the flow
+POST /api/mcp/connectors/{id}/oauth/authorize
+```
+
+The response carries an authorization URL to open. The redirect target,
+`GET /api/mcp/oauth/callback`, is a public, state-verified endpoint (not JWT-gated, since a
+browser redirect can't carry your session) — it validates the signed PKCE state itself before
+exchanging the code and storing your encrypted tokens.
+
+## Share it
+
+A custom MCP server connector is private to its owner until shared. Share it with one user, with
+everyone on the platform, or directly with a specific agent regardless of who owns that agent:
+
+<CodeGroup>
+```bash Share with a user
+nasiko mcp connector share add <connector-id> --user alice
+```
+
+```bash Share publicly
+nasiko mcp connector share add <connector-id> --public
+```
+
+```bash Grant to one specific agent
+nasiko mcp connector grant-agent <connector-id> <agent-name-or-id>
+```
+</CodeGroup>
+
+```bash
+nasiko mcp connector share list <connector-id>       # see current grants
+nasiko mcp connector share remove <connector-id> --user alice
+nasiko mcp connector revoke-agent <connector-id> <agent-name-or-id>
+nasiko mcp connector consumers <connector-id>         # who/what is actually using it
+```
+
+Once a connector is shared with someone, it's usable on **every agent they run** immediately —
+nothing further needs to be configured per agent. Sharing with an entire team or department is an
+org-level operation; see [per-agent tool permissions](/guides/acl/user-agent-mcp) for that and for
+restricting which of a connector's tools a given agent may call.
+
+<Note>
+  Revoking a share doesn't just block future access — the grantee's stored credential for that
+  connector is removed in the same step, so a later re-grant always starts from a clean reconnect
+  rather than silently reactivating an old session.
+</Note>
+
+## Related
+
+- [MCP overview](/guides/mcp/overview) — the gateway, the delegation token, and the request flow
+- [Deploy your own server](/guides/mcp/internal-mcp-deployment) — build and run an MCP server from
+  source instead of connecting one that's already running
+- [Per-agent tool permissions](/guides/acl/user-agent-mcp) — restrict which connectors and tools a
+  specific agent may use, and team/department-level sharing
+- [Access control overview](/guides/acl/overview) — how MCP permissions fit with the platform's
+  other access-control mechanisms

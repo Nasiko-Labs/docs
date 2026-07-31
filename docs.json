@@ -11,10 +11,100 @@
   "navigation": {
     "pages": [
       {
-        "group": "Getting Started",
+        "group": "Guides",
         "pages": [
-          "index",
-          "quickstart"
+          "guides/what-is-nasiko",
+          {
+            "group": "Quickstart",
+            "pages": [
+              "guides/quickstart/overview",
+              "guides/quickstart/multi-tenant-creation",
+              "guides/quickstart/cli-installation"
+            ]
+          },
+          "guides/cli-usage",
+          {
+            "group": "Architecture",
+            "pages": [
+              "guides/architecture/overview",
+              "guides/architecture/core-concepts"
+            ]
+          },
+          "guides/a2a-agents-and-frameworks",
+          {
+            "group": "Agent Development Lifecycle",
+            "pages": [
+              "guides/adlc/overview",
+              "guides/adlc/scaffolding",
+              "guides/adlc/run-and-chat-locally",
+              "guides/adlc/deploy-and-manage",
+              "guides/adlc/versions-and-lifecycle"
+            ]
+          },
+          {
+            "group": "MCP",
+            "pages": [
+              "guides/mcp/overview",
+              "guides/mcp/external-mcp-servers",
+              "guides/mcp/internal-mcp-deployment"
+            ]
+          },
+          {
+            "group": "ACL",
+            "pages": [
+              "guides/acl/overview",
+              "guides/acl/user-management",
+              "guides/acl/user-agent",
+              "guides/acl/user-agent-mcp"
+            ]
+          },
+          {
+            "group": "Secret management",
+            "pages": [
+              "guides/secrets/overview",
+              "guides/secrets/entra-id",
+              "guides/secrets/user-secrets"
+            ]
+          },
+          "guides/llm-router",
+          "guides/artifact-registry",
+          "guides/maf"
+        ]
+      },
+      {
+        "group": "Product",
+        "pages": [
+          "product/overview",
+          "product/chat",
+          "product/agents",
+          "product/observability",
+          "product/administration",
+          "product/artifact-registry"
+        ]
+      },
+      {
+        "group": "Reference",
+        "pages": [
+          "platform/orchestrator",
+          "platform/observability",
+          "platform/agent",
+          "platform/acl",
+          "platform/mcp-gateway",
+          "platform/maf",
+          "platform/backup-and-restore",
+          "platform/sample-agents"
+        ]
+      },
+      {
+        "group": "API Reference",
+        "pages": [
+          "api-reference/overview"
+        ]
+      },
+      {
+        "group": "Changelog",
+        "pages": [
+          "changelog"
         ]
       }
     ],

@@ -1,0 +1,89 @@
+---
+title: "Running and chatting locally"
+description: "Build, run, and chat with your agent as a plain container before it ever touches a cluster."
+---
+
+An agent speaks A2A the moment it starts — you don't need a cluster, or even a connected CLI, to
+build it, run it, and have a full conversation with it. Test everything locally first, then deploy
+once you're happy with the result.
+
+<Steps>
+  <Step title="Build the image">
+    ```sh
+    nasiko build                    # build from the current directory
+    nasiko build --tag my-agent:v2  # custom tag
+    nasiko build ./path/to/agent    # build a different directory
+    ```
+
+    `nasiko build` reads the project's `Dockerfile` to build the image, and its `AgentCard.json`
+    for the `name:version` tag.
+  </Step>
+  <Step title="Run it">
+    ```sh
+    nasiko run                      # build + start on port 8000
+    nasiko run --port 8080          # custom port
+    ```
+
+    `nasiko run` does the same build as above, then starts the container. Your agent is now live
+    at `http://localhost:8000`, speaking A2A over plain HTTP.
+  </Step>
+  <Step title="Chat with it">
+    <CodeGroup>
+    ```sh Interactive
+    nasiko chat http://localhost:8000
+    ```
+    ```sh One-shot
+    nasiko chat http://localhost:8000 "What can you do?"
+    ```
+    ```sh Full-screen TUI
+    nasiko chat http://localhost:8000 --tui
+    ```
+    </CodeGroup>
+
+    All three talk A2A directly to your running container — no control plane involved. Interactive
+    mode holds a running conversation in your terminal; one-shot sends a single message and prints
+    the response; `--tui` opens a full-screen `ratatui` chat interface.
+  </Step>
+</Steps>
+
+## Resuming a conversation
+
+Every conversation is tracked by session, keyed to the A2A `contextId` your agent returns. List and
+resume past sessions instead of starting fresh each time:
+
+```sh
+nasiko sessions                                        # list local chat sessions
+nasiko chat http://localhost:8000 --resume <session-id> # continue a previous conversation
+nasiko history <session-id>                             # show the message history for a session
+```
+
+This is useful while you're iterating on multi-turn behavior — resume the same session after a code
+change and confirm the agent still handles the conversation correctly, without replaying every turn
+by hand.
+
+## Chatting once you're deployed
+
+The same `chat` command works against a deployed agent or the platform's routing engine once you've
+[connected to a cluster](/guides/adlc/deploy-and-manage) — the target just changes from a local URL
+to an agent name, a UUID, or `orchestrator`:
+
+```sh
+nasiko chat "hello"                        # the routing engine, on the active cluster
+nasiko chat my-agent "hi"                  # a specific deployed agent, by name
+nasiko chat --agent my-agent "hi"          # same, with an explicit flag
+```
+
+A lone argument containing whitespace is treated as the message, not the target — so `nasiko chat
+"hello"` talks to the routing engine, while `nasiko chat my-agent "hello"` talks to `my-agent`
+directly.
+
+## Where to go next
+
+<CardGroup cols={2}>
+  <Card title="Deploy and manage" href="/guides/adlc/deploy-and-manage">
+    Push your agent to a cluster and keep it running in production.
+  </Card>
+  <Card title="A2A agents and frameworks" href="/guides/a2a-agents-and-frameworks">
+    The protocol details behind every `chat` call.
+  </Card>
+</CardGroup>

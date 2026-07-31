@@ -1,0 +1,156 @@
+---
+title: "User and org management"
+description: "Create users, assign roles, and organize your organization into departments and teams."
+---
+
+Platform administrators manage users, departments, and teams through the admin CLI or the
+equivalent API routes. This page covers creating accounts, the role/superuser distinction,
+building out an org hierarchy, and pulling that hierarchy in automatically from an identity
+provider.
+
+## Creating a user
+
+Creating a user does not take a password:
+
+```bash
+nasiko-ee users create --username alice --email alice@example.com --role team_member
+```
+
+The platform returns a one-time **access key / access secret** pair instead:
+
+```json
+{
+  "id": "5b1e...",
+  "username": "alice",
+  "access_key": "ak_...",
+  "access_secret": "as_...",
+  "message": "Store access_secret securely — it won't be shown again."
+}
+```
+
+<Warning>
+  The `access_secret` is shown exactly once and doubles as the user's initial login password.
+  There is no recovery endpoint — if it's lost, an admin has to reset the account rather than
+  retrieve the original value.
+</Warning>
+
+`--role` defaults to `member` and accepts any of the five hierarchy tiers (`admin`,
+`department_manager`, `team_lead`, `team_member`, `member` — see
+[access control overview](/guides/acl/overview)). Two more flags place the user directly at
+creation time:
+
+```bash
+# Create straight into a team (also sets the user's department to that team's department)
+nasiko-ee users create --username bob --email bob@example.com --team platform-eng
+
+# Create into a department only, with no team
+nasiko-ee users create --username carol --email carol@example.com --dept engineering
+```
+
+To grant full superuser privileges — distinct from `--role`, see below — pass `--superuser`.
+
+Move an existing user later with `place`:
+
+```bash
+nasiko-ee users place bob --team platform-eng   # move into a team
+nasiko-ee users place bob --dept engineering    # department only, no team
+nasiko-ee users place bob --clear               # remove from any team/department
+```
+
+Other user-lifecycle commands:
+
+```bash
+nasiko-ee users ls                   # list users
+nasiko-ee users deactivate alice     # deactivate (keeps the record, blocks login)
+nasiko-ee users delete alice         # delete
+```
+
+## Role vs. superuser
+
+`role` and the superuser flag are independent settings, and it's easy to conflate them:
+
+- **`role`** places a user on the five-tier hierarchy and drives the capability thresholds
+  described in [access control overview](/guides/acl/overview) (deploying agents, managing
+  secrets, and so on).
+- **Superuser** is a separate boolean. It bypasses organization-visibility scoping entirely and is
+  required for the platform's most sensitive routes — creating other users, creating or deleting
+  departments and teams, configuring OIDC group mappings, and triggering directory sync. Setting
+  `role` to `admin` does not, by itself, grant superuser — the two are checked separately
+  everywhere they matter.
+
+Grant it explicitly at creation (`--superuser`) or by editing the user's account afterward through
+the Users page or the equivalent API route.
+
+## Departments and teams
+
+Departments and teams form a two-level hierarchy: a department contains teams, and a team belongs
+to exactly one department. Creating, updating, or deleting either requires superuser privileges.
+
+```bash
+# Departments
+nasiko-ee department create --name Engineering --manager <user-id>
+nasiko-ee department ls
+nasiko-ee department get <dept-id>
+nasiko-ee department update <dept-id> --manager <user-id>
+nasiko-ee department members <dept-id>
+nasiko-ee department agents <dept-id>
+nasiko-ee department delete <dept-id>
+
+# Teams
+nasiko-ee team create --name Platform --dept <dept-id> --lead <user-id>
+nasiko-ee team ls --dept <dept-id>
+nasiko-ee team get <team-id>
+nasiko-ee team update <team-id> --lead <user-id>
+nasiko-ee team members <team-id>
+nasiko-ee team agents <team-id>
+nasiko-ee team delete <team-id>
+```
+
+A department's `--manager` and a team's `--lead` are ordinary users assigned that responsibility —
+assigning someone as a manager or lead doesn't change their `role` value automatically; pair it
+with `nasiko-ee users place` (and a `role` bump, if warranted) to give them the matching
+permission tier.
+
+## Single sign-on and automatic placement
+
+Nasiko supports OIDC-based single sign-on with any standards-compliant identity provider — the
+integration is generic, not tied to a specific vendor. See
+[SSO setup](/guides/secrets/entra-id) for connecting an identity provider and enabling login.
+
+Two further features build automatic org placement on top of SSO login, and their availability
+differs:
+
+- **Group-to-role mapping** works with any OIDC provider that can emit a group-membership claim.
+  You map an external group identifier to an internal role, team, and/or department; the mapping
+  is applied the moment a user carrying that group claim signs in. A user who matches more than
+  one mapping gets the highest-ranked role's mapping applied in full — the rows aren't merged
+  field by field. A user who matches no mapping is left at the default role, untouched, so a
+  manually promoted user is never silently reset just because their groups changed.
+- **Directory sync** — pre-provisioning your entire org hierarchy (departments, teams, and users)
+  from your identity provider's directory before anyone logs in — currently relies on the
+  Microsoft Graph API and is only available for a Microsoft Entra ID tenant. It infers a
+  department/team hierarchy from each user's department attribute and manager chain: the person
+  with no in-department manager becomes that department's head, their direct reports who
+  themselves manage people become team leads, and everyone else collapses into the nearest lead's
+  team. Users with no department attribute at all are created as plain members. Trigger it with:
+
+  ```bash
+  nasiko-ee admin directory-sync
+  ```
+
+  Directory sync is insert-only and safe to re-run: it never touches a user it has already
+  created, and it never reverts a placement an admin changed by hand afterward. If your directory
+  structure changes significantly later, reassign the affected users manually rather than
+  expecting a re-sync to reconcile it.
+
+<Note>
+  Any user who signs in via SSO without a pre-existing mapping or directory-sync record lands as a
+  plain `member` with no team or department — exactly like a user created without `--team`/`--dept`.
+  An admin promotes and places them afterward, the same way as any other user.
+</Note>
+
+## Next steps
+
+- [Access control overview](/guides/acl/overview) — the role hierarchy and what each tier unlocks
+- [User → agent access](/guides/acl/user-agent) — granting and revoking access to specific agents
+- [Secret management](/guides/secrets/overview) — securing agent secrets once teams are in place

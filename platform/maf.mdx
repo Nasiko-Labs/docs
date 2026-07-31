@@ -1,0 +1,137 @@
+---
+title: "MAF internals"
+description: "The planner/executor/worker split, how execution is queued and recovered, and how MAF's guarantees differ from routed chat."
+---
+
+The [MAF guide](/guides/maf) covers defining, generating, and running a workflow from the outside.
+This page covers what happens underneath `POST /api/maf/workflow/{id}/run` — how a queued execution
+actually gets processed, what happens when a worker crashes mid-run, and — because it's a genuinely
+different code path from routed chat, not a variant of it — exactly which of the platform's usual
+inter-agent guarantees do and don't apply to a MAF step calling its agent.
+
+## Planner, executor, worker
+
+"Planner" covers two distinct things depending on when it runs:
+
+- **Draft-time planning** (`POST /api/maf/generate`) — one LLM call turns a natural-language
+  description plus your registered agents into a full draft: a name, a description, output-synthesis
+  guidance, and a step list with agents already assigned. This is optional and only shapes what gets
+  saved as the workflow's definition.
+- **Run-time planning** — every execution, regardless of whether the workflow was hand-written or
+  generated, re-plans at the start of the run: a fresh LLM call turns each step's stored task
+  description into a concrete prompt template and an extraction goal, generated new on every run
+  rather than reused from creation time.
+
+The **executor** then walks the steps in order. For each one: it builds a context block out of every
+prior step's extracted result, asks an LLM to fill the current step's prompt template with values
+from that context (skipped entirely — no LLM call — if the template has no placeholders left to
+fill), calls the step's agent, asks an LLM to extract exactly what the next step needs out of that
+agent's raw reply, and persists the step's status, prompt, extracted result, and token/latency
+numbers before moving to the next step. A final LLM call synthesizes every step's extracted output
+into one answer, following the draft-time output-synthesis guidance. A single execution can
+therefore involve as many as four distinct kinds of LLM call (plan, per-step prompt-fill, per-step
+extract, final synthesis) on top of the agent calls themselves.
+
+```mermaid
+flowchart TB
+    R["POST /workflow/{id}/run"] --> Q["XADD to Redis stream<br/>nasiko:maf:execute"]
+    Q --> W["Worker: XREADGROUP<br/>(consumer group maf-workers)"]
+    W --> P["Plan all steps<br/>(1 LLM call)"]
+    P --> S1["Step 1: fill prompt → call agent → extract"]
+    S1 --> S2["Step 2: ... (sees Step 1's extracted context)"]
+    S2 --> F["Synthesize final output<br/>(1 LLM call)"]
+    F --> Done["Execution marked success"]
+```
+
+## The worker: Redis Streams, not a database poll
+
+Unlike the [build worker](/platform/agent#the-build-worker), which polls a Postgres table, the MAF
+worker is a Redis Streams consumer on a single stream (`nasiko:maf:execute`) with one consumer
+group (`maf-workers`). Each server process registers a unique consumer name (hostname plus OS
+process id), so multiple replicas can pull from the same stream without double-processing a
+message.
+
+Crash recovery works the same way Redis Streams are designed for: a message a consumer read but
+never acknowledged (because that consumer process died mid-execution) stays in the group's pending
+entries list. Every worker runs `XAUTOCLAIM` once at startup and again periodically, reclaiming any
+message that's been pending for more than ten minutes and reprocessing it — so an execution that was
+in flight when a replica was killed doesn't just vanish, it gets picked up again automatically,
+without anyone needing to notice and manually restart it.
+
+Retries are capped by `MAF_MAX_ATTEMPTS` (default `3`), tracked per execution row. A failed run that
+hasn't exhausted its attempts is reset to `pending` and re-enqueued for another try; one that has is
+marked terminally `failed` so nothing keeps waiting on it.
+
+## Auto-assignment uses the routing engine — manual assignment doesn't check ACL
+
+A step created without an explicit agent is auto-assigned using the same three-stage
+[routing engine](/platform/orchestrator#the-routingengine-trait) used elsewhere on the platform,
+scoped to the agents the creating user can access; if the engine itself errors, workflow creation
+falls back to matching the task description by keyword against that user's own registered agents.
+
+A step created **with** an explicit agent id, by contrast, is not currently re-checked against the
+creating user's access to that agent — only that the agent exists and isn't soft-deleted. Keep this
+in mind if you're building workflows programmatically from agent ids you didn't derive from that
+user's own accessible-agent list.
+
+## What doesn't apply here: flow guard and agent ACL
+
+This is the most important architectural difference to understand if you're reasoning about MAF's
+guarantees using what you already know about routed chat: **a MAF step calling its agent is a direct
+call from the executor to that agent's own resolved endpoint — it does not go through the same
+call path that routed chat and the ReAct orchestrator use, and consequently:**
+
+- It is **not** subject to the [flow guard's](/platform/orchestrator#the-flow-guard) cascade limits
+  — max depth, max fan-out, token budget, wall-clock timeout, or cycle detection. Those limits exist
+  specifically to bound an open-ended, LLM-directed call chain that could in principle recurse or
+  fan out unpredictably; a MAF workflow's steps are a fixed, pre-defined linear sequence you wrote or
+  reviewed yourself, so the platform doesn't apply the same cascade protection to it.
+- It is **not** subject to [agent-to-agent ACL](/platform/acl#agent--agent) checks either — there's
+  no `agent_acl` lookup on a step-to-agent call. A step can call any agent it's been assigned,
+  regardless of whether an `agent_acl` allowlist would otherwise permit that pairing.
+
+What a MAF execution *does* still get: each step derives its own deterministic `traceparent` (from
+the execution id and step index via UUIDv5), so every step lands as its own distinct trace in Tempo
+even though the whole execution shares one MAF execution id — see
+[observability](/platform/observability) for how that ties into the session/trace model elsewhere.
+Token usage is tracked per step, combining the run-time LLM calls with the called agent's own
+reported usage (the executor polls Tempo briefly for the agent's span before finalizing a step's
+total, since an agent's own usage data is rarely available the instant its call returns).
+
+<Warning>
+  Because MAF bypasses both the flow guard and agent ACL, the workflow-authoring boundary — who can
+  create a workflow, and which agent ids they name in it — is the only access control acting on
+  which agents a MAF execution actually reaches. Don't assume a flow-guard or ACL rule that
+  protects an agent from unwanted routed-chat traffic also protects it from being named as a MAF
+  step.
+</Warning>
+
+## Route surface
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `GET` / `POST` | `/api/maf/workflows` | List your workflows / create one |
+| `POST` | `/api/maf/generate` | Draft a workflow from a natural-language description |
+| `GET`/`PUT`/`DELETE` | `/api/maf/workflow/{id}` | Read, edit, or remove a workflow |
+| `POST` | `/api/maf/workflow/{id}/run` | Queue an execution — returns `202` immediately with an `execution_id` |
+| `GET` | `/api/maf/workflow/{id}/executions` | Run history for one workflow |
+| `GET` | `/api/maf/executions` | Every execution across all your workflows |
+| `GET` | `/api/maf/execution/{id}` | One execution's status |
+| `GET` | `/api/maf/workflow/result/{exec_id}` | Poll for status and the final output |
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="MAF guide" href="/guides/maf">
+    The task-oriented walkthrough: defining, generating, and running a workflow.
+  </Card>
+  <Card title="Orchestrator internals" href="/platform/orchestrator">
+    The routing engine MAF uses for auto-assignment, and the flow guard MAF steps skip.
+  </Card>
+  <Card title="Access control internals" href="/platform/acl">
+    The agent-to-agent ACL model a MAF step-to-agent call doesn't currently pass through.
+  </Card>
+  <Card title="Observability internals" href="/platform/observability">
+    How per-step traces stay distinguishable within one execution.
+  </Card>
+</CardGroup>
