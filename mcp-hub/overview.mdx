@@ -1,0 +1,178 @@
+---
+title: "MCP gateway overview"
+description: "How Nasiko agents get tool access: connectors, per-agent permissions, and the delegation-token-secured gateway endpoint."
+---
+
+An agent is only as useful as the actions it can take in the outside world — sending an email,
+searching the web, calling an internal API. Nasiko gives every deployed agent **one fixed URL** for
+every one of those actions, no matter how many tools or providers sit behind it: the **MCP
+gateway**. Adding, removing, sharing, or restricting a tool is a configuration change, not a code
+change — an agent is never redeployed when the set of tools available to its caller changes.
+
+The gateway speaks the [Model Context Protocol](https://modelcontextprotocol.io) (MCP): agents call
+it with standard JSON-RPC `tools/list` and `tools/call` requests, and it fans each call out to
+whichever real backend actually implements that tool.
+
+<CardGroup cols={2}>
+  <Card title="Connect an external server" icon="link" href="/mcp-hub/external-mcp-server">
+    Register a Composio-managed integration or your own already-running MCP server as a connector.
+  </Card>
+  <Card title="Deploy your own server" icon="upload" href="/mcp-hub/internal-mcp-deployment">
+    Upload your MCP server's source and let Nasiko build, harden, and run it for you.
+  </Card>
+  <Card title="Per-agent tool permissions" icon="sliders" href="/onboarding/acl/user-agent-mcp">
+    Control which connectors and individual tools a specific agent may use.
+  </Card>
+  <Card title="Platform reference" icon="book" href="/platform/mcp-gateway">
+    Full technical reference for the gateway.
+  </Card>
+</CardGroup>
+
+## Two kinds of tool provider, one interface
+
+Every tool an agent can reach comes from a **connector** — the umbrella term for either of two
+underlying kinds, kept strictly distinct so they're never confused:
+
+| Term | Meaning |
+| --- | --- |
+| **Toolkit** | A managed, pre-built integration (Gmail, Slack, GitHub, Google Calendar, and others) — OAuth and credential refresh are handled for you |
+| **MCP server** | A server speaking MCP directly — either one you already run elsewhere and register by URL, or one you upload and Nasiko builds and deploys for you |
+| **Connector** | The neutral term for a row in the registry representing either kind |
+
+Everyone who uses a shared connector still connects with **their own account** — sharing a
+connector never shares the underlying login. See [Connect an external
+server](/mcp-hub/external-mcp-server) for registering and sharing connectors, and [Deploy your
+own server](/mcp-hub/internal-mcp-deployment) for having Nasiko build and run one from your
+source.
+
+## The delegation token
+
+An agent is untrusted, user-authored code that serves requests from many different users over its
+lifetime, so its identity can't be baked in at deploy time — it has to be established on every
+single request. Nasiko solves this with a **delegation token**: a short-lived, scoped credential
+that says "I am this specific agent, acting on behalf of this specific user" — nothing more.
+
+- When the platform proxies a user's request to an agent container, it mints a delegation token
+  (minutes, not hours, of validity) and injects it into the agent's inbound request. The user's own
+  session credential is stripped before the request ever reaches the container — an agent can
+  never see or replay a real user login.
+- The agent forwards that same token whenever it calls the gateway, in the `x-nasiko-agent-token`
+  header. This is the **only** credential the gateway endpoint accepts — it is deliberately not
+  behind normal session authentication, because an agent never holds a normal session in the first
+  place.
+- The token is scoped to exactly one purpose (calling the gateway), expires quickly, and is
+  rejected outright if its signature, audience, or expiry don't check out.
+
+<Note>
+  If you're calling `/api/mcp` directly while testing (rather than through a deployed agent), you
+  need a delegation token, not your own login token — there's no way to authenticate to this
+  endpoint with a session credential.
+</Note>
+
+## The gateway endpoint
+
+Every agent talks to exactly one route for every tool call:
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `POST` | `/api/mcp` | JSON-RPC entry point — `initialize`, `ping`, `tools/list`, `tools/call` |
+
+<CodeGroup>
+```json tools/list request
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/list"
+}
+```
+
+```json tools/list response
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "tools": [
+      { "name": "GMAIL_SEND_EMAIL", "description": "Send an email via Gmail", "inputSchema": { "...": "..." } },
+      { "name": "a1b2c3d4__search_docs", "description": "Search internal documentation", "inputSchema": { "...": "..." } }
+    ]
+  }
+}
+```
+</CodeGroup>
+
+<CodeGroup>
+```json tools/call request
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "method": "tools/call",
+  "params": {
+    "name": "GMAIL_SEND_EMAIL",
+    "arguments": { "to": "user@example.com", "subject": "Hi", "body": "..." }
+  }
+}
+```
+
+```json tools/call response
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "result": { "status": "sent" }
+}
+```
+</CodeGroup>
+
+Every tool name coming from a custom MCP server connector is namespaced as
+`{connector-id-prefix}__{tool_name}`, so two different connectors can never collide even if their
+underlying tools share a name. Composio-backed tools keep their natural names (`GMAIL_SEND_EMAIL`,
+`SLACK_POST_MESSAGE`, and so on).
+
+### When a call is blocked or needs approval
+
+A `tools/call` request can come back as a JSON-RPC error instead of a result, if the calling
+agent isn't allowed to use that tool right now:
+
+<CodeGroup>
+```json blocked
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "error": { "code": -32000, "message": "Tool 'GMAIL_SEND_EMAIL' is blocked or disabled for this agent." }
+}
+```
+
+```json approval required
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "error": {
+    "code": -32001,
+    "message": "Tool 'GMAIL_SEND_EMAIL' requires user approval. Grant access in the agent settings.",
+    "data": { "server": "gmail" }
+  }
+}
+```
+</CodeGroup>
+
+## Permissions, in short
+
+Every tool call resolves through two layers, always in this order:
+
+1. **Reachability** — can the calling user reach this connector at all (they own it, it's been
+   shared with them, or it's a globally available toolkit)?
+2. **Per-agent permission** — is the connector enabled for this specific agent, and is this
+   specific tool allowed, blocked, or gated behind approval?
+
+Nothing needs to be configured to grant an agent access to a connector its caller can already
+reach — access propagates immediately the moment a connector is shared, with no extra step. See
+[per-agent tool permissions](/onboarding/acl/user-agent-mcp) for the full model, including tool-level
+allow/ask/block rules, and [access control overview](/onboarding/acl/overview) for how this fits with
+the platform's other access-control mechanisms.
+
+## Related
+
+- [What is Nasiko?](/) — where the MCP gateway fits into the platform
+- [Architecture overview](/architecture/overview) — how the gateway sits inside the single
+  control-plane server
+- [Artifact registry](/artifact-registry/overview) — browse and publish MCP server packages as
+  reusable artifacts

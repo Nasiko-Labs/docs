@@ -1,0 +1,98 @@
+---
+title: "Access control overview"
+description: "How Nasiko decides who can chat with, manage, and deploy agents, and which agents may call each other."
+---
+
+Nasiko enforces access control through two independent mechanisms. They answer different
+questions, are checked separately, and never substitute for one another:
+
+1. **User → agent access** — which people can view, chat with, update, delete, or manage the
+   secrets of a given agent.
+2. **Agent → agent access** — which agents are allowed to call which other agents during a
+   multi-agent conversation.
+
+A user who can chat with an agent gains nothing about that agent's ability to call other agents,
+and an agent that's allowed to call another agent says nothing about which humans can reach either
+one. Keeping the two separate means you can, for example, let an entire department chat with a
+research agent while still keeping that agent's ability to invoke a billing agent locked down to
+an explicit allowlist.
+
+This page covers the model shared by both mechanisms — roles and the permission tiers they unlock.
+The mechanics of each mechanism have their own pages:
+
+<CardGroup cols={2}>
+  <Card title="User and org management" icon="users" href="/onboarding/acl/user-management">
+    Create users, assign roles, and organize them into teams and departments.
+  </Card>
+  <Card title="User → agent access" icon="key" href="/onboarding/acl/user-agent">
+    Ownership, the public flag, and explicit grants — how they combine to gate an agent.
+  </Card>
+  <Card title="Agent → agent MCP access" icon="plug" href="/onboarding/acl/user-agent-mcp">
+    Per-agent connector and tool permissions for the MCP gateway.
+  </Card>
+  <Card title="Platform reference" icon="shield" href="/platform/acl">
+    Full technical reference for the access-control model.
+  </Card>
+</CardGroup>
+
+## Roles
+
+Every user has exactly one **role**, drawn from a five-tier hierarchy. Each tier includes
+everything the tier below it can do, plus more:
+
+| Role | Typical use |
+| --- | --- |
+| `admin` | Full platform administration |
+| `department_manager` | Manages a department: its teams, agents, and members |
+| `team_lead` | Manages a team's agents and secrets |
+| `team_member` | Regular contributor on a team |
+| `member` | Baseline authenticated user, not attached to any team |
+
+A role is a general capability tier, not a grant on any specific agent — it determines *what kind*
+of action a user is allowed to attempt at all. Whether they can act on a *particular* agent is
+decided separately, by the ownership/grant model described in
+[user → agent access](/onboarding/acl/user-agent).
+
+<Note>
+  **Role vs. superuser.** `role` and the superuser flag are independent. A superuser bypasses
+  organization-visibility scoping and unlocks the handful of platform-wide administrative routes
+  (creating users, creating departments/teams, OIDC group mappings, directory sync) regardless of
+  their `role` value. Promoting a user's `role` to `admin` does **not** by itself make them a
+  superuser — see [user and org management](/onboarding/acl/user-management) for how each is granted.
+</Note>
+
+## What each tier unlocks
+
+Three platform-wide capabilities scale with role:
+
+| Capability | Minimum role |
+| --- | --- |
+| Deploy and run agents | `member` — any authenticated user |
+| Manage an agent's secrets | `team_lead` |
+| Manage platform users | `admin` |
+
+Deploying agents is deliberately open to every authenticated user — it's the baseline action the
+platform exists for. Managing secrets (viewing which secrets are set, rotating them, injecting new
+ones) is restricted to `team_lead` and above, since a leaked or misconfigured secret can affect
+everyone who depends on that agent. Managing platform users — creating accounts, changing roles,
+moving people between teams — is restricted to `admin`.
+
+These thresholds gate the *capability*, not the target. A `team_lead` can manage secrets on agents
+they're permitted to manage in the first place — role alone doesn't override the ownership and
+grant checks covered in [user → agent access](/onboarding/acl/user-agent).
+
+## Where each mechanism applies
+
+| Mechanism | Governs | See |
+| --- | --- | --- |
+| User → agent | Chat, view, update, delete, secrets | [User → agent access](/onboarding/acl/user-agent) |
+| Agent → agent | Which agents an agent may invoke during a conversation | [Platform reference](/platform/acl) |
+| Per-agent MCP tools | Which external tools/connectors an agent may call | [User → agent MCP access](/onboarding/acl/user-agent-mcp) |
+
+<Warning>
+  Agent-to-agent calls are **default-deny**, full stop — not "unrestricted until the first rule."
+  Both the calling agent and the target need an explicit allowlist row before agent A can call
+  agent B; there's no state where an agent can reach everything by default. If a workflow between
+  two agents isn't working, check for a missing allowlist entry before assuming anything else is
+  wrong.
+</Warning>

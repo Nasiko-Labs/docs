@@ -1,0 +1,151 @@
+---
+title: "CLI installation"
+description: "Install the developer CLI (nasiko) and the platform admin CLI (nasiko-ee), then connect them to a running control plane."
+---
+
+Nasiko ships two command-line tools:
+
+| CLI | Binary | Used by | Purpose |
+| --- | --- | --- | --- |
+| Developer CLI | `nasiko` | Agent developers | Scaffold, build, deploy, and chat with agents |
+| Platform admin CLI | `nasiko-ee` | Platform administrators | Provision control planes, manage the org hierarchy, grant agent access |
+
+Both are lightweight, synchronous Rust binaries — no runtime dependency beyond the binary itself.
+
+## Developer CLI (`nasiko`)
+
+Build it from source:
+
+```bash
+git clone https://github.com/nasiko-ai/nasiko-rs.git
+cd nasiko-rs
+cargo install --path cli --force
+```
+
+This installs `nasiko` into `~/.cargo/bin`. Verify it:
+
+```bash
+nasiko --help
+```
+
+State lives in `~/.nasiko/config.json` (registered clusters, active cluster, auth tokens) and
+`~/.nasiko/.env` (local-stack configuration written by `nasiko up`).
+
+### Connect it to a control plane
+
+<Steps>
+  <Step title="Point the CLI at a control plane">
+    If you're running one locally with `nasiko up`, the CLI connects itself automatically as
+    cluster `local`. To point it at an already-running control plane instead:
+
+    ```bash
+    nasiko connect https://nasiko.example.com --name prod
+    ```
+  </Step>
+  <Step title="Pick the active cluster">
+    ```bash
+    nasiko use prod
+    nasiko clusters       # list everything you've registered
+    ```
+
+    All subsequent commands (`deploy`, `chat`, `ps`, …) operate against the active cluster.
+  </Step>
+  <Step title="Authenticate">
+    ```bash
+    nasiko auth login       # prompts for username + password
+    nasiko auth whoami       # confirm who you're logged in as
+    nasiko auth status
+    nasiko auth logout
+    ```
+  </Step>
+</Steps>
+
+## Platform admin CLI (`nasiko-ee`)
+
+<Tabs>
+  <Tab title="Install script">
+    ```bash
+    curl -fsSL https://get.nasiko.dev/ee | bash
+    ```
+
+    No login or token required for this step — it's an anonymous download. Installs into
+    `~/.local/bin` by default, never uses `sudo`, and never edits your shell rc files (it prints
+    the `PATH` line to add if needed).
+
+    Overrides:
+
+    | Variable | Default | Purpose |
+    | --- | --- | --- |
+    | `NASIKO_EE_VERSION` | `latest` | Pin a version, e.g. `v0.1.0` |
+    | `NASIKO_INSTALL_DIR` | `~/.local/bin` | Install destination |
+    | `NASIKO_REGISTRY` | `registry.nasiko.dev` | Registry host (for mirrors or air-gapped installs) |
+
+    If your organization disallows piping `curl` into `bash`, download the script first, review
+    it, then run it locally.
+  </Tab>
+  <Tab title="Build from source">
+    From the repo root, there are three ways to build it, all producing the same command set
+    except for cluster provisioning:
+
+    | Variant | Command | Binary | Cluster-provisioning commands |
+    | --- | --- | --- | --- |
+    | Default | `cargo install --path ee/cli --force` | `nasiko-ee` | Full |
+    | Full, installed as `nasiko` | `just install-cli-enterprise` | `nasiko` | Full |
+    | Lightweight | `just install-cli-enterprise-subset` | `nasiko` | Stubbed — prints a contact message and exits |
+
+    The lightweight variant is for installs where cluster provisioning (`cluster create`, `init
+    --agent-runtime kubernetes`, and related commands) isn't needed locally — everything else
+    (`init`, `agents`, `users`, `access`, `registry`, `mcp`, `activate`, …) behaves identically.
+
+    <Warning>
+      Installing the enterprise CLI under the `nasiko` binary name **replaces** the developer CLI
+      if you already have one installed to `~/.cargo/bin`. Reinstall the developer CLI with
+      `cargo install --path cli` to switch back.
+    </Warning>
+  </Tab>
+</Tabs>
+
+Once installed, verify with `nasiko-ee --version`.
+
+### Set up credentials and provision
+
+```bash
+nasiko-ee init --setup
+```
+
+Creates `~/.nasiko/.ee.env` with a template for cloud provider credentials (AWS, DigitalOcean,
+Azure, or GCP — set whichever you use), your Docker Hub org, and optional keys like
+`OPENAI_API_KEY`. Fill it in, then provision a control plane:
+
+```bash
+nasiko-ee init \
+  --provider do \
+  --region blr1 \
+  --domain nasiko.example.com \
+  --admin-password <password>
+```
+
+See [setting up an organization](/multi-tenant) for what to do once a
+control plane is up, and the platform admin guide for the full provisioning and operations
+reference.
+
+### Registry access
+
+The control-plane image is distributed through a private registry. Nasiko hands out a read-only
+pull token out of band; save it locally with:
+
+```bash
+nasiko-ee activate <token>
+```
+
+This writes `~/.nasiko/registry-values.json`, which the cluster install commands merge in
+automatically to authenticate image pulls.
+
+## Which one do I need?
+
+- Building or deploying agents day to day: install the developer CLI (`nasiko`).
+- Provisioning a control plane, or managing departments/teams/users/agent grants: install the
+  platform admin CLI (`nasiko-ee`).
+
+Many platform administrators install both — `nasiko-ee agents` wraps the same agent operations
+as the developer CLI for the deployment you're managing.

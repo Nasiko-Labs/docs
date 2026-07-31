@@ -3,7 +3,7 @@ title: "Orchestrator internals"
 description: "The routing engine's three-stage pipeline, how it degrades under failure, and the flow guard that limits every agent-to-agent call."
 ---
 
-The [routing engine guide](/guides/llm-router) covers what routing does from the outside: send a
+The [routing engine guide](/platform/llm-router) covers what routing does from the outside: send a
 query without naming an agent, get an answer from whichever agent was the best fit. This page goes
 underneath that — the pipeline's internals, exactly how each stage degrades when something upstream
 is slow or unavailable, where the pipeline is actually invoked today, and the flow guard that
@@ -171,16 +171,16 @@ Configuration (environment variables on the control plane):
 ## Related
 
 <CardGroup cols={2}>
-  <Card title="Routing engine guide" href="/guides/llm-router">
+  <Card title="Routing engine guide" href="/platform/llm-router">
     The task-oriented walkthrough: tuning knobs, inspecting decisions, reusable LLM configs.
   </Card>
   <Card title="MAF platform reference" href="/platform/maf">
     How workflow steps get their agents assigned, and why MAF calls don't go through this same flow guard.
   </Card>
-  <Card title="Architecture overview" href="/guides/architecture/overview">
+  <Card title="Architecture overview" href="/architecture/overview">
     Where routing and the flow guard sit in the overall request path.
   </Card>
-  <Card title="Core concepts" href="/guides/architecture/core-concepts">
+  <Card title="Core concepts" href="/architecture/core-concepts">
     Definitions for session, flow, and routing engine vs. orchestration.
   </Card>
 </CardGroup>

@@ -1,0 +1,28 @@
+---
+title: "Setup"
+description: "What you need before you touch the CLI or the dashboard — an account and a control plane to point at."
+---
+
+Before you use either of Nasiko's two surfaces — the CLI or the dashboard — you need two things: a
+running control plane to connect to, and an account on it.
+
+<Steps>
+  <Step title="Get a control plane">
+    If your organization already runs one, get its URL from whoever administers it and skip to the
+    next step. Starting fresh instead? `nasiko up` brings up a local control plane on your own
+    machine in one command — see [Quickstart](/quickstart).
+  </Step>
+  <Step title="Get an account">
+    An administrator creates your account (see [ACL](/onboarding/acl/overview) for how accounts,
+    roles, and permissions work). You'll get back a one-time access key and secret — the secret
+    becomes your login password, so save it somewhere safe the first time you see it.
+  </Step>
+  <Step title="Sign in">
+    Use the CLI (`nasiko auth login` — see [Setup Your CLI](/cli/setup)) or the dashboard (sign in
+    at your control plane's URL — see [the web dashboard](/product/overview)). Either one works
+    against the same account; neither requires the other.
+  </Step>
+</Steps>
+
+Once you're signed in somewhere, head to the [Quickstart](/quickstart) to scaffold and deploy your
+first agent.

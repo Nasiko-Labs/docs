@@ -3,7 +3,7 @@ title: "MCP gateway internals"
 description: "The delegation-token trust model, the permission-resolution pipeline, and the hardened pipeline for uploaded MCP servers."
 ---
 
-The [MCP gateway guide](/guides/mcp/overview) covers connecting and sharing connectors from a
+The [MCP gateway guide](/mcp-hub/overview) covers connecting and sharing connectors from a
 user's point of view. This page goes underneath that: how the gateway decides who's calling and
 what they can reach on every single request, and — because an uploaded MCP server is the platform
 running arbitrary third-party code for the first time, not a curated example agent — the extra
@@ -16,7 +16,7 @@ lifetime. Its identity can't be baked in at deploy time — the gateway has to w
 and on whose behalf on every single `tools/call`, without ever handing the agent a credential it
 could replay elsewhere.
 
-The [delegation token](/guides/mcp/overview#the-delegation-token) is what makes that possible: an
+The [delegation token](/mcp-hub/overview#the-delegation-token) is what makes that possible: an
 actor-pattern JWT binding two identities (`sub = user_id`, `act = agent_id`, `aud = "mcp"`) with a
 short expiry, minted by the same server process that forwards a user's request to an agent
 container. Two properties fall out of minting and validating it in one process rather than across a
@@ -85,7 +85,7 @@ its own set of protections layered on top of everything above.
 `POST /api/mcp/connectors/upload` (a zip) or `/upload-github` (a repository URL, re-validated
 against the allowed-host list at both the handler layer and again at clone time — defense in depth,
 not one check trusting the other) queues a build through the same shared build worker that handles
-agent uploads — see [agent runtime](/platform/agent#the-build-worker) for the crash-isolation,
+agent uploads — see [agent runtime](/platform/agent-registry#the-build-worker) for the crash-isolation,
 retry, and stuck-job recovery guarantees that path inherits. Once built, the image is deployed with
 two properties no other workload on the platform gets by default:
 
@@ -167,16 +167,16 @@ notices and manually reconnects it.
 ## Related
 
 <CardGroup cols={2}>
-  <Card title="MCP gateway overview" href="/guides/mcp/overview">
+  <Card title="MCP gateway overview" href="/mcp-hub/overview">
     The user-facing model: connectors, delegation tokens, tool call shapes.
   </Card>
-  <Card title="Deploy your own MCP server" href="/guides/mcp/internal-mcp-deployment">
+  <Card title="Deploy your own MCP server" href="/mcp-hub/internal-mcp-deployment">
     The task-oriented walkthrough for the upload path this page hardens.
   </Card>
-  <Card title="Per-agent tool permissions" href="/guides/acl/user-agent-mcp">
+  <Card title="Per-agent tool permissions" href="/onboarding/acl/user-agent-mcp">
     Configuring the allow/ask/block rules Layer 2 enforces.
   </Card>
-  <Card title="Agent runtime reference" href="/platform/agent">
+  <Card title="Agent runtime reference" href="/platform/agent-registry">
     The shared build worker that uploaded MCP servers queue through.
   </Card>
 </CardGroup>

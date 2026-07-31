@@ -1,74 +1,64 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
+  "theme": "maple",
   "name": "Mintlify Starter Kit",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#BB8F06",
+    "light": "#EEC239",
+    "dark": "#3A3430"
   },
   "favicon": "/favicon.svg",
+  "fonts": {
+    "family": "Inter"
+  },
   "navigation": {
     "pages": [
       {
-        "group": "Guides",
+        "group": "Getting Started",
         "pages": [
-          "guides/what-is-nasiko",
+          "index",
+          "quickstart",
+          "setup_page",
+          "multi-tenant",
           {
-            "group": "Quickstart",
+            "group": "Onboarding",
             "pages": [
-              "guides/quickstart/overview",
-              "guides/quickstart/multi-tenant-creation",
-              "guides/quickstart/cli-installation"
+              {
+                "group": "ACL",
+                "pages": [
+                  "onboarding/acl/overview",
+                  "onboarding/acl/user-management",
+                  "onboarding/acl/user-agent",
+                  "onboarding/acl/user-agent-mcp"
+                ]
+              }
             ]
-          },
-          "guides/cli-usage",
-          {
-            "group": "Architecture",
-            "pages": [
-              "guides/architecture/overview",
-              "guides/architecture/core-concepts"
-            ]
-          },
-          "guides/a2a-agents-and-frameworks",
-          {
-            "group": "Agent Development Lifecycle",
-            "pages": [
-              "guides/adlc/overview",
-              "guides/adlc/scaffolding",
-              "guides/adlc/run-and-chat-locally",
-              "guides/adlc/deploy-and-manage",
-              "guides/adlc/versions-and-lifecycle"
-            ]
-          },
-          {
-            "group": "MCP",
-            "pages": [
-              "guides/mcp/overview",
-              "guides/mcp/external-mcp-servers",
-              "guides/mcp/internal-mcp-deployment"
-            ]
-          },
-          {
-            "group": "ACL",
-            "pages": [
-              "guides/acl/overview",
-              "guides/acl/user-management",
-              "guides/acl/user-agent",
-              "guides/acl/user-agent-mcp"
-            ]
-          },
-          {
-            "group": "Secret management",
-            "pages": [
-              "guides/secrets/overview",
-              "guides/secrets/entra-id",
-              "guides/secrets/user-secrets"
-            ]
-          },
-          "guides/llm-router",
-          "guides/artifact-registry",
-          "guides/maf"
+          }
+        ]
+      },
+      {
+        "group": "CLI",
+        "pages": [
+          "cli/setup",
+          "cli/overview"
+        ]
+      },
+      {
+        "group": "ADLC",
+        "pages": [
+          "adlc/overview",
+          "adlc/agent-scaffolding",
+          "adlc/a2a-agents",
+          "adlc/build-run-test",
+          "adlc/deploy",
+          "adlc/versions-lifecycle"
+        ]
+      },
+      {
+        "group": "Architecture",
+        "pages": [
+          "architecture/overview",
+          "architecture/core-concepts"
         ]
       },
       {
@@ -83,16 +73,40 @@
         ]
       },
       {
-        "group": "Reference",
+        "group": "Platform",
         "pages": [
+          "platform/agent-registry",
           "platform/orchestrator",
-          "platform/observability",
-          "platform/agent",
-          "platform/acl",
-          "platform/mcp-gateway",
           "platform/maf",
+          "platform/observability",
+          "platform/mcp-gateway",
+          "platform/llm-router",
+          "platform/finops",
+          "platform/acl",
           "platform/backup-and-restore",
-          "platform/sample-agents"
+          {
+            "group": "Secret manager",
+            "pages": [
+              "platform/secret-manager/overview",
+              "platform/secret-manager/entra-id",
+              "platform/secret-manager/user-secrets"
+            ]
+          }
+        ]
+      },
+      {
+        "group": "MCP Hub",
+        "pages": [
+          "mcp-hub/overview",
+          "mcp-hub/external-mcp-server",
+          "mcp-hub/internal-mcp-deployment"
+        ]
+      },
+      {
+        "group": "Agents in Artifact Registry",
+        "pages": [
+          "artifact-registry/overview",
+          "artifact-registry/sample-agents"
         ]
       },
       {
@@ -107,25 +121,11 @@
           "changelog"
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
+    ]
   },
   "logo": {
     "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
+    "dark": "/logo/dark.png"
   },
   "navbar": {
     "links": [
@@ -137,13 +137,12 @@
     "primary": {
       "type": "button",
       "label": "Dashboard",
-      "href": "https://app.mintlify.com"
+      "href": "https://nasiko.dev"
     }
   },
   "contextual": {
     "options": [
       "copy",
-      "view",
       "chatgpt",
       "claude",
       "perplexity",
@@ -154,9 +153,10 @@
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
+      "github": "https://github.com/Nasiko-Labs/nasiko",
+      "linkedin": "https://www.linkedin.com/company/nasikolabs/",
+      "x": "https://x.com/nasikolabs",
+      "discord": "https://discord.gg/a4aU2kcAyy"
     }
   }
 }

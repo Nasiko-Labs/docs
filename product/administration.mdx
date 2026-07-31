@@ -8,7 +8,7 @@ platform-wide settings, and manage who belongs to your organization and what the
 Some of these — **Secrets** and **Settings** — are available to everyone with a login. The rest
 appear in the navigation only once your role includes organization or infrastructure management,
 so what you see here depends on who you are. This page walks through each screen as it actually
-appears; for the underlying role model, see [Access control overview](/guides/acl/overview).
+appears; for the underlying role model, see [Access control overview](/onboarding/acl/overview).
 
 ## Secrets
 
@@ -30,8 +30,8 @@ it and confirm.
   Saving a secret here updates what's stored, encrypted, for the agent — it doesn't push the new
   value into an already-running container by itself. The new value takes effect the next time the
   agent is deployed or redeployed. See [Managing your agent's
-  secrets](/guides/secrets/user-secrets) for how that applies across restarts and scaling events,
-  and [Secret management overview](/guides/secrets/overview) for how encryption at rest works.
+  secrets](/platform/secret-manager/user-secrets) for how that applies across restarts and scaling events,
+  and [Secret management overview](/platform/secret-manager/overview) for how encryption at rest works.
 </Note>
 
 ## Settings
@@ -66,7 +66,7 @@ your role:
 | **Group Mappings** | Top-level administrators | Map identity-provider groups to Nasiko roles, teams, and departments |
 
 The exact roles are `admin`, `department_manager`, `team_lead`, `team_member`, and `member` — see
-[Access control overview](/guides/acl/overview) for the full hierarchy, and how the platform-wide
+[Access control overview](/onboarding/acl/overview) for the full hierarchy, and how the platform-wide
 **superuser** flag (independent of role) unlocks a handful of these screens outright regardless of
 role.
 
@@ -153,8 +153,8 @@ rather than waiting for people to log in.
 ## Where to go from here
 
 If you'd rather script any of this instead of clicking through it, the CLI and API cover the same
-ground — see [User and org management](/guides/acl/user-management) for creating users and
+ground — see [User and org management](/onboarding/acl/user-management) for creating users and
 organizing them into teams and departments, and [Managing your agent's
-secrets](/guides/secrets/user-secrets) for secrets from the command line. For the full technical
+secrets](/platform/secret-manager/user-secrets) for secrets from the command line. For the full technical
 model behind roles, grants, and agent-to-agent access, see [Access control
 reference](/platform/acl).

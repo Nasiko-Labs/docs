@@ -1,0 +1,59 @@
+---
+title: "Agent Development Lifecycle"
+description: "The end-to-end path from a blank directory to a running, managed agent — scaffold, run locally, deploy, and operate."
+---
+
+Building an agent for Nasiko follows the same shape regardless of language or framework: scaffold a
+project, run and chat with it on your own machine, deploy it to a cluster, and manage it — and its
+versions — over time. You don't need a cluster for the first two steps; a cluster only enters the
+picture once you're ready to deploy.
+
+<Steps>
+  <Step title="Scaffold">
+    Start from a template rather than a blank directory. `nasiko new` generates an
+    `AgentCard.json`, a `Dockerfile`, and starter source code for your chosen language and
+    framework; `nasiko card` and `nasiko validate` keep the card in sync with your code and check
+    the project structure before you build anything.
+  </Step>
+  <Step title="Run and chat locally">
+    Build and run the agent as a plain container on your machine — no cluster required. It speaks
+    A2A the moment it starts, so you can chat with it directly over HTTP, in an interactive
+    session, or in a full-screen TUI, and iterate on prompts and tools before anyone else sees it.
+  </Step>
+  <Step title="Deploy and manage">
+    Once you're ready, connect to a cluster and deploy. Nasiko builds (or accepts a pre-built
+    image), pushes it to the cluster's registry, and starts the container — auto-instrumented for
+    observability and wired up with its secrets. From there, day-2 commands cover logs, scaling,
+    restarts, and teardown.
+  </Step>
+  <Step title="Versions and lifecycle">
+    Redeploying the same agent name updates it in place; the version in `AgentCard.json` is the
+    image tag that ties a deployment to a specific build. If you share agents or skills through the
+    artifact registry, published artifacts carry their own version history and lifecycle status,
+    independent of what's currently running on your cluster.
+  </Step>
+</Steps>
+
+## The four phases in detail
+
+<CardGroup cols={2}>
+  <Card title="Scaffolding" icon="wand-magic-sparkles" href="/adlc/agent-scaffolding">
+    Generate a new agent project from a template, then generate or refresh its agent card.
+  </Card>
+  <Card title="Run and chat locally" icon="play" href="/adlc/build-run-test">
+    Build, run, and chat with your agent before it ever touches a cluster.
+  </Card>
+  <Card title="Deploy and manage" icon="rocket" href="/adlc/deploy">
+    Push or upload your agent, then operate it — logs, scaling, restarts, secrets, teardown.
+  </Card>
+  <Card title="Versions and lifecycle" icon="code-branch" href="/adlc/versions-lifecycle">
+    How image versions map to deployments, and how shared registry artifacts age.
+  </Card>
+</CardGroup>
+
+## Before you start
+
+You need Docker running locally and the `nasiko` CLI installed. Everything through "run and chat
+locally" works without a cluster; see [CLI installation](/cli/setup) to get
+set up, or [what is Nasiko](/) for the bigger picture before diving into the
+lifecycle itself.

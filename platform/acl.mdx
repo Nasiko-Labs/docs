@@ -3,7 +3,7 @@ title: "Access control internals"
 description: "How the two independent ACL layers are actually enforced, the role hierarchy, and org-scoped visibility."
 ---
 
-The [access control guide](/guides/acl/overview) covers the model from a configuration point of
+The [access control guide](/onboarding/acl/overview) covers the model from a configuration point of
 view: roles, grants, and allowlists. This page covers how those checks are actually wired into the
 request path — where each one runs, what happens when a check is skipped entirely, and the
 role hierarchy's exact capability thresholds.
@@ -100,10 +100,10 @@ organization on a shared platform to every signed-in account.
 ## Related
 
 <CardGroup cols={2}>
-  <Card title="Access control overview" href="/guides/acl/overview">
+  <Card title="Access control overview" href="/onboarding/acl/overview">
     The configuration-facing model: roles, grants, and allowlists.
   </Card>
-  <Card title="User → agent access" href="/guides/acl/user-agent">
+  <Card title="User → agent access" href="/onboarding/acl/user-agent">
     Ownership, public flags, and grants in day-to-day terms.
   </Card>
   <Card title="Orchestrator internals" href="/platform/orchestrator">

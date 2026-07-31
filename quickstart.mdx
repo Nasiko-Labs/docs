@@ -1,0 +1,115 @@
+---
+title: "Quickstart"
+description: "From zero to a governed agent running on the Nasiko control plane"
+---
+
+In a few minutes you'll scaffold an agent, run it locally, deploy it to the control plane, and see
+it show up under governance — registered, traced, and costed.
+
+Nasiko has two independent surfaces:
+
+|  | What it's for | How you get in |
+| --- | --- | --- |
+| **CLI** (`nasiko`) | Building agents — scaffold, run, test, deploy, version. | `cargo install --path cli --force` — see [Setup Your CLI](/cli/setup) |
+| **Dashboard** | Governing your tenant — agent registry, access control, traces, cost, secrets. | Sign in at your control plane's URL. Nothing to install. |
+
+Neither one requires the other. This guide builds an agent with the CLI (steps 1–4), then picks it up in the dashboard (step 5) — but if you only need to see and govern what your org has already deployed, sign in and skip straight to step 5.
+
+## Prerequisites
+
+- A working Docker install (the local stack and agent builds run in containers)
+- An account with deploy permission — see [ACL](/onboarding/acl/overview)
+- An API key for at least one model provider (`OPENAI_API_KEY` or similar)
+
+## Get started
+
+<Steps>
+  <Step title="Install and authenticate the CLI">
+    ```bash
+    git clone https://github.com/nasiko-ai/nasiko-rs.git && cd nasiko-rs
+    cargo install --path cli --force
+    nasiko up
+    nasiko auth login
+    ```
+
+    `nasiko up` starts a local control plane (Postgres, Redis, S3-compatible storage, and the
+    control plane binary itself) and connects the CLI to it as cluster `local`. `auth login`
+    prompts for a username and password and stores the token in `~/.nasiko/config.json`. Full
+    options in [Setup Your CLI](/cli/setup).
+  </Step>
+
+  <Step title="Scaffold an agent">
+    ```bash
+    nasiko new openai my-first-agent
+    cd my-first-agent
+    ```
+
+    Runs a template out of the connected artifact registry and writes a project directory with an
+    `AgentCard.json`, a `Dockerfile`, and starter source. Run `nasiko new` with no arguments for an
+    interactive wizard instead. Browse what's available in [Sample Agents](/artifact-registry/sample-agents).
+  </Step>
+
+  <Step title="Run it locally">
+    ```bash
+    nasiko run .
+    ```
+
+    ```text
+    ✓ built my-first-agent (local)
+    → running on localhost:8000
+    ```
+
+    ```bash
+    nasiko chat http://localhost:8000 "Customer says their invoice is wrong"
+    ```
+
+    Local runs use the same router and access-control checks as production, so what works here works deployed. More in [Build, Run, and Test Locally](/adlc/build-run-test).
+  </Step>
+
+  <Step title="Deploy to the control plane">
+    ```bash
+    nasiko deploy .
+    ```
+
+    Builds the image, pushes it to the control plane's embedded registry, then registers and starts
+    the agent container — writing `.nasiko/agent.json` in your project directory, bound to the
+    deployed agent's ID. No local Docker? Use `nasiko upload .` instead and let the control plane's
+    build worker build it for you.
+
+    See [Deploy and Manage](/adlc/deploy).
+  </Step>
+
+  <Step title="See it under governance">
+    Sign in to the dashboard — no install, no CLI needed. Your agent is already:
+
+    - listed in the [Agent Registry](/platform/agent-registry) with its status and owner
+    - showing up in [Sessions](/product/observability) for every chat you send it
+    - reporting token spend in [FinOps](/platform/finops)
+
+    <Frame caption="my-first-agent in the Nasiko dashboard">
+      {/* placeholder: dashboard screenshot after first deploy */}
+      <img src="/images/quickstart-dashboard.png" alt="Agent registry entry with traces and cost" />
+    </Frame>
+  </Step>
+</Steps>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Manage secrets" icon="key" href="/platform/secret-manager/user-secrets">
+    Move that provider key out of your shell.
+  </Card>
+  <Card title="Set access policy" icon="shield-check" href="/onboarding/acl/overview">
+    Control who can invoke, edit, and promote this agent.
+  </Card>
+  <Card title="Connect tools over MCP" icon="plug" href="/mcp-hub/external-mcp-server">
+    Give the agent real systems to act on.
+  </Card>
+  <Card title="Compose multiple agents" icon="diagram-project" href="/adlc/a2a-agents">
+    Wire agents together across frameworks.
+  </Card>
+</CardGroup>
+
+<Tip>
+  Stuck? Ask in [Discord](https://discord.gg/a4aU2kcAyy) or email [support@nasiko.com](mailto:support@nasiko.com).
+</Tip>

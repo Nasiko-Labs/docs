@@ -1,0 +1,88 @@
+---
+title: "Introduction"
+---
+
+## What is Nasiko? 
+
+Nasiko is the control plane for enterprise AI agents.
+
+As enterprises move from isolated AI experiments to production agent systems, agents are spreading across teams, models, tools, workflows, harnesses, providers, and business units faster than existing infrastructure can govern them.
+
+Nasiko helps enterprises move from agent sprawl to agent control through three customer-facing pillars:
+
+<CardGroup cols={1}>
+  <Card title="TokenOps" icon="coins" horizontal>
+    Control and optimize AI spend.
+  </Card>
+  <Card title="Policy, Security & Governance" icon="shield-check" horizontal>
+    Control agent access, behavior, and risk.
+  </Card>
+  <Card title="Multi-Agent Harness / Meta-Harness" icon="diagram-project" horizontal>
+    Author, execute, and monitor agent workflows across fragmented providers, tools, models, harnesses, and enterprise environments.
+  </Card>
+</CardGroup>
+
+The customer outcome of the third pillar is speed of execution: helping teams expand AI capabilities faster without losing cost, policy, ownership, or operational control.
+
+<Frame caption="Nasiko Dev">
+  {/* placeholder: replace with the Nasiko Dev hover GIF */}
+  <img src="/images/nasiko-dev.gif" alt="Nasiko Dev" noZoom />
+</Frame>
+
+## Why Nasiko
+
+<Frame>
+  {/* placeholder */}
+  <img src="/images/why-nasiko.png" alt="Why Nasiko" />
+</Frame>
+
+## How a request flows
+
+```mermaid
+flowchart LR
+    User(["User query"]) -->|"HTTPS"| CP["Control plane"]
+    CP -->|"① route"| Agent1["Agent"]
+    Agent1 -->|"② proxied A2A call"| Agent2["Agent"]
+    CP -.->|"traces, logs, cost"| Obs["Observability"]
+```
+
+A user sends a query to the control plane. Nasiko picks an agent for it (or the query names one
+directly). If that agent needs to call another agent to finish the job, the call is proxied back
+through the control plane — never agent-to-agent directly — so flow limits and tracing apply
+uniformly, no matter how deep the call chain gets. See the [architecture overview](/architecture/overview)
+for the full picture.
+
+## Explore the docs
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Get a control plane running and chat with your first agent in minutes.
+  </Card>
+  <Card title="Agent lifecycle" icon="cube" href="/adlc/overview">
+    Scaffold, run, deploy, and version an agent — the full Agent Development Lifecycle.
+  </Card>
+  <Card title="Routing" icon="route" href="/platform/llm-router">
+    A three-stage routing engine (shortlist, rerank, select) picks the best agent for a query.
+  </Card>
+  <Card title="MCP tool access" icon="plug" href="/mcp-hub/overview">
+    Connect agents to external MCP servers or deploy your own internal ones.
+  </Card>
+  <Card title="Access control" icon="shield-check" href="/onboarding/acl/overview">
+    User-to-agent grants, agent-to-agent allowlists, and an org hierarchy for larger teams.
+  </Card>
+  <Card title="Secrets" icon="key" href="/platform/secret-manager/overview">
+    Encrypted-at-rest secrets, injected into agent containers at deploy time.
+  </Card>
+  <Card title="Observability & FinOps" icon="chart-line" href="/platform/observability">
+    One trace across every hop of a multi-agent interaction, with cost attached.
+  </Card>
+  <Card title="Artifact registry" icon="box-archive" href="/artifact-registry/overview">
+    Agent images, skills, and templates — including curated sample agents.
+  </Card>
+  <Card title="Multi-agent flows" icon="diagram-project" href="/platform/maf">
+    Compose multiple agents into a single planned, executed workflow.
+  </Card>
+  <Card title="The web dashboard" icon="window" href="/product/overview">
+    A tour of the control plane's UI — chat, agent management, dashboards, and admin screens.
+  </Card>
+</CardGroup>

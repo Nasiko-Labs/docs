@@ -1,0 +1,52 @@
+---
+title: "FinOps"
+description: "How Nasiko tracks token spend per agent and per model, and where you go to see it."
+---
+
+Every LLM call the platform makes — a chosen agent answering a query, the routing engine's own
+selection call, a MAF workflow's per-step calls — reports its `gen_ai.usage.*` token counts as part
+of the same telemetry that powers [observability](/platform/observability). FinOps is the layer
+that turns those counts into cost.
+
+## How a token count becomes a dollar amount
+
+Costs are computed by applying `gen_ai.usage.*` token counts to a `model_pricing` lookup: each model
+has an `input_price_per_1m` / `output_price_per_1m` rate, versioned by an effective-date window so a
+price change doesn't retroactively re-cost historical spend. Lookups are cached in memory for five
+minutes; a model with no matching row falls back to a static built-in price table rather than
+silently reporting zero cost.
+
+<Note>
+  The routing engine's own selection call is metered like any other LLM call, not folded silently
+  into whichever agent gets chosen — so "what did it cost to pick an agent" shows up as its own line
+  item, separate from the agent's own spend.
+</Note>
+
+## Where you see it
+
+The **Usage** screen in the dashboard is the everyday view: four stat cards (total tokens, total
+cost, request count, average latency) over a rolling window, a daily-tokens chart for the last seven
+days, and a searchable table you can break down **By Agent** or **By Model**. See
+[Observability](/product/observability) for the full walkthrough of that screen.
+
+Underneath it, two API routes back the same and deeper data:
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `GET` | `/api/observability/finops/dashboard` | Aggregate cost dashboard data |
+| `GET` | `/api/observability/finops/insights` | An LLM-generated narrative summary over the aggregated FinOps data |
+
+`finops/insights` is worth calling out on its own: rather than just returning numbers, it asks an
+LLM to summarize the aggregated cost data into a short narrative — useful for a weekly digest or an
+at-a-glance "what changed" without building your own summarization on top of the raw numbers.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Observability internals" href="/platform/observability">
+    The write/read path this cost data rides on, and the full observability API surface.
+  </Card>
+  <Card title="Usage screen" href="/product/observability">
+    The dashboard view most people actually use day to day.
+  </Card>
+</CardGroup>
