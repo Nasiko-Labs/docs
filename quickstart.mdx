@@ -1,47 +1,113 @@
 ---
 title: "Quickstart"
-description: "Begin with a guide on the fastest path to a successful outcome"
+description: "From zero to a governed agent running on the Nasiko control plane"
 ---
 
-Describe how someone begins using your product. What is the first thing they need to do? Are there any prerequisites?
+{/* placeholder: all commands, names, and URLs below are dummy values pending the real CLI */}
 
-A quickstart should take someone from zero to using your product. They'll get a quick win and a sense of what they can accomplish.
+In about five minutes you'll scaffold an agent from the artifact registry, run it locally, deploy it to the control plane, and see it show up under governance — registered, traced, and costed.
+
+Nasiko has two independent surfaces:
+
+|  | What it's for | How you get in |
+| --- | --- | --- |
+| **CLI** | Building agents — scaffold, run, test, deploy, version. | `pip install nasiko` |
+| **Dashboard** | Governing your tenant — registry, policy, traces, cost, secrets, tenants. | Sign in at [nasiko.dev](https://nasiko.dev). Nothing to install. |
+
+Neither one requires the other. This guide builds an agent with the CLI (steps 1–4), then picks it up in the dashboard (step 5) — but if you only need to see and govern what your org has already deployed, sign in and skip straight to step 5.
 
 ## Prerequisites
 
-Before you begin, you must have:
-
-- Requirement one (for example, Node.js 18+, a free account, an API key)
-- Requirement two (for example, a compatible device, a compatible browser, a compatible operating system)
+- Python 3.11+ (or Node.js 20+)
+- A Nasiko tenant and an account with the `agent.deploy` permission — see [ACL](/onboarding/ACL)
+- An API key for at least one model provider
 
 ## Get started
 
 <Steps>
-  <Step title="Install">
-    Describe how to install your product or sign up.
-
+  <Step title="Install and authenticate the CLI">
     ```bash
-    npm install your-package
+    pip install nasiko
+    nasiko login --tenant acme
     ```
+
+    `login` opens a browser, then writes credentials to `~/.nasiko/config.toml`. Full options in [Setup Your CLI](/cli/setup).
   </Step>
-  <Step title="Configure">
-    Describe any setup or configuration needed before first use.
 
+  <Step title="Scaffold an agent">
     ```bash
-    your-cli init
+    nasiko init my-first-agent --from samples/support-triage
+    cd my-first-agent
     ```
+
+    This pulls a versioned template out of the artifact registry. Browse what's available with `nasiko registry list samples` or see [Sample Agents](/artifact-registry/sample-agents).
   </Step>
-  <Step title="Run it">
-    Show the first thing a user does to see it working.
 
+  <Step title="Run it locally">
     ```bash
-    your-cli start
+    export ANTHROPIC_API_KEY=sk-ant-...
+    nasiko run --input "Customer says their invoice is wrong"
     ```
+
+    ```text
+    ✓ agent my-first-agent (local)
+    → routed to claude-sonnet-5 via llm-router
+    → tools: crm.lookup_invoice, ticket.create
+
+    Created ticket SUP-4821 (billing / high). Invoice INV-2291 shows a
+    duplicate line item; flagged for finance review.
+
+    1,412 tokens · $0.004 · 2.1s
+    ```
+
+    Local runs use the same router and policy engine as production, so what works here works deployed. More in [Build, Run, and Test Locally](/adlc/build-run-test).
+  </Step>
+
+  <Step title="Deploy to the control plane">
+    ```bash
+    nasiko deploy --env dev
+    ```
+
+    ```text
+    ✓ built my-first-agent:0.1.0
+    ✓ pushed to registry
+    ✓ deployed to dev  https://acme.nasiko.dev/agents/my-first-agent
+    ```
+
+    Every deploy is an immutable version you can promote or roll back — see [Deploy and Manage to Control Plane](/adlc/deploy).
+  </Step>
+
+  <Step title="See it under governance">
+    Sign in to the [dashboard](https://nasiko.dev) — no install, no CLI needed. Your agent is already:
+
+    - listed in the [Agent Registry](/platform/agent-registry) with its version, owner, and tools
+    - emitting traces in [Observability](/platform/observability) for every run
+    - reporting token spend per run in [FinOps](/platform/finops)
+
+    <Frame caption="my-first-agent in the Nasiko dashboard">
+      {/* placeholder: dashboard screenshot after first deploy */}
+      <img src="/images/quickstart-dashboard.png" alt="Agent registry entry with traces and cost" />
+    </Frame>
   </Step>
 </Steps>
 
-<Tip>
-  Give people a way to get help. This could be a link to a support page, a chat with a customer support agent, or a forum for your product.
+## Next steps
 
-  Example: Need help? Reach out to us at [support@yourcompany.com](mailto:support@yourcompany.com).
+<CardGroup cols={2}>
+  <Card title="Manage secrets" icon="key" href="/platform/secret-manager/user-secrets">
+    Move that provider key out of your shell.
+  </Card>
+  <Card title="Set access policy" icon="shield-check" href="/onboarding/ACL">
+    Control who can invoke, edit, and promote this agent.
+  </Card>
+  <Card title="Connect tools over MCP" icon="plug" href="/mcp-hub/external-mcp-server">
+    Give the agent real systems to act on.
+  </Card>
+  <Card title="Compose multiple agents" icon="diagram-project" href="/adlc/a2a-agents">
+    Wire agents together across frameworks.
+  </Card>
+</CardGroup>
+
+<Tip>
+  Stuck? Ask in [Discord](https://discord.gg/a4aU2kcAyy) or email [support@nasiko.com](mailto:support@nasiko.com).
 </Tip>

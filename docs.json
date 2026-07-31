@@ -1,41 +1,87 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
+  "theme": "maple",
   "name": "Mintlify Starter Kit",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#BB8F06",
+    "light": "#EEC239", 
+    "dark": "#3A3430"
   },
   "favicon": "/favicon.svg",
+  "fonts": {
+    "family": "Inter"
+  },
   "navigation": {
     "pages": [
       {
         "group": "Getting Started",
         "pages": [
           "index",
-          "quickstart"
+          "quickstart",
+          "setup_page",
+          "multi-tenant",
+          {
+            "group": "Onboarding",
+            "pages": [
+              "onboarding/ACL"
+            ]
+          }
+        ]
+      },
+      {
+        "group": "CLI",
+        "pages": [
+          "cli/setup",
+          "cli/overview"
+        ]
+      },
+      {
+        "group": "ADLC",
+        "pages": [
+          "adlc/agent-scaffolding",
+          "adlc/a2a-agents",
+          "adlc/build-run-test",
+          "adlc/deploy",
+          "adlc/versions-lifecycle"
+        ]
+      },
+      {
+        "group": "Platform",
+        "pages": [
+          "platform/agent-registry",
+          "platform/orchestrator",
+          "platform/maf",
+          "platform/observability",
+          "platform/mcp-gateway",
+          "platform/llm-router",
+          "platform/finops",
+          {
+            "group": "Secret manager",
+            "pages": [
+              "platform/secret-manager/entra-id",
+              "platform/secret-manager/user-secrets"
+            ]
+          }
+        ]
+      },
+      {
+        "group": "MCP Hub",
+        "pages": [
+          "mcp-hub/external-mcp-server",
+          "mcp-hub/internal-mcp-deployment"
+        ]
+      },
+      {
+        "group": "Agents in Artifact Registry",
+        "pages": [
+          "artifact-registry/sample-agents"
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
+    ]
   },
   "logo": {
     "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
+    "dark": "/logo/dark.png"
   },
   "navbar": {
     "links": [
@@ -47,13 +93,12 @@
     "primary": {
       "type": "button",
       "label": "Dashboard",
-      "href": "https://app.mintlify.com"
+      "href": "https://nasiko.dev"
     }
   },
   "contextual": {
     "options": [
       "copy",
-      "view",
       "chatgpt",
       "claude",
       "perplexity",
@@ -64,9 +109,10 @@
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
+      "github": "https://github.com/Nasiko-Labs/nasiko",
+      "linkedin": "https://www.linkedin.com/company/nasikolabs/",
+      "x": "https://x.com/nasikolabs",
+      "discord" : "https://discord.gg/a4aU2kcAyy"
     }
   }
 }
