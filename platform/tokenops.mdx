@@ -1,11 +1,11 @@
 ---
-title: "FinOps"
+title: "TokenOps"
 description: "How Nasiko tracks token spend per agent and per model, and where you go to see it."
 ---
 
 Every LLM call the platform makes — a chosen agent answering a query, the routing engine's own
 selection call, a MAF workflow's per-step calls — reports its `gen_ai.usage.*` token counts as part
-of the same telemetry that powers [observability](/platform/observability). FinOps is the layer
+of the same telemetry that powers [observability](/platform/observability). TokenOps is the layer
 that turns those counts into cost.
 
 ## How a token count becomes a dollar amount
@@ -29,12 +29,13 @@ cost, request count, average latency) over a rolling window, a daily-tokens char
 days, and a searchable table you can break down **By Agent** or **By Model**. See
 [Observability](/product/observability) for the full walkthrough of that screen.
 
-Underneath it, two API routes back the same and deeper data:
+Underneath it, two API routes back the same and deeper data (named `finops` in the API itself,
+since that's the underlying route path — TokenOps is the product name for what they power):
 
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
 | `GET` | `/api/observability/finops/dashboard` | Aggregate cost dashboard data |
-| `GET` | `/api/observability/finops/insights` | An LLM-generated narrative summary over the aggregated FinOps data |
+| `GET` | `/api/observability/finops/insights` | An LLM-generated narrative summary over the aggregated cost data |
 
 `finops/insights` is worth calling out on its own: rather than just returning numbers, it asks an
 LLM to summarize the aggregated cost data into a short narrative — useful for a weekly digest or an

@@ -81,7 +81,7 @@
           "platform/observability",
           "platform/mcp-gateway",
           "platform/llm-router",
-          "platform/finops",
+          "platform/tokenops",
           "platform/acl",
           "platform/backup-and-restore",
           {

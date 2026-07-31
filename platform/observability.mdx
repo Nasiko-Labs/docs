@@ -5,7 +5,7 @@ description: "Zero-code agent instrumentation, the session/trace/flow data model
 
 Every agent deployed through Nasiko is traced and logged without a single line of code added to
 the agent itself. This page covers how that's actually done — the write path that instruments an
-agent at deploy time, the read path that turns raw traces and logs into sessions and FinOps
+agent at deploy time, the read path that turns raw traces and logs into sessions and TokenOps
 numbers, and the full API surface those dashboards are built on.
 
 ## Write path: instrumentation with no agent code changes
@@ -118,7 +118,7 @@ All under `/api/observability/*`, authenticated the same way as the rest of the 
 | `GET` | `span/{trace_id}/{span_id}` | One span's detail |
 | `GET` | `agent/{id}/stats` | Aggregate call/latency/success stats |
 | `GET` | `finops/dashboard` | Aggregate cost dashboard data |
-| `GET` | `finops/insights` | LLM-generated narrative over the aggregated FinOps data |
+| `GET` | `finops/insights` | LLM-generated narrative over the aggregated cost data |
 | `GET` | `agents/{ref}/logs`, `agents/{ref}/logs/stream` | Loki log lines for an agent, with a streaming variant |
 
 ## Configuration

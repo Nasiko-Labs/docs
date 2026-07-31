@@ -5,7 +5,7 @@ description: "How Nasiko's control plane, agent containers, and durable state st
 
 Nasiko is an A2A (agent-to-agent) orchestration platform. A single control plane deploys agent
 containers, routes user queries to the best agent for the job, proxies all agent-to-agent traffic,
-and gives you end-to-end observability — traces, logs, and cost (FinOps) data — across every hop.
+and gives you end-to-end observability — traces, logs, and cost (TokenOps) data — across every hop.
 
 This page is a tour of the moving parts. For definitions of the terms used here (session, flow,
 routing engine, and so on), see [core concepts](/architecture/core-concepts).
@@ -48,7 +48,7 @@ flowchart TB
 
     CP -->|"OTLP traces & metrics"| Collector
     Agents -->|"OTLP (auto-instrumented,<br/>traceparent propagated)"| Collector
-    Tempo -.->|"queried for dashboards & FinOps"| CP
+    Tempo -.->|"queried for dashboards & TokenOps"| CP
     Loki -.-> CP
 
     classDef client fill:#e8f0fe,stroke:#4a76c9,color:#1a3a6b
@@ -73,7 +73,7 @@ Three properties fall out of this design:
   completes.
 - **Telemetry is automatic.** The control plane injects OpenTelemetry configuration into every
   agent deployment, so traces and logs flow to the collector without any code changes in your
-  agent — then the control plane queries that same data back out for dashboards and FinOps
+  agent — then the control plane queries that same data back out for dashboards and TokenOps
   reporting.
 
 ## Request flow
@@ -164,6 +164,6 @@ limits on every inter-agent hop.
     User-to-agent grants and agent-to-agent allowlists.
   </Card>
   <Card title="Observability" href="/platform/observability">
-    Traces, logs, and FinOps dashboards built on the same telemetry the control plane collects.
+    Traces, logs, and TokenOps dashboards built on the same telemetry the control plane collects.
   </Card>
 </CardGroup>
