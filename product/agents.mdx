@@ -1,133 +1,92 @@
 ---
 title: "Agents"
-description: "Browse the agent catalog, deploy a new agent from upload, GitHub, or a registry image, manage the ones you've deployed, and watch a build run live."
+description: "Browse the catalog, deploy agents, manage the ones you've deployed, and watch builds."
 ---
 
-The web UI gives you five screens for working with agents: **Agents** (a catalog of every agent
-you can reach), **Your Agents** (the ones you've deployed, with lifecycle controls), **Add Agent**
-(three ways to register a new one), the agent card (one agent's full detail view), and **Builds**
-(the history and live progress of container builds kicked off from the browser). This page walks
-through each one. If you'd rather script the same deploy lifecycle from a terminal, see
-[Agent Development Lifecycle](/adlc/overview) — same underlying platform, CLI instead of
-clicks.
+Five screens cover agents: **Agents** (the catalog), **Your Agents** (what you've deployed), **Add Agent** (three ways to register one), the agent card, and **Builds**. To script the same lifecycle instead, see [Agent Development Lifecycle](/adlc/overview).
 
-## Agents: the catalog
+## Agents — the catalog
 
-**Agents** — titled **Agent Catalog** on the page itself — lists every agent you have access to,
-whether it's running, stopped, or still deploying. A subtitle under the heading shows how many
-agents are available.
+Lists every agent you can reach, running or not.
 
-Two controls narrow the list:
+- **Search** filters by name, description, or tag as you type
+- **Category** filters by tag, built from every tag in the catalog
 
-- A search box (*"Search agents by name, skill, or capability..."*) filters by name, description,
-  or tag as you type.
-- A **category** dropdown, built from every tag present across the catalog, filters to agents
-  carrying that tag.
+Each card shows a name, status badge, description, and up to three tags, with **Details** (the agent card) and **Chat** ([direct chat](/product/chat)).
 
-Each agent shows as a card with its name, a status badge (colored for running, error, or
-pending/deploying, and plain for stopped) when a status is known, a short description, and up to
-three tags. Every card carries two actions: **Details**, which opens that agent's [card](#the-agent-card),
-and **Chat**, which jumps straight into a direct conversation with it — the same direct-chat
-screen described in [Chat](/product/chat). If your search or filter produces no matches, the grid
-shows an empty state prompting you to adjust your criteria.
+<Frame>
+  <img src="/product-images/agent-registry/agent-hub.png" alt="Agent hub with a search field, category tabs for For you, HR, DevOps, Finance, Legal, and AI infra, and cards for summarizer, translator, assistant-agent, and calendar-agent" />
+</Frame>
 
-## Your Agents: what you've deployed
+## Your Agents — what you've deployed
 
-**Your Agents** lists the agent containers you manage — distinct from the full catalog, which
-includes agents you can merely reach. A stats bar above the list shows counts of **running** and
-**stopped** agents (plus **error** if any exist), and a running total; clicking a count filters the
-list to that status, click again to clear the filter. A search box filters by name or image, and a
-sort dropdown reorders the grid by **Name**, **Status**, or **Version**.
+Lists the containers you manage. The stats bar shows **running**, **stopped**, and **error** counts — click one to filter, click again to clear. Search filters by name or image; sort by **Name**, **Status**, or **Version**.
 
-Each card shows the agent's name (linking to its [card](#the-agent-card)), a status badge, and its
-image and version tag as `name:version`. An agent stuck in an error state also shows an inline
-notice with a link to view its logs. Below that, the actions differ by state:
+Each card shows the name, status badge, and `name:version`. Actions depend on state:
 
-- A **running** agent shows **Restart** and **Stop** — each calls the container lifecycle endpoint
-  for that action and refreshes the list when it completes.
-- A **stopped** agent shows **Deploy** instead, which opens a modal where you can add environment
-  variables (or import existing values from your saved secrets) before it (re)deploys the
-  container — set variables are also saved to that agent's secrets for future deploys.
-- Every card also has **Delete**, which asks you to confirm before stopping the container and
-  removing the agent from the registry entirely.
+| State | Actions |
+| --- | --- |
+| Running | **Restart**, **Stop**, **Delete** |
+| Stopped | **Deploy**, **Delete** |
 
-If you haven't deployed anything yet, the empty state links you to the catalog to deploy an
-existing agent, or to **Add Agent** to register a new one.
+**Deploy** opens a modal for environment variables — import them from saved secrets, or set new ones (which are saved to the agent's secrets for future deploys). **Delete** confirms, then stops the container and removes it from the registry.
 
-## Add Agent: three ways to register a new agent
+An agent in an error state shows an inline link to its logs.
 
-**Add Agent** presents three enabled methods, each as its own card, plus an **Import from
-AgentKit** card marked "Coming soon" that isn't clickable yet:
+<Frame>
+  <img src="/product-images/agent-registry/published-by-you.png" alt="Published by you view with All, Active, Setting up, Private, Shared, and Failed tabs above cards for calendar-agent, summarizer, translator, and assistant-agent" />
+</Frame>
 
-- **Import from GitHub** — requires GitHub authentication. Clicking **Connect GitHub** takes you to
-  a repository picker. If you haven't connected GitHub yet, you're prompted to connect it first;
-  once connected, you get a searchable list of your repositories (name, language, last-updated
-  date, and a **Private** badge where relevant) with an **Import** button on each row. The repo
-  must contain an `AgentCard.json` at its root. Importing clones the repo and, on success, takes
-  you to **Your Agents**.
-- **Upload a code package** — clicking **Upload .zip** opens your OS file picker restricted to
-  `.zip` files. The package must include a `skill.json` at its root. Selecting a file uploads it
-  immediately; on success you're taken to **Your Agents**.
-- **Import from OCI registry** — clicking **Connect Registry** prompts you for an artifact
-  reference (for example `nasiko/my-agent:v1.0`). Submitting it pulls a pre-built agent image
-  directly from that registry and, on success, takes you to **Your Agents**.
+## Add Agent
 
-Both the upload and GitHub methods build the agent's container image before deploying it — that
-build gets its own record you can watch progress on from the [Builds](#builds-watching-a-build-run)
-screen while it runs. A failed upload, import, or registry pull shows an error message in place of
-the redirect rather than silently failing.
+Three methods, plus **Import from AgentKit** marked coming soon.
+
+| Method | Requirement | What happens |
+| --- | --- | --- |
+| **Import from GitHub** | GitHub connected; `AgentCard.json` at repo root | Pick a repo from a searchable list, then **Import** clones and builds it |
+| **Upload a code package** | `.zip` with `skill.json` at root | Uploads immediately and builds |
+| **Import from OCI registry** | An artifact reference, e.g. `nasiko/my-agent:v1.0` | Pulls the pre-built image |
+
+Upload and GitHub both build the container image first — watch progress in [Builds](#builds). Failures show an error in place of the redirect.
+
+<Frame>
+  <img src="/product-images/agent-registry/import-agent.png" alt="Import new agent screen with a Set up CLI banner and method cards for Import from GitHub, Upload a code package, and the disabled Add workflows from n8n and Import from AgentKit" />
+</Frame>
 
 ## The agent card
 
-Clicking **Details** on a catalog card, or an agent's name in **Your Agents**, opens that agent's
-card: its name, an avatar, version, and tags at the top, followed by its description. Header
-actions include **Restart** and **Stop** when the agent is running, **Delete** always, and a
-**Start session** link into a direct [Chat](/product/chat) with it. Below that, three tabs organize
-the detail:
+Opens from **Details** in the catalog or an agent's name in Your Agents. The top shows name, avatar, version, tags, and description. Header actions: **Restart** and **Stop** when running, **Delete**, and **Start session** for [direct chat](/product/chat).
 
-- **Overview** — a **Skills** section listing each of the agent's registered skills; a skill with
-  a sample query is clickable and opens a chat with that query pre-filled. A **Quick performance**
-  section shows recent trace count, total cost, and p50/p99 latency (or an empty state if the
-  agent hasn't handled a request yet). An **Agent details** panel lists provider, project and docs
-  URLs, ID, version, protocol, transport, and default I/O. A **Capabilities** panel shows whether
-  the agent supports streaming, push notifications, and state history, plus whether it's currently
-  reachable for chat. An **Access Control** section shows which other agents this one is allowed to
-  call, and who can access it — a public badge, or a breakdown of user, team, department, and
-  per-agent grants.
-- **Settings** — a read-only summary of the agent's configuration: image, port, status, and
-  replica count.
-- **Logs** — recent container output, with a dropdown to choose how many lines to show (50, 100,
-  or 500) and a **Follow** toggle that keeps the view scrolled to the latest line whenever you
-  reload or change the line count.
+**Overview**
+- **Skills** — each registered skill; one with a sample query opens a chat with it pre-filled
+- **Quick performance** — recent trace count, total cost, p50/p99 latency
+- **Agent details** — provider, project and docs URLs, ID, version, protocol, transport, default I/O
+- **Capabilities** — streaming, push notifications, state history, and current chat reachability
+- **Access Control** — which agents this one may call, and who can access it (public badge, or user/team/department/agent grants)
 
-## Builds: watching a build run
+**Settings** — read-only image, port, status, and replica count.
 
-**Builds** lists every image build triggered from the browser — including the ones kicked off by
-uploading a package or importing from GitHub on the **Add Agent** screen — in a searchable,
-paginated table. Each row shows a short build ID, the version tag, the resulting image reference, a
-status badge (**success**, **building**, **failed**, **queued**, or **cancelled**), a link to the
-source repository when the build came from GitHub, and when it started.
+**Logs** — recent container output. Choose 50, 100, or 500 lines; **Follow** keeps the view at the latest line.
 
-Opening a build shows a summary (build ID, agent name, status, image), a step-by-step breakdown
-when steps are recorded — each numbered and marked pending, active, done, or failed, with its
-duration — and the build's log output below. While a build is still in the **building** state, the
-log view stays connected and streams new lines in as they're produced, rather than requiring you
-to refresh.
+## Builds
+
+Every image build triggered from the browser, in a searchable paginated table. Each row: short build ID, version tag, image reference, status badge (**success**, **building**, **failed**, **queued**, **cancelled**), source repo link for GitHub builds, and start time.
+
+Opening a build shows a summary, a numbered step breakdown with durations when steps are recorded, and log output. Logs stream live while a build is still in **building**.
 
 ## Related
 
 <CardGroup cols={2}>
   <Card title="Agent Development Lifecycle" icon="terminal" href="/adlc/overview">
-    The same scaffold-run-deploy-manage lifecycle from the CLI, if you'd rather script it than
-    click through it.
+    The same lifecycle from the CLI.
   </Card>
   <Card title="A2A agents and frameworks" icon="plug" href="/adlc/a2a-agents">
-    What your container needs to expose to run on Nasiko, regardless of language or framework.
+    What your container must expose.
   </Card>
   <Card title="Chat" icon="messages" href="/product/chat">
-    Talk to an agent directly, or let the orchestrator route your question to the right one.
+    Talk to an agent directly or via the orchestrator.
   </Card>
   <Card title="Observability" icon="chart-line" href="/product/observability">
-    Dig deeper into a given agent's traces, logs, and cost over time.
+    Traces, logs, and cost over time.
   </Card>
 </CardGroup>

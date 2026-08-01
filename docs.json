@@ -55,19 +55,15 @@
         ]
       },
       {
-        "group": "Architecture",
-        "pages": [
-          "architecture/overview",
-          "architecture/core-concepts"
-        ]
-      },
-      {
-        "group": "Product",
+        "group": "Dashboard",
         "pages": [
           "product/overview",
           "product/chat",
           "product/agents",
+          "product/mcp-gateway",
+          "product/llm-router",
           "product/observability",
+          "product/tokenops",
           "product/administration",
           "product/artifact-registry"
         ]
@@ -78,8 +74,6 @@
           "platform/agent-registry",
           "platform/orchestrator",
           "platform/maf",
-          "platform/observability",
-          "platform/mcp-gateway",
           "platform/llm-router",
           "platform/tokenops",
           "platform/acl",
@@ -92,6 +86,12 @@
               "platform/secret-manager/user-secrets"
             ]
           }
+        ]
+      },
+      {
+        "group": "MCP Gateway",
+        "pages": [
+          "mcp-gateway/agent-integration"
         ]
       },
       {
@@ -108,18 +108,6 @@
           "artifact-registry/overview",
           "artifact-registry/sample-agents"
         ]
-      },
-      {
-        "group": "API Reference",
-        "pages": [
-          "api-reference/overview"
-        ]
-      },
-      {
-        "group": "Changelog",
-        "pages": [
-          "changelog"
-        ]
       }
     ]
   },
@@ -131,13 +119,13 @@
     "links": [
       {
         "label": "Support",
-        "href": "mailto:hi@mintlify.com"
+        "href": "mailto:support@nasiko.com"
       }
     ],
     "primary": {
       "type": "button",
       "label": "Dashboard",
-      "href": "https://nasiko.dev"
+      "href": "https://demo.nasiko.dev/app/login?from=/home"
     }
   },
   "contextual": {

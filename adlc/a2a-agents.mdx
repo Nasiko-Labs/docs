@@ -1,37 +1,23 @@
 ---
 title: "A2A agents and frameworks"
-description: "The A2A protocol is Nasiko's agent contract — what your container must expose, how the platform talks to it, and which languages and frameworks you can build with."
+description: "What your container must expose to run on Nasiko, and how the platform talks to it."
 ---
 
-Nasiko doesn't run "agents" in some proprietary format — it runs containers that speak
-[A2A (Agent-to-Agent)](https://a2a-protocol.org), an open JSON-RPC protocol for talking to
-autonomous agentic applications. If your container implements the contract below, it can run on
-Nasiko regardless of the language, framework, or LLM behind it.
+Nasiko runs containers that speak [A2A](https://a2a-protocol.org), an open JSON-RPC protocol for agentic applications. Implement the contract below and your container runs on Nasiko regardless of language, framework, or model.
 
-A2A treats each agent as an opaque peer: you send it a message, it works on a task — for seconds or
-hours — and it returns results as one or more artifacts. The platform never inspects an agent's
-prompts, tools, or reasoning; it only speaks A2A to it, the same way it speaks A2A to every other
-agent.
+A2A treats each agent as an opaque peer: you send it a message, it works on a task, it returns artifacts. The platform never inspects an agent's prompts, tools, or reasoning.
 
 ## The agent contract
 
-To run on Nasiko, a container must do exactly three things:
+A container must do three things:
 
-1. **Serve an agent card.** A JSON document describing the agent's name, skills, and capabilities,
-   available over unauthenticated GET at `/.well-known/agent-card.json` (the platform also accepts
-   the legacy path `/.well-known/agent.json`).
-2. **Implement A2A JSON-RPC.** At minimum, the `message/send` method. Most agents also implement
-   `message/stream` so responses can be streamed back token-by-token over SSE.
-3. **Respond to health checks.** An HTTP 200 on the same A2A endpoint, so the platform knows the
-   container is alive before routing traffic to it.
+1. **Serve an agent card** — JSON describing name, skills, and capabilities, over unauthenticated GET at `/.well-known/agent-card.json` (the legacy `/.well-known/agent.json` also works).
+2. **Implement A2A JSON-RPC** — at minimum `message/send`. Add `message/stream` for token-by-token SSE responses.
+3. **Respond to health checks** — HTTP 200 on the same endpoint.
 
-That's it. Nasiko doesn't — and can't — enforce internal implementation, framework choice, or
-response quality. Whether an agent's declared skills actually work is on you.
+Nasiko doesn't enforce internal implementation or response quality. Whether an agent's declared skills work is on you.
 
 ### Agent card
-
-The agent card is how the platform (and other agents) discover what your agent can do, before ever
-sending it a message:
 
 ```json
 {
@@ -64,20 +50,18 @@ sending it a message:
 
 | Field | Required | Description |
 | --- | --- | --- |
-| `name`, `description`, `version` | Yes | Identity — `version` should track your deployed image tag |
+| `name`, `description`, `version` | Yes | Identity — `version` should track your image tag |
 | `supportedInterfaces` | Yes | Transport endpoints (URL + protocol binding) |
-| `capabilities` | Yes | Feature flags — `streaming`, `pushNotifications` |
+| `capabilities` | Yes | `streaming`, `pushNotifications` |
 | `defaultInputModes` / `defaultOutputModes` | Yes | Accepted and produced MIME types |
-| `skills` | Yes | The capabilities other agents and the routing engine reason about |
+| `skills` | Yes | What other agents and the routing engine reason about |
 | `provider`, `securitySchemes`, `documentationUrl`, `iconUrl` | No | Optional metadata |
 
-Skills are effectively frozen once an agent is deployed — the platform reads the card once at
-deploy time to populate the registry. Changing what an agent can do means changing its source and
-redeploying, not editing metadata after the fact.
+The platform reads the card once at deploy time. Changing what an agent can do means changing its source and redeploying, not editing metadata.
 
 ### Wire format
 
-A2A runs as JSON-RPC 2.0 over HTTP. A minimal `message/send` request looks like:
+A2A is JSON-RPC 2.0 over HTTP. A minimal `message/send`:
 
 ```json
 {
@@ -94,7 +78,7 @@ A2A runs as JSON-RPC 2.0 over HTTP. A minimal `message/send` request looks like:
 }
 ```
 
-and a non-streaming response wraps the result in a `Task`:
+The non-streaming response wraps the result in a `Task`:
 
 ```json
 {
@@ -113,33 +97,23 @@ and a non-streaming response wraps the result in a `Task`:
 }
 ```
 
-For `message/stream`, the response is a Server-Sent Events stream of the same JSON-RPC envelope,
-with each event carrying a status update or an artifact chunk — a `working` status, one or more
-artifact chunks, then a terminal `completed` status.
+`message/stream` returns the same envelope as SSE: a `working` status, artifact chunks, then a terminal `completed` status.
 
-`contextId` is what ties a multi-turn conversation together: every message and task in the same
-conversation shares it, and it's also the unit a Nasiko *session* groups in
-[observability](/platform/orchestrator).
+`contextId` ties a multi-turn conversation together. It's also what a Nasiko *session* groups in [observability](/platform/orchestrator).
 
 <Note>
-  Building your A2A server from scratch is the most portable option, but you don't have to —
-  official A2A SDKs exist for several languages, and the [sample
-  agents](/artifact-registry/sample-agents) shipped with Nasiko show working examples you can copy from
-  directly.
+  Official A2A SDKs exist for several languages, and the [sample agents](/artifact-registry/sample-agents) are working examples you can copy from.
 </Note>
 
 ## How Nasiko dispatches to agents
 
-Every chat request lands on one endpoint, and what happens next depends on whether it names a
-specific agent:
-
 | Request shape | What happens |
 | --- | --- |
-| `agent_id` set to a specific agent | **Direct dispatch** — proxied straight to that agent's container |
-| No `agent_id`, or `agent_id: "orchestrator"` | **Routed dispatch** — the platform picks an agent for you |
+| `agent_id` names an agent | **Direct dispatch** — proxied to that agent's container |
+| No `agent_id`, or `agent_id: "orchestrator"` | **Routed dispatch** — the platform picks an agent |
 
 ```json
-// Direct — talks to a named agent
+// Direct
 {
   "jsonrpc": "2.0",
   "method": "message/send",
@@ -151,7 +125,7 @@ specific agent:
 ```
 
 ```json
-// Routed — the platform decides which agent should handle this
+// Routed
 {
   "jsonrpc": "2.0",
   "method": "message/send",
@@ -161,65 +135,45 @@ specific agent:
 }
 ```
 
-For routed dispatch, Nasiko's orchestrator runs a multi-turn ReAct loop: it resolves every agent you
-can access and exposes each one as a callable tool (name, description, skills), then lets an LLM
-decide — across as many as ten turns — which agent or agents to call and in what order. This is a
-different mechanism from the [routing engine](/platform/orchestrator)'s three-stage shortlist/rerank/
-select pipeline — no shortlisting or reranking happens here, and the orchestrator can call more than
-one agent per query. (The routing engine itself is invoked elsewhere, to auto-assign agents to [MAF
-workflow](/platform/maf) steps.) Either way, every hop is an ordinary A2A `message/send` or
-`message/stream` call proxied through the platform, so an agent can't tell the difference between
-being called directly and being called by the orchestrator.
+Routed dispatch runs a multi-turn ReAct loop: the orchestrator exposes every agent you can access as a callable tool, then an LLM decides across up to ten turns which agents to call and in what order.
+
+This is not the [routing engine](/platform/orchestrator)'s three-stage shortlist/rerank/select pipeline — no shortlisting or reranking happens here, and the orchestrator can call several agents per query. The routing engine is used elsewhere, to auto-assign agents to [MAF workflow](/platform/maf) steps.
+
+Either way, every hop is an ordinary A2A call proxied through the platform. An agent can't tell whether it was called directly or by the orchestrator.
 
 <Tip>
-  **Agent identifiers can be a name or a UUID** almost everywhere in the platform's API — except the
-  agent proxy itself, which only accepts UUIDs. If you're integrating directly against
-  `/api/agents/{id}`, resolve the agent's name to its UUID first (for example via the agents list
-  endpoint); chat and observability routes will resolve either form for you.
+  Agent identifiers accept a name or a UUID almost everywhere — except the agent proxy, which requires a UUID. If you're calling `/api/agents/{id}` directly, resolve the name first.
 </Tip>
 
 ## Frameworks and languages
 
-Nasiko doesn't care what's inside the container — only that it speaks A2A on the outside. The
-platform's template library (see [scaffolding](/adlc/agent-scaffolding)) includes working reference
-agents across multiple languages and frameworks, so you can start from whichever matches your stack:
-
-| Language | Frameworks represented |
+| Language | Frameworks |
 | --- | --- |
-| Python | OpenAI's Agents SDK, Anthropic's SDK, CrewAI, LangChain/LangGraph, Google's Agent Development Kit, or a plain LLM SDK call |
+| Python | OpenAI Agents SDK, Anthropic SDK, CrewAI, LangChain/LangGraph, Google ADK, or a plain LLM SDK call |
 | Rust | Direct A2A server implementations |
 | Go | Direct A2A server implementations |
 
-If none of those fit, implement the three-item contract above in any language that can serve HTTP
-and, ideally, SSE — there's no SDK requirement to run on Nasiko.
+If none fit, implement the three-item contract in any language that serves HTTP and SSE. There's no SDK requirement. See [scaffolding](/adlc/agent-scaffolding) for the template library.
 
-## A compatibility detail you generally don't need to worry about
+## Version compatibility
 
-A2A has evolved across versions, and response shapes differ subtly between them — for example,
-older responses put a task's artifacts directly under `result`, while newer ones wrap them under
-`result.task`. Nasiko's A2A client tries the current JSON-RPC method names and dialect first
-(`message/send`/`message/stream`) and falls back through older forms if an agent responds
-differently, and its response parsing similarly falls back across shapes rather than hard-failing on
-a version mismatch.
+A2A response shapes differ subtly across versions — older responses put artifacts directly under `result`, newer ones under `result.task`. Nasiko's client tries current method names and dialects first, then falls back through older forms rather than hard-failing.
 
-In practice this means: implement against the current `message/send`/`message/stream` methods and
-the task-wrapped response shape shown above, and Nasiko will talk to your agent correctly — you
-don't need to special-case older dialects yourself, and you don't need to worry about exactly which
-A2A client version is calling you.
+Implement against current `message/send`/`message/stream` and the task-wrapped shape above. You don't need to special-case older dialects.
 
-## Where to go next
+## Next
 
 <CardGroup cols={2}>
-  <Card title="Architecture overview" href="/architecture/overview">
-    How the control plane, agent containers, and the proxy fit together.
+  <Card title="Agents in the dashboard" href="/product/agents">
+    Deploy and manage from the web app.
   </Card>
-  <Card title="Orchestrator internals" href="/platform/orchestrator">
-    The ReAct loop behind routed dispatch, and the separate pipeline behind MAF step assignment.
+  <Card title="Routing and flow limits" href="/platform/orchestrator">
+    The ReAct loop and the MAF assignment pipeline.
   </Card>
   <Card title="Sample agents" href="/artifact-registry/sample-agents">
-    Working reference agents you can copy from.
+    Reference agents to copy from.
   </Card>
   <Card title="Scaffolding" href="/adlc/agent-scaffolding">
-    Generate a new agent project from a template.
+    Generate a new project from a template.
   </Card>
 </CardGroup>

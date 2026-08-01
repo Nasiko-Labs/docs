@@ -1,104 +1,70 @@
 ---
-title: "Product overview"
-description: "The Nasiko web app: what it is, who uses it, how to log in, and how navigation adapts to your role."
+title: "Dashboard overview"
+description: "The Nasiko web app — chat with agents, manage them, and watch cost and traces."
 ---
 
-Nasiko's web app is where most people actually experience the platform: a chat window to talk to
-an agent, a dashboard to check what an agent cost this week, a screen to add a teammate to a team.
-This page orients you to that app before the rest of the Product section walks through each screen
-in detail.
+The dashboard is the web UI for your control plane. It ships inside the control plane server, so there's nothing extra to install or deploy, and it reads the same data your agents and API calls do.
 
-## What the UI is
+## Signing in
 
-The web app is a lightweight, no-build interface — plain HTML pages and small, framework-free JS
-components. There's no separate product to install or deploy: it's simply part of the same control
-plane server that deploys your agents, routes chat traffic, and records observability data. When
-you open your Nasiko URL in a browser, you're talking to that one server — there's no extra
-frontend service to stand up, configure, or keep in sync.
+Sign in with a username and password at your control plane URL. GitHub, Google, and Microsoft buttons appear only if your organization has enabled them.
 
-Because the UI ships inside the control plane itself, it's always available the moment the control
-plane is, and it's always looking at the exact same data your agents and API calls are.
+Sessions are stored in a secure cookie — you don't manage a token. When a session expires, the app returns you to the login screen.
 
-## Who it's for
+<Frame>
+  <img src="/product-images/setup/login.png" alt="Nasiko sign-in screen with access key and access secret fields and single sign-on buttons" />
+</Frame>
 
-Anyone with a login can use the web app — what you see just depends on what you're there to do:
+Your own account details — role, status, member since, last login — are on **Profile**, reached from your name at the bottom of the sidebar.
 
-- **Someone who wants an answer** opens the chat screen, asks a question, and gets routed to
-  whichever deployed agent is best suited to handle it — no need to know which agent that is in
-  advance.
-- **Someone watching cost and usage** checks the usage dashboard for token counts and spend,
-  broken down by agent and by model, to keep an eye on the bill.
-- **Someone managing the organization** works from the admin-facing screens — users, teams,
-  departments, who can access which agents — to keep the roster and permissions current.
+## Navigation
 
-Many people move between these day to day; none of it requires touching a command line.
+Everyone with a login sees the same screens: **Orchestrator**, **Agents**, **Your Agents**, **Add Agent**, **Sessions**, **MCP gateway**, **Flows**, **LLM router**, **Builds**, **TokenOps**, **Secrets**, **Settings**, **Access Control**, **Users**, **Departments**, and **Teams**.
 
-## Logging in
+Some screens are view-only unless your role allows more:
 
-You sign in from a login screen with a username and password (and, depending on how your
-organization has configured it, buttons to continue with GitHub, Google, or Microsoft). Signing in
-starts a session, stored in a secure cookie your browser sends automatically — you don't manage a
-token yourself.
+| Screen | Who can act |
+| --- | --- |
+| **Users**, **Access Control** | Users with user-management permission |
+| **Departments**, **Teams** | Administrators (everyone else can view) |
 
-<Note>
-  A "Continue with Microsoft" button only shows up if your organization has actually configured
-  that sign-in option. If it hasn't, you'll just see the username/password form (and whichever
-  other providers are enabled).
-</Note>
+Three screens appear only once your role qualifies:
 
-Sessions expire. If yours does — or if you're not signed in yet — the app redirects you back to
-the login screen instead of showing broken or partial data. Sign in again and you're back where
-you left off.
+| Screen | Visible to | What it controls |
+| --- | --- | --- |
+| **Team Access** | Team or department managers, org admins | Which agents your group can reach |
+| **Agent Runtime** | Administrators | Infrastructure settings for running agents |
+| **Group Mappings** | Top-level administrators | How identity-provider groups map to Nasiko roles |
 
-## Finding your way around
+## Artifact registry
 
-Once you're in, a navigation bar (a sidebar on larger screens, a top bar on smaller ones) lists the
-screens available to you. Everyone with a login sees the same set, including the organization
-screens: **Orchestrator** (the main chat entry point), **Agents**, **Your Agents**, **Add Agent**,
-**Sessions**, **Flows**, **Builds**, **Usage**, **Access Control**, **Users**, **Departments**,
-**Teams**, **Secrets**, and **Settings**.
+Shared agents, skills, and templates live in the artifact registry — a separate app at its own URL. See [Artifact registry](/product/artifact-registry).
 
-What differs by role isn't which items you *see*, but what you can *do* on a few of them — **Users**
-and **Access Control** work fully only if you can manage users, and **Departments**/**Teams** let
-everyone view but restrict creating or editing to an administrator. Rather than hiding the item,
-these pages degrade gracefully for a role that can't act on them (a friendly notice or a disabled
-action, not a broken page).
-
-Three items are the exception and only appear in the nav at all once your role qualifies:
-
-- **Team Access** — if you manage a team or department, or administer the whole organization —
-  lets you review and grant the agents your group can reach.
-- **Agent Runtime** — administrators only — controls infrastructure-level settings for how agents
-  actually run.
-- **Group Mappings** — the organization's top-level administrators only — controls how external
-  identity-provider groups map onto Nasiko roles.
-
-Nothing about this is a separate mode you switch into — it's one navigation bar that simply shows a
-few extra items, and unlocks a few more actions, depending on what your role is allowed to do.
-
-## A separate app
-
-Browsing and publishing shared agents, skills, and templates happens in the artifact registry —
-its own web app at its own URL, separate from the sidebar described above. See
-[Artifact registry](/product/artifact-registry) for details.
-
-## Explore the rest of the Product section
+## Screens
 
 <CardGroup cols={2}>
   <Card title="Chat" icon="messages" href="/product/chat">
-    Talk to a deployed agent directly, or let the orchestrator route your question to the right
-    one — plus session history and multi-agent flow traces.
+    Talk to an agent directly, or let the orchestrator route your question.
   </Card>
   <Card title="Agents" icon="layers" href="/product/agents">
-    Browse the agent catalog, add and deploy agents, and manage the ones you've already deployed.
+    Browse the catalog, deploy agents, manage the ones you own.
+  </Card>
+  <Card title="MCP gateway" icon="plug" href="/product/mcp-gateway">
+    Register MCP servers and control which tools each agent may call.
+  </Card>
+  <Card title="LLM router" icon="route" href="/product/llm-router">
+    Connect a provider and assign a model to each reasoning level.
   </Card>
   <Card title="Observability" icon="chart-line" href="/product/observability">
-    Trace a conversation across every agent hop and track token usage and cost over time.
+    Trace a conversation across every agent hop.
+  </Card>
+  <Card title="TokenOps" icon="coins" href="/product/tokenops">
+    Spend per agent, month by month, with CSV export.
   </Card>
   <Card title="Administration" icon="users" href="/product/administration">
-    Manage users, teams, departments, access control, and other org-wide settings.
+    Users, teams, departments, and access control.
   </Card>
   <Card title="Artifact registry" icon="package" href="/product/artifact-registry">
-    Browse and publish shared agents, skills, and templates in the standalone registry app.
+    Browse and publish shared agents, skills, and templates.
   </Card>
 </CardGroup>

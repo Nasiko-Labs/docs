@@ -1,31 +1,27 @@
 ---
 title: "Running and chatting locally"
-description: "Build, run, and chat with your agent as a plain container before it ever touches a cluster."
+description: "Build, run, and chat with your agent before it touches a cluster."
 ---
 
-An agent speaks A2A the moment it starts — you don't need a cluster, or even a connected CLI, to
-build it, run it, and have a full conversation with it. Test everything locally first, then deploy
-once you're happy with the result.
+An agent speaks A2A the moment it starts. You don't need a cluster, or even a connected CLI, to run it and hold a full conversation with it.
 
 <Steps>
   <Step title="Build the image">
     ```sh
-    nasiko build                    # build from the current directory
+    nasiko build                    # current directory
     nasiko build --tag my-agent:v2  # custom tag
-    nasiko build ./path/to/agent    # build a different directory
+    nasiko build ./path/to/agent
     ```
 
-    `nasiko build` reads the project's `Dockerfile` to build the image, and its `AgentCard.json`
-    for the `name:version` tag.
+    Reads the `Dockerfile` to build, and `AgentCard.json` for the `name:version` tag.
   </Step>
   <Step title="Run it">
     ```sh
     nasiko run                      # build + start on port 8000
-    nasiko run --port 8080          # custom port
+    nasiko run --port 8080
     ```
 
-    `nasiko run` does the same build as above, then starts the container. Your agent is now live
-    at `http://localhost:8000`, speaking A2A over plain HTTP.
+    Your agent is live at `http://localhost:8000`, speaking A2A over HTTP.
   </Step>
   <Step title="Chat with it">
     <CodeGroup>
@@ -40,50 +36,41 @@ once you're happy with the result.
     ```
     </CodeGroup>
 
-    All three talk A2A directly to your running container — no control plane involved. Interactive
-    mode holds a running conversation in your terminal; one-shot sends a single message and prints
-    the response; `--tui` opens a full-screen `ratatui` chat interface.
+    All three talk A2A directly to your container — no control plane involved.
   </Step>
 </Steps>
 
 ## Resuming a conversation
 
-Every conversation is tracked by session, keyed to the A2A `contextId` your agent returns. List and
-resume past sessions instead of starting fresh each time:
+Conversations are tracked by session, keyed to the A2A `contextId` your agent returns.
 
 ```sh
-nasiko sessions                                        # list local chat sessions
-nasiko chat http://localhost:8000 --resume <session-id> # continue a previous conversation
-nasiko history <session-id>                             # show the message history for a session
+nasiko sessions                                          # list local sessions
+nasiko chat http://localhost:8000 --resume <session-id>   # continue a conversation
+nasiko history <session-id>                               # show message history
 ```
 
-This is useful while you're iterating on multi-turn behavior — resume the same session after a code
-change and confirm the agent still handles the conversation correctly, without replaying every turn
-by hand.
+Useful for iterating on multi-turn behavior — resume the same session after a code change instead of replaying every turn.
 
 ## Chatting once you're deployed
 
-The same `chat` command works against a deployed agent or the platform's routing engine once you've
-[connected to a cluster](/adlc/deploy) — the target just changes from a local URL
-to an agent name, a UUID, or `orchestrator`:
+The same command works against a deployed agent or the routing engine once you've [connected to a cluster](/adlc/deploy):
 
 ```sh
-nasiko chat "hello"                        # the routing engine, on the active cluster
-nasiko chat my-agent "hi"                  # a specific deployed agent, by name
-nasiko chat --agent my-agent "hi"          # same, with an explicit flag
+nasiko chat "hello"                  # the routing engine
+nasiko chat my-agent "hi"            # a specific deployed agent
+nasiko chat --agent my-agent "hi"    # same, explicit flag
 ```
 
-A lone argument containing whitespace is treated as the message, not the target — so `nasiko chat
-"hello"` talks to the routing engine, while `nasiko chat my-agent "hello"` talks to `my-agent`
-directly.
+A lone argument containing whitespace is the message, not the target.
 
-## Where to go next
+## Next
 
 <CardGroup cols={2}>
   <Card title="Deploy and manage" href="/adlc/deploy">
-    Push your agent to a cluster and keep it running in production.
+    Push your agent to a cluster.
   </Card>
   <Card title="A2A agents and frameworks" href="/adlc/a2a-agents">
-    The protocol details behind every `chat` call.
+    The protocol behind every `chat` call.
   </Card>
 </CardGroup>

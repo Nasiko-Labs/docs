@@ -1,135 +1,120 @@
 ---
 title: "Observability"
-description: "Review past conversations, trace every agent hop behind an answer, follow a multi-agent flow step by step, and track token usage and cost — all in the web UI."
+description: "Review past conversations, trace every agent hop, and follow a multi-agent flow."
 ---
 
-Every conversation you have through [Chat](/product/chat) leaves a trail: a saved session you can
-reopen, a trace of every hop that went into the answer, and — when more than one agent was
-involved — a flow you can step through hop by hop. The web UI gives you four screens over that
-trail: **Sessions**, **Session Trace**, **Flows**, and **Usage**. This page walks through what you
-see on each one.
+Three screens cover what happened: **Sessions**, **Session Trace**, and **Flows**. Token spend lives on the [TokenOps dashboard](/product/tokenops).
 
-A quick note on vocabulary, since it explains why these screens are organized the way they are: a
-**session** is one query, grouped by that query's own conversation context — it's the row you see
-in the session list. A **trace** is every hop that went into answering that one query — the
-agent's own LLM calls, plus any agent-to-agent calls it made along the way — linked together
-because each hop shares the same underlying identifier. A **flow** is that same hop chain, viewed
-as a step-by-step timeline instead of a session's message history. That's why Session Trace and
-Flow Detail below end up showing much the same information from two different angles. For how
-that linkage actually works under the hood — instrumentation, `traceparent` propagation, the
-Tempo/Loki backends — see [Observability internals](/platform/observability); this page sticks to
-what you see and click.
+| Term | What it is |
+| --- | --- |
+| **Session** | One query, grouped by its conversation context — a row in the session list |
+| **Trace** | Every hop behind that query: the agent's LLM calls plus any agent-to-agent calls |
+| **Flow** | The same hop chain shown as a step-by-step timeline |
 
-## Sessions: your chat history
+Session Trace and Flow Detail show much the same data from two angles.
 
-**Sessions** is your list of past conversations, whether they started in Orchestrator or in a
-direct agent [Chat](/product/chat). Each row shows:
+## Sessions
 
-- A colored avatar with the agent's initial, and the agent's name (or **Orchestrator** if the
-  conversation wasn't tied to one specific agent).
-- A message count badge and a short preview of the last message.
-- How long ago the conversation was last active (for example *"2h ago"*), with rows grouped under
-  headers — **Today**, **Yesterday**, **This Week**, **Older**.
+Your past conversations, from Orchestrator or direct [Chat](/product/chat). Each row shows:
 
-A search box at the top filters the list by agent name or message text as you type. A **New
-Chat** button starts a fresh conversation, and a trash icon on each row lets you remove that
-session from your history.
+- The agent's name and initial avatar, or **Orchestrator** if no single agent handled it
+- A message count and a preview of the last message
+- Time since last active, grouped under **Today**, **Yesterday**, **This Week**, **Older**
 
-Clicking a session opens its full message thread in Chat, picking up right where the conversation
-left off. From there, an assistant reply that's finished streaming carries a small trace icon next
-to its **Copy** button (see [Chat](/product/chat)) — that's the doorway into the next screen: click
-it to open that specific reply's full hop-by-hop trace in Session Trace.
+Search filters by agent name or message text. **New Chat** starts fresh; the trash icon removes a session.
 
-## Session trace: every hop behind one answer
+Clicking a session reopens the thread in Chat. A finished assistant reply carries a trace icon next to **Copy** — that opens its full trace.
 
-Session Trace shows the complete trace for a single query: every span that contributed to the
-answer, in order, including nested agent-to-agent calls. At the top, a stats row summarizes the
-whole trace:
+<Frame>
+  <img src="/product-images/recent-sessions/session-transcript.png" alt="Recent sessions list beside a reopened conversation thread with a follow-up input" />
+</Frame>
 
-- **Spans** — the total number of spans recorded.
-- **Duration** — total wall-clock time, shown in milliseconds or seconds.
-- **Tokens** — combined input and output tokens across every span in the trace.
-- **Cost** — the dollar cost of the trace, when cost data is available.
-- **Session** — the underlying session identifier, shown when present.
+## Session trace
 
-Below that is the span list itself, indented to show nesting — a top-level call with the
-agent-to-agent or LLM calls it triggered indented underneath it. Each span shows its name, the
-model it used (for LLM calls), that span's own token count, and its duration; a red dot marks a
-span that errored. Click any span to expand a detail panel with its kind, span ID, status, start
-and end times, model, and the input/output token split.
+Every span behind a single query, in order, including nested agent-to-agent calls.
+
+The stats row shows **Spans**, **Duration**, **Tokens** (input + output), **Cost** when available, and the **Session** ID.
+
+The span list is indented to show nesting. Each span shows its name, model for LLM calls, token count, and duration; a red dot marks an error. Click a span for its kind, span ID, status, start and end times, model, and input/output token split.
 
 <Note>
-  If you open a trace right after a conversation finishes, you may briefly see a message that the
-  trace isn't available yet. Traces can take a few seconds to finish indexing — give it a moment
-  and refresh.
+  Traces take a few seconds to index. Opening one immediately after a conversation may say it isn't available yet — refresh.
 </Note>
 
-## Flows: the multi-agent call chain
+## Flows
 
-**Flows** lists every multi-agent interaction the platform has recorded — cases where answering a
-query involved more than one agent call — as a searchable, sortable table. Each row shows:
+Every multi-agent interaction, as a searchable sortable table:
 
-- The **flow ID**, linking to that flow's detail page.
-- The **query** that started the flow.
-- The originating **agent**.
-- A **status** badge — completed, running, failed, or timeout.
-- **Calls** — how many agent invocations happened in the flow.
-- **Duration** and when the flow **started**.
+| Column | Detail |
+| --- | --- |
+| **Flow ID** | Links to the detail page |
+| **Query** | What started the flow |
+| **Agent** | The originating agent |
+| **Status** | Completed, running, failed, or timeout |
+| **Calls** | Agent invocations in the flow |
+| **Duration**, **Started** | Timing |
 
-The search box filters by agent name or query text.
+Search filters by agent name or query text.
 
 ### Flow detail
 
-Opening a flow shows a row of summary cards — **Status**, **Root Agent**, **Duration** (or *"In
-progress"* if the flow hasn't finished), **Started**, **Steps**, and the originating **Query** —
-followed by a **Trace** section that lays out each step as a timeline. Every step shows:
+Summary cards for **Status**, **Root Agent**, **Duration**, **Started**, **Steps**, and **Query**, then a **Trace** timeline. Each step shows:
 
-- A status badge for that step.
-- The **agent** it called, with a short preview of what was sent to it (hover to see the full
-  text).
-- A horizontal bar positioned and sized to show when that step ran and how long it took relative
-  to the whole flow, so you can see at a glance which hop was the slow one.
-- That step's own duration.
-
-If a flow has no recorded agent calls, this section just says so rather than showing an empty
-timeline.
+- A status badge
+- The agent it called, with a preview of what was sent (hover for the full text)
+- A bar sized and positioned to show when it ran relative to the whole flow — the slow hop is visible at a glance
+- Its duration
 
 <Note>
-  Flows relate closely to [multi-agent workflows](/platform/maf) — if you're designing a fixed,
-  multi-step sequence across agents rather than reviewing one that already ran, that guide is the
-  place to start.
+  Designing a fixed multi-step sequence rather than reviewing one that ran? See [multi-agent workflows](/platform/maf).
 </Note>
 
-## Usage: tokens and cost
+## Tokens and cost
 
-**Usage** is the cost and consumption dashboard. Four stat cards at the top summarize your recent
-activity:
+Token spend has its own screen — see [TokenOps](/product/tokenops) for per-agent cost, operations, agent hours, and latency by month, with CSV export.
 
-- **Total Tokens**, with input/output split shown underneath.
-- **Total Cost**, labeled with the period it covers (30 days by default).
-- **Requests**, with the average latency shown underneath.
-- **Avg Latency** per request.
+Cost also appears inline: a session trace's stats row shows that query's token count and dollar cost, so you can attribute one expensive answer without leaving the trace.
 
-Below the stat cards, a **Daily Usage** bar chart plots total tokens per day over the last seven
-days, including days with no activity, so you can spot a spike or a quiet stretch at a glance.
+## API
 
-Underneath the chart, two tabs — **By Agent** and **By Model** — switch a searchable, paginated
-table between the two breakdowns: request count, tokens, cost, and average latency, grouped either
-by which agent handled the request or by which model answered it.
+Everything these screens show is available under `/api/observability/*`:
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `GET` | `session/list` | Sessions for an agent, paginated by time range |
+| `GET` | `session/{id}` | Full drill-down for one session |
+| `GET` | `trace/{id}` | One trace, every span |
+| `GET` | `span/{trace_id}/{span_id}` | One span's detail |
+| `GET` | `agent/{id}/stats` | Aggregate call, latency, and success stats |
+| `GET` | `finops/dashboard` | Cost dashboard data — backs [TokenOps](/product/tokenops) |
+| `GET` | `finops/insights` | LLM-generated narrative over the cost data |
+| `GET` | `agents/{ref}/logs`, `agents/{ref}/logs/stream` | Log lines, with a streaming variant |
+
+## Configuration
+
+Agents are traced with no code changes — every deployment gets OpenTelemetry configuration injected into its spec, so instrumentation starts at boot and `traceparent` propagates across agent-to-agent hops automatically. If you run your own control plane, these are the knobs:
+
+| Env var | Purpose |
+| --- | --- |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | Where agents and the control plane export traces |
+| `OTEL_*` (protocol, headers, sample ratio) | Exporter tuning, injected into every deployment |
+| `OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT` | Whether prompt and completion *text* is captured. Off still gives token metrics without raw content. |
+| `TEMPO_URL` | Trace query endpoint |
+| `LOKI_URL` | Log query endpoint |
 
 ## Related
 
 <CardGroup cols={2}>
   <Card title="Chat" icon="messages" href="/product/chat">
-    Where sessions and traces come from — talking to the orchestrator or a specific agent.
+    Where sessions and traces come from.
   </Card>
   <Card title="Agents" icon="layers" href="/product/agents">
-    Browse the agent catalog and manage the agents you've deployed.
+    Browse and manage deployed agents.
   </Card>
-  <Card title="Observability internals" icon="chart-line" href="/platform/observability">
-    The instrumentation, trace/session/flow data model, and API surface behind these screens.
+  <Card title="TokenOps dashboard" icon="coins" href="/product/tokenops">
+    Spend per agent, month by month.
   </Card>
   <Card title="Multi-agent workflows" icon="diagram-project" href="/platform/maf">
-    Design a fixed, multi-step sequence across agents instead of reviewing one that already ran.
+    Design a fixed multi-step sequence.
   </Card>
 </CardGroup>

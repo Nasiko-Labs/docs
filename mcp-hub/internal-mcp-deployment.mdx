@@ -1,42 +1,28 @@
 ---
 title: "Deploy your own MCP server"
-description: "Upload your MCP server's source and have Nasiko build, harden, and deploy it as a managed connector — the same pipeline as deploying an agent."
+description: "Upload your MCP server's source and have Nasiko build, harden, and deploy it as a connector."
 ---
 
-If you have source code for an MCP server rather than a URL to an already-running one, Nasiko can
-build and deploy it for you: upload a `.zip` or point at a GitHub repo, and the platform builds a
-container image, deploys it, waits for it to come up healthy, and registers it as a connector —
-the same on-ramp agent source uploads already use, just for MCP servers instead of agents. Once
-it's running, it behaves like any other connector: shareable, permissioned per agent, and callable
-through the [gateway](/mcp-hub/overview) like every other tool.
+Upload a `.zip` or point at a GitHub repo, and the platform builds a container image, deploys it hardened, waits for a healthy handshake, and registers it as a connector. From then on it behaves like any other connector — shareable, permissioned per agent, callable through the [gateway](/mcp-hub/overview).
 
-If a server you want to use is already running somewhere reachable, you don't need this — see
-[Connect an external MCP server](/mcp-hub/external-mcp-server) instead.
+Already have a running server? See [Connect an external MCP server](/mcp-hub/external-mcp-server).
 
-## What your server needs to provide
+## What your server must provide
 
-- **A `Dockerfile` at the root of your source.** This is the only hard requirement — a missing
-  `Dockerfile`, or one with no `FROM` line, is rejected before a build is ever attempted.
-- **Read the `$PORT` environment variable and bind `0.0.0.0:$PORT`.** The platform assigns the
-  port (8080 by default) and expects your server to listen on it.
-- **Serve MCP over Streamable HTTP at the `/mcp` path.** This is the convention the platform uses
-  to reach your server once it's deployed.
+- **A `Dockerfile` at the source root.** The only hard requirement — a missing `Dockerfile`, or one with no `FROM`, is rejected before any build.
+- **Read `$PORT` and bind `0.0.0.0:$PORT`.** The platform assigns the port (8080 by default).
+- **Serve MCP over Streamable HTTP at `/mcp`.**
 
-Everything else — whether your project looks like a Python or Node MCP server, which SDK you used
-— is detected only as a diagnostic hint, never enforced. An unrecognized project layout still
-proceeds to a real build attempt; the actual correctness gate is a live handshake performed after
-deploy (below), matching how the wider MCP ecosystem verifies servers.
+Language and SDK detection is a diagnostic hint only, never enforced. An unrecognized layout still gets a real build attempt — the correctness gate is the live handshake after deploy.
 
 <Note>
-  The zip you upload is capped at 50 MB by default. If your server needs private-repo access, use
-  the GitHub path instead — it clones over HTTPS from an allow-listed set of hosts and can use your
-  connected GitHub account for private repositories.
+  Uploaded zips are capped at 50 MB by default. For private-repo access, use the GitHub path — it clones over HTTPS from allow-listed hosts and can use your connected GitHub account.
 </Note>
 
 ## Upload it
 
 <CodeGroup>
-```bash CLI — from a local zip
+```bash CLI — local zip
 nasiko mcp connector upload \
   --name my-mcp-server \
   --zip ./my-mcp-server.zip \
@@ -44,7 +30,7 @@ nasiko mcp connector upload \
   --env "STRIPE_KEY=sk_live_..."
 ```
 
-```bash CLI — from a GitHub repo
+```bash CLI — GitHub repo
 nasiko mcp connector upload-github \
   --name my-mcp-server \
   --github-url https://github.com/yourorg/my-mcp-server \
@@ -61,13 +47,9 @@ POST /api/mcp/connectors/upload
 ```
 </CodeGroup>
 
-`--env` (repeatable) sets secrets the uploaded server itself reads at runtime — they're encrypted
-at rest and injected into the container only at deploy time. This is distinct from a connector's
-own credential (`nasiko mcp credential set`), which authenticates the *gateway* to the server —
-not the server to whatever third-party API it wraps.
+`--env` (repeatable) sets secrets your server reads at runtime — encrypted at rest, injected at deploy time. This is distinct from a connector *credential* (`nasiko mcp credential set`), which authenticates the gateway to your server, not your server to the API it wraps.
 
-Both commands return immediately with a connector ID and a build ID; the build itself runs
-asynchronously:
+Both commands return immediately; the build runs asynchronously:
 
 ```json
 {
@@ -78,8 +60,7 @@ asynchronously:
 ```
 
 <Note>
-  Uploading a server requires the same permission as deploying an agent — any authenticated user,
-  by default (see [access control overview](/onboarding/acl/overview)).
+  Uploading requires the same permission as deploying an agent — any authenticated user by default. See [access control](/onboarding/acl/overview).
 </Note>
 
 ## Watch it build
@@ -94,63 +75,30 @@ GET /api/mcp/connectors/{id}/build-status
 GET /api/mcp/connectors/{id}/build-logs?tail=200
 ```
 
-`build-status` reports one of `pending`, `building`, `running` (live and serving tool calls), or
-`failed` — poll it rather than expecting a stream; there's no push notification for build
-completion. `logs` returns the container's actual stdout/stderr for debugging a failed or slow
-build.
+`build-status` reports `pending`, `building`, `running`, or `failed`. Poll it — there's no push notification. `logs` returns the container's stdout and stderr.
 
 ## What happens during the build
 
-1. **Source acquired** — your zip is extracted, or the GitHub repo is cloned.
-2. **Validation** — the `Dockerfile` requirement is checked; your project's language/framework is
-   detected as a hint only, never a rejection.
-3. **Image build** — a container image is built from your `Dockerfile`.
-4. **Hardened deploy** — the container runs with OS-level hardening applied specifically to
-   uploaded, third-party code: a fixed non-root user, a read-only root filesystem, every Linux
-   capability dropped, and no privilege escalation. It's placed on a network segment dedicated to
-   uploaded MCP servers, separate from agent traffic and the platform's own database and cache —
-   and its network policy allows it to receive tool calls but not to initiate outbound
-   agent-to-agent traffic of its own.
-5. **Readiness check** — the platform calls `tools/list` against your server directly, retrying
-   for up to a few minutes to absorb a slow cold start. The connector only flips to `running` — and
-   only becomes visible to anyone — once this handshake actually succeeds.
-6. **Tool catalog sync** — every tool your server reports is recorded so permission screens and
-   the catalog can show them instantly; any tool (or the server itself) missing a description gets
-   one generated automatically.
+1. **Source acquired** — the zip is extracted, or the repo is cloned.
+2. **Validation** — the `Dockerfile` requirement is checked. Language detection is a hint, never a rejection.
+3. **Image build** — built from your `Dockerfile`.
+4. **Hardened deploy** — a fixed non-root user, read-only root filesystem, all Linux capabilities dropped, no privilege escalation. Placed on a network segment dedicated to uploaded MCP servers, separate from agent traffic and the platform's database and cache. Its network policy allows receiving tool calls but not initiating outbound agent-to-agent traffic.
+5. **Readiness check** — the platform calls `tools/list` against your server, retrying for a few minutes to absorb a cold start. The connector flips to `running` — and becomes visible — only once this succeeds.
+6. **Tool catalog sync** — every reported tool is recorded so permission screens show them instantly. Missing descriptions are generated automatically.
 
-If the build or the readiness check fails on a **first-time** upload, the connector record is
-removed entirely so you can re-upload under the same name without a conflict. If a connector had
-already deployed successfully before, a failed re-upload instead marks it `failed` while keeping
-its history and existing grants intact — nothing about who it's shared with is lost, and you can
-try uploading again.
+If a **first-time** upload fails at build or readiness, the connector record is removed so you can re-upload under the same name. If the connector had deployed successfully before, a failed re-upload marks it `failed` while keeping its history and grants intact.
 
 ## Self-heal
 
-Containers move — a restart, a redeploy, a host reboot can all change the address a connector's
-container is reachable at. Because an uploaded server's container was resolved by the platform
-itself (not typed in by a user, unlike an external URL connector), the gateway is allowed to trust
-and refresh it: if a tool call fails to even connect, the gateway looks up the container's current
-live address and retries once before giving up. This happens on demand, only after a real failure
-— never as a background poll — so a moved container recovers on its next call without anyone
-having to notice or intervene.
+A restart, redeploy, or host reboot can change a container's address. Because the platform resolved that address itself — unlike a user-typed external URL — the gateway is allowed to refresh it: if a tool call fails to connect, it looks up the current address and retries once. On demand after a real failure, never as a background poll.
 
 ## Once it's running
 
-An uploaded server is a connector like any other from this point on — share it, restrict which
-agents can use it, and set per-tool rules the same way you would for a connector you registered by
-URL:
-
-- [Connect an external MCP server](/mcp-hub/external-mcp-server) — sharing, and per-user
-  credentials layered on top (rarely needed for an uploaded server, since the gateway calls it
-  directly, but the same sharing commands apply)
-- [Per-agent tool permissions](/onboarding/acl/user-agent-mcp) — enable/disable the connector per
-  agent, and set allow/ask/block rules per tool
-- [Artifact registry](/artifact-registry/overview) — publish your MCP server's source as a reusable
-  artifact so others on the platform can build from it too
+- [Connect an external MCP server](/mcp-hub/external-mcp-server) — sharing commands apply the same way
+- [Per-agent tool permissions](/onboarding/acl/user-agent-mcp) — enable per agent, set per-tool rules
+- [Artifact registry](/artifact-registry/overview) — publish your source as a reusable artifact
 
 ## Related
 
-- [MCP overview](/mcp-hub/overview) — the gateway, the delegation token, and the request flow
-  every deployed connector is reached through
-- [Architecture overview](/architecture/overview) — how build workers and the container
-  runtime fit into the platform as a whole
+- [MCP overview](/mcp-hub/overview) — the gateway and delegation token
+- [Agent runtime and deployment](/platform/agent-registry) — how builds are queued, retried, recovered

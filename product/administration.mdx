@@ -1,160 +1,129 @@
 ---
 title: "Administration"
-description: "Manage per-agent secrets, platform settings, and — for roles that include organization management — users, teams, departments, and access."
+description: "Manage agent secrets, platform settings, users, teams, departments, and access."
 ---
 
-Administration covers the screens where you configure an agent's credentials, adjust
-platform-wide settings, and manage who belongs to your organization and what they can reach.
-Some of these — **Secrets** and **Settings** — are available to everyone with a login. The rest
-appear in the navigation only once your role includes organization or infrastructure management,
-so what you see here depends on who you are. This page walks through each screen as it actually
-appears; for the underlying role model, see [Access control overview](/onboarding/acl/overview).
+**Secrets** and **Settings** are available to everyone with a login. The organization screens appear only once your role includes org or infrastructure management. For the role model, see [access control](/onboarding/acl/overview).
 
 ## Secrets
 
-The **Secrets** screen lists the credentials attached to an agent — API keys, database
-connection strings, third-party tokens — as key/value pairs the agent reads from its container
-environment.
+Lists an agent's credentials — API keys, connection strings, tokens — as key/value pairs the agent reads from its container environment.
 
-Each row shows the secret's **Key** and when it was created. The **Value** column never displays
-the actual secret — it always renders as a masked placeholder, both in the table and while typing
-it into the form, and there's no way to reveal a previously-saved value from this screen. Secrets
-are write-only from the UI's point of view: you can set them and overwrite them, but you can't
-read one back.
+Each row shows the **Key** and creation date. The **Value** is always masked, in the table and while typing. Secrets are write-only from the UI: you can set and overwrite them, never read one back.
 
-To add a secret, click **Add Secret**, enter a **Key** (uppercase letters, numbers, and
-underscores — `API_KEY` style) and a **Value**, then save. To remove one, click **Delete** next to
-it and confirm.
+The screen is titled **API Secrets & Credentials**; with nothing stored yet it shows **No secrets configured**.
+
+<Frame>
+  <img src="/product-images/settings/api-secrets.png" alt="API Secrets and Credentials screen with an Add secret button and a 'No secrets configured' empty state" />
+</Frame>
+
+**Add secret** takes a **Secret name** (uppercase, numbers, underscores — `MY_API_KEY` style) and a **Secret value**, then **Save**. **Delete** removes one after confirmation.
+
+<Frame>
+  <img src="/product-images/settings/add-secret.png" alt="Add secret dialog with Secret name and Secret value fields and Cancel and Save buttons" />
+</Frame>
 
 <Note>
-  Saving a secret here updates what's stored, encrypted, for the agent — it doesn't push the new
-  value into an already-running container by itself. The new value takes effect the next time the
-  agent is deployed or redeployed. See [Managing your agent's
-  secrets](/platform/secret-manager/user-secrets) for how that applies across restarts and scaling events,
-  and [Secret management overview](/platform/secret-manager/overview) for how encryption at rest works.
+  Saving a secret updates what's stored. It doesn't push the value into a running container — that happens on the next deploy or restart. See [managing agent secrets](/platform/secret-manager/user-secrets) and [secret management](/platform/secret-manager/overview).
 </Note>
 
 ## Settings
 
-The **Settings** screen holds platform-wide configuration, organized into three tabs:
+Three tabs of platform-wide configuration:
 
-- **General** — the instance name shown in the UI, the default model used for chat, and the
-  maximum output tokens allowed per request.
-- **Models** — the Anthropic API key used for Claude model routing, and an optional OpenAI API
-  key.
-- **Registry** — the OCI registry URL, username, and password used for pulling agent images.
+| Tab | Contains |
+| --- | --- |
+| **General** | Instance name, default chat model, max output tokens per request |
+| **Models** | Anthropic API key for Claude routing, optional OpenAI key |
+| **Registry** | OCI registry URL, username, and password for pulling agent images |
 
-API keys and the registry password are entered through masked, password-style fields — like
-secrets, they're stored encrypted and the screen doesn't show you a previously-saved value; you
-only ever type in a new one. Changes on any tab apply once you click **Save Changes** at the
-bottom of the screen.
+API keys and the registry password use masked fields — stored encrypted, never displayed back. Click **Save Changes** to apply.
 
 ## Organization and access screens
 
-If your role includes managing people, agent access, or infrastructure, additional screens show
-up alongside Secrets and Settings. Which ones you see — and what you can do on them — depends on
-your role:
-
-| Screen | Who it's for | What it unlocks |
+| Screen | Who sees it | What it does |
 | --- | --- | --- |
-| **Access Control** | Organization administrators | Org-wide stats, health warnings, and a shortcut to place unassigned members into a department/team |
-| **Users** | Organization administrators | Create, edit, deactivate, and delete user accounts; assign roles and placement |
-| **Departments** | Team leads and above can view; org administrators manage | Browse departments and their rollups; create/edit is reserved for top-level administrators |
-| **Teams** | Team leads and above can view; org administrators manage | Browse teams and their rollups; create/edit is reserved for top-level administrators |
-| **Team Access** | Team leads, department managers, and administrators | Review and adjust the role and team placement of people in your own team or department |
-| **Agent Runtime** | Administrators | View and manage the platform's underlying compute clusters |
-| **Group Mappings** | Top-level administrators | Map identity-provider groups to Nasiko roles, teams, and departments |
+| **Access Control** | Org administrators | Org-wide stats, health warnings, placement shortcut for unassigned members |
+| **Users** | Org administrators | Create, edit, deactivate, and delete accounts; assign roles and placement |
+| **Departments** | Team leads and above view; org admins manage | Browse departments and rollups |
+| **Teams** | Team leads and above view; org admins manage | Browse teams and rollups |
+| **Team Access** | Team leads, department managers, admins | Adjust role and placement within your own team or department |
+| **Agent Runtime** | Administrators | View and manage compute clusters |
+| **Group Mappings** | Top-level administrators | Map identity-provider groups to roles, teams, departments |
 
-The exact roles are `admin`, `department_manager`, `team_lead`, `team_member`, and `member` — see
-[Access control overview](/onboarding/acl/overview) for the full hierarchy, and how the platform-wide
-**superuser** flag (independent of role) unlocks a handful of these screens outright regardless of
-role.
+Roles are `admin`, `department_manager`, `team_lead`, `team_member`, and `member`. The separate **superuser** flag unlocks several of these screens regardless of role — see [access control](/onboarding/acl/overview).
 
 ### Access Control
 
-Access Control is a dashboard view of the whole organization: counts of admins, departments,
-teams, users, and agents across the top, followed by warning cards for anything that needs
-attention (for example, users with no team or department). Below that, a **Departments** table
-rolls up each department's manager, team count, member count, and agent count, and an
-**Unassigned Members** table lists users with no team or department yet.
+An org-wide dashboard: counts of admins, departments, teams, users, and agents, then warning cards for anything needing attention (users with no team or department, for example). Below, a **Departments** table rolls up each department's manager, team, member, and agent counts, and **Unassigned Members** lists users with no placement.
 
-From the unassigned members table, click the folder icon next to a user to open an **Assign
-department / team** dialog — pick a department, optionally narrow to one of its teams, and save.
-Leaving both fields empty clears the user's placement entirely.
+The folder icon next to an unassigned user opens **Assign department / team** — pick a department, optionally narrow to a team, save. Leaving both empty clears their placement.
 
-If you land on this screen without the role to use it, it shows a plain error rather than any
-data — there's no softened "not available" message here the way there is on Users.
+<Frame>
+  <img src="/product-images/access-control/overview.png" alt="Access control Overview with admin, department, team, user, and agent counts, warning tiles for unassigned users and a department with no manager, a Departments table, and an Unassigned members table" />
+</Frame>
+
+Without the role to use this screen, it shows a plain error rather than data.
 
 ### Users
 
-Users lists every account on the platform, with columns for name/email, role, department/team,
-active status, and last login. A filter bar lets you narrow the list by role, department, or
-status, and the search box matches on name/username/email.
+Every account, with name/email, role, department/team, active status, and last login. Filter by role, department, or status; search matches name, username, or email.
 
-From here you can:
+<Frame>
+  <img src="/product-images/access-control/all-users.png" alt="All users table listing members and admins with role, department, team, last active, and status columns, plus Role, Department, and Team filters" />
+</Frame>
 
-- **Add User** — enter a username, email, optional display name, and a role. There's no password
-  to set: the platform generates a one-time **access key** and **access secret** on creation,
-  shown once in the dialog immediately afterward (with copy buttons) — that access secret doubles
-  as the user's login password, and the platform can't show it to you again after you close the
-  dialog.
-- **Edit** — update username, email, or display name, or set a new password (leave it blank to
-  keep the current one).
-- **Assign department/team** (the folder icon) — the same placement dialog described under Access
-  Control.
-- **Activate / Deactivate** — toggle whether the account can sign in.
-- **Delete** — permanently remove the account.
-- **Sync Azure AD Directory** — trigger a directory sync if your organization has one configured;
-  a toast summarizes how many departments, teams, and users were created versus already present.
+**Unassigned** and **Admins** are the same table pre-filtered — users with no placement, and accounts holding the admin role.
+
+<Frame>
+  <img src="/product-images/access-control/unassigned-users.png" alt="Unassigned users table showing four members with 'not assigned' in the department and team columns" />
+</Frame>
+
+<Frame>
+  <img src="/product-images/access-control/admins.png" alt="Admins table listing two admin accounts scoped to all departments and all teams" />
+</Frame>
+
+- **Add User** — username, email, optional display name, role. No password: the platform generates a one-time **access key** and **access secret**, shown once in the dialog with copy buttons. The secret is the user's login password and can't be shown again.
+- **Edit** — username, email, display name, or a new password (blank keeps the current one)
+- **Assign department/team** (folder icon) — the same placement dialog as above
+- **Activate / Deactivate** — toggle sign-in
+- **Delete** — permanently remove the account
+- **Sync Azure AD Directory** — trigger a directory sync; a toast reports how many departments, teams, and users were created
 
 <Note>
-  Users is reserved for organization administrators and above. If your role doesn't reach that
-  level, the screen loads normally but tells you plainly that full user management "requires
-  platform administrator access," and points you to Team Access instead for managing roles within
-  your own team or department.
+  Without administrator access, this screen loads but says full user management requires it, and points you to Team Access.
 </Note>
 
 ### Departments and Teams
 
-Departments and Teams are each a simple roster screen: a searchable table (name, manager/lead,
-team or member counts, and agent count) plus stats at the top. Every team belongs to a department,
-so creating one requires picking a department from a dropdown.
+Roster screens: a searchable table (name, manager or lead, team or member counts, agent count) plus stats. Every team belongs to a department, so creating one requires picking a department.
 
-Anyone at team-lead level or above can browse these lists. Creating a new department or team, or
-editing one that already exists, is reserved for the organization's top-level administrators —
-everyone else sees the roster but not the create/edit controls taking effect.
+Team leads and above can browse. Creating or editing is reserved for top-level administrators.
+
+<Frame>
+  <img src="/product-images/access-control/departments.png" alt="Departments screen with a Create department button and a table row for Engineering showing its team chip, no manager assigned, and member and agent counts" />
+</Frame>
+
+<Frame>
+  <img src="/product-images/access-control/teams.png" alt="Teams screen with a Create team button and a table row for Nasiko team under Engineering showing no lead assigned and zero agents and members" />
+</Frame>
 
 ### Team Access
 
-Team Access is the scoped version of Users, for people who manage a team or department rather than
-the whole organization. It shows only the users in your own team (or, for a department manager,
-your whole department) alongside your role, with an **Edit Access** action per person to change
-their role and — if you're an administrator or department manager — reassign their team.
+The scoped version of Users. Shows only your own team — or your whole department, for a department manager — with **Edit Access** per person to change their role and, for admins and department managers, reassign their team.
 
-You can only ever grant a role below your own, never at or above it — a team lead promoting
-someone can hand them team member or team lead, never department manager or admin.
+You can only grant a role below your own. A team lead can hand out team member or team lead, never department manager or admin.
 
 ### Agent Runtime
 
-Agent Runtime shows the compute clusters backing your deployed agents — provider (DigitalOcean,
-AWS, Azure), region, node size, and status (from provisioning through ready to destroyed), with a
-live provisioning log you can open per cluster and a **Destroy Cluster** action once it's no
-longer transitional.
+The compute clusters backing your agents: provider (DigitalOcean, AWS, Azure), region, node size, and status from provisioning through ready to destroyed. Open a live provisioning log per cluster, or **Destroy Cluster** once it's no longer transitional.
 
 ### Group Mappings
 
-Group Mappings connects your identity provider's security groups to Nasiko roles. Each mapping
-ties an external group's object ID to a role, a department, a team, or any combination — at least
-one of the three has to be set. New logins through that identity provider are placed
-automatically according to the highest-ranked matching mapping. The same **Sync Azure AD
-Directory** action available on Users is here too, for pulling directory structure in directly
-rather than waiting for people to log in.
+Connects identity-provider security groups to Nasiko roles. Each mapping ties an external group's object ID to a role, a department, a team, or any combination — at least one is required. New logins are placed by the highest-ranked matching mapping. **Sync Azure AD Directory** is available here too.
 
-## Where to go from here
+## Doing this from the CLI
 
-If you'd rather script any of this instead of clicking through it, the CLI and API cover the same
-ground — see [User and org management](/onboarding/acl/user-management) for creating users and
-organizing them into teams and departments, and [Managing your agent's
-secrets](/platform/secret-manager/user-secrets) for secrets from the command line. For the full technical
-model behind roles, grants, and agent-to-agent access, see [Access control
-reference](/platform/acl).
+- [User and org management](/onboarding/acl/user-management) — creating users, teams, departments
+- [Managing agent secrets](/platform/secret-manager/user-secrets) — secrets from the command line
+- [Access control reference](/platform/acl) — the full model behind roles, grants, and agent-to-agent access

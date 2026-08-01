@@ -14,8 +14,12 @@
 
 ## Terminology
 
-{/* Add product-specific terms and preferred usage */}
-{/* Example: Use "workspace" not "project", "member" not "user" */}
+- The cost/usage product is **TokenOps**. The API route path is `finops` — refer to it as TokenOps
+  in prose, and only mention `finops` when naming an actual endpoint.
+- **Routing engine** = picks which *agent* answers. **LLM router** = picks which *model* runs.
+  **Orchestrator** = the live ReAct loop over accessible agents. **MAF** = a pre-defined workflow.
+  These are four different mechanisms; don't use them interchangeably.
+- The dashboard screen is **TokenOps**, not "Usage".
 
 ## Style preferences
 
@@ -29,5 +33,33 @@
 
 ## Content boundaries
 
-{/* Define what should and shouldn't be documented */}
-{/* Example: Don't document internal admin features */}
+Docs are split into **customer-facing** (everything outside `internal/`, published) and
+**internal-only** (`internal/`, excluded from the build by `.mintignore`).
+
+The audience for the published site is broad: CXOs and non-developers reading dashboards, admins
+managing access, developers building agents, and self-hosting operators running a control plane.
+Write for all four — most tasks should have a dashboard path documented, not only a CLI one.
+
+**Never publish** — put it in `internal/` instead:
+
+- Source-level internals: Rust trait definitions, type/struct names, `tokio::spawn` behavior
+- Database table or column names, Redis key formats, stream and consumer-group names
+- Checks that are deferred, bypassed, or "not load-bearing yet" — anything that maps a gap
+- Roadmap and design intent ("this is the seam we extend for X")
+- Internal test and benchmark fixtures
+- **System-design and vocabulary pages.** Don't use the words "architecture" or "core concepts"
+  in customer-facing docs, and don't add a page that plays that role. Where a published page needs
+  a term like session or flow, define it inline in product terms.
+
+**Keep published** — self-hosting customers need these:
+
+- Environment-variable configuration tables
+- HTTP API endpoint tables
+- Infrastructure topology (Postgres, Redis, S3/MinIO, Tempo, Loki) and backup guidance
+- The `nasiko-ee` admin CLI, Helm charts, cluster provisioning
+- Security posture stated behaviorally (what *is* enforced, not what isn't)
+
+Rule of thumb: **a customer needs to know how it behaves and how to configure it. They don't need to
+know what it's called in the source tree, or where it falls short.**
+
+Never link from a published page into `internal/` — that produces a broken link on the live site.

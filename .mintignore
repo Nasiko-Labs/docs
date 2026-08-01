@@ -5,3 +5,13 @@
 # Draft content
 drafts/
 *.draft.mdx
+
+# Internal-only documentation — never published to the customer-facing site.
+# Mintlify serves any page present in the repo by direct URL even when it is
+# absent from docs.json navigation, so excluding it here is what actually keeps
+# it off the live site.
+internal/
+
+# Hidden for now — delete these two lines to republish.
+api-reference/
+changelog.mdx

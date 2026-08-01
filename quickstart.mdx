@@ -1,25 +1,24 @@
 ---
 title: "Quickstart"
-description: "From zero to a governed agent running on the Nasiko control plane"
+description: "Deploy your first agent to the Nasiko control plane."
 ---
 
-In a few minutes you'll scaffold an agent, run it locally, deploy it to the control plane, and see
-it show up under governance — registered, traced, and costed.
+Scaffold an agent, run it locally, deploy it, and see it under governance.
 
-Nasiko has two independent surfaces:
+Nasiko has two surfaces. Neither requires the other.
 
 |  | What it's for | How you get in |
 | --- | --- | --- |
-| **CLI** (`nasiko`) | Building agents — scaffold, run, test, deploy, version. | `cargo install --path cli --force` — see [Setup Your CLI](/cli/setup) |
-| **Dashboard** | Governing your tenant — agent registry, access control, traces, cost, secrets. | Sign in at your control plane's URL. Nothing to install. |
+| **CLI** (`nasiko`) | Build agents — scaffold, run, test, deploy, version. | `cargo install --path cli --force`. See [Setup Your CLI](/cli/setup). |
+| **Dashboard** | Govern your tenant — registry, access, traces, cost, secrets. | Sign in at your control plane URL. |
 
-Neither one requires the other. This guide builds an agent with the CLI (steps 1–4), then picks it up in the dashboard (step 5) — but if you only need to see and govern what your org has already deployed, sign in and skip straight to step 5.
+Steps 1–4 use the CLI. Step 5 uses the dashboard. To govern agents someone else deployed, skip to step 5.
 
 ## Prerequisites
 
-- A working Docker install (the local stack and agent builds run in containers)
+- Docker
 - An account with deploy permission — see [ACL](/onboarding/acl/overview)
-- An API key for at least one model provider (`OPENAI_API_KEY` or similar)
+- A model provider API key (`OPENAI_API_KEY` or similar)
 
 ## Get started
 
@@ -32,10 +31,7 @@ Neither one requires the other. This guide builds an agent with the CLI (steps 1
     nasiko auth login
     ```
 
-    `nasiko up` starts a local control plane (Postgres, Redis, S3-compatible storage, and the
-    control plane binary itself) and connects the CLI to it as cluster `local`. `auth login`
-    prompts for a username and password and stores the token in `~/.nasiko/config.json`. Full
-    options in [Setup Your CLI](/cli/setup).
+    `nasiko up` starts a local control plane and connects the CLI to it as cluster `local`. `auth login` stores your token in `~/.nasiko/config.json`. Options: [Setup Your CLI](/cli/setup).
   </Step>
 
   <Step title="Scaffold an agent">
@@ -44,9 +40,7 @@ Neither one requires the other. This guide builds an agent with the CLI (steps 1
     cd my-first-agent
     ```
 
-    Runs a template out of the connected artifact registry and writes a project directory with an
-    `AgentCard.json`, a `Dockerfile`, and starter source. Run `nasiko new` with no arguments for an
-    interactive wizard instead. Browse what's available in [Sample Agents](/artifact-registry/sample-agents).
+    Writes an `AgentCard.json`, a `Dockerfile`, and starter source. Run `nasiko new` with no arguments for a wizard. Templates: [Sample Agents](/artifact-registry/sample-agents).
   </Step>
 
   <Step title="Run it locally">
@@ -63,7 +57,7 @@ Neither one requires the other. This guide builds an agent with the CLI (steps 1
     nasiko chat http://localhost:8000 "Customer says their invoice is wrong"
     ```
 
-    Local runs use the same router and access-control checks as production, so what works here works deployed. More in [Build, Run, and Test Locally](/adlc/build-run-test).
+    Local runs use the same router and access checks as production. More: [Build, Run, and Test Locally](/adlc/build-run-test).
   </Step>
 
   <Step title="Deploy to the control plane">
@@ -71,24 +65,20 @@ Neither one requires the other. This guide builds an agent with the CLI (steps 1
     nasiko deploy .
     ```
 
-    Builds the image, pushes it to the control plane's embedded registry, then registers and starts
-    the agent container — writing `.nasiko/agent.json` in your project directory, bound to the
-    deployed agent's ID. No local Docker? Use `nasiko upload .` instead and let the control plane's
-    build worker build it for you.
+    Builds the image, pushes it to the embedded registry, then registers and starts the agent. Writes `.nasiko/agent.json` bound to the deployed agent's ID.
 
-    See [Deploy and Manage](/adlc/deploy).
+    No local Docker? Use `nasiko upload .` and the control plane builds it. See [Deploy and Manage](/adlc/deploy).
   </Step>
 
   <Step title="See it under governance">
-    Sign in to the dashboard — no install, no CLI needed. Your agent is already:
+    Sign in to the dashboard. Your agent is already:
 
-    - listed in the [Agent Registry](/platform/agent-registry) with its status and owner
-    - showing up in [Sessions](/product/observability) for every chat you send it
-    - reporting token spend in [TokenOps](/platform/tokenops)
+    - listed in the [Agent Registry](/platform/agent-registry) with status and owner
+    - logging every chat in [Sessions](/product/observability)
+    - reporting spend in [TokenOps](/platform/tokenops)
 
-    <Frame caption="my-first-agent in the Nasiko dashboard">
-      {/* placeholder: dashboard screenshot after first deploy */}
-      <img src="/images/quickstart-dashboard.png" alt="Agent registry entry with traces and cost" />
+    <Frame>
+      <img src="/product-images/agent-registry/published-by-you.png" alt="Agent registry Published by you tab listing deployed agents with active status badges and skill tags" />
     </Frame>
   </Step>
 </Steps>
@@ -103,7 +93,7 @@ Neither one requires the other. This guide builds an agent with the CLI (steps 1
     Control who can invoke, edit, and promote this agent.
   </Card>
   <Card title="Connect tools over MCP" icon="plug" href="/mcp-hub/external-mcp-server">
-    Give the agent real systems to act on.
+    Give the agent systems to act on.
   </Card>
   <Card title="Compose multiple agents" icon="diagram-project" href="/adlc/a2a-agents">
     Wire agents together across frameworks.

@@ -1,25 +1,17 @@
 ---
 title: "CLI usage reference"
-description: "Full command reference for the nasiko developer CLI, grouped by workflow: setup, create, test, operate, and integrations."
+description: "Command reference for the nasiko developer CLI."
 ---
 
-`nasiko` is the agent-developer CLI: build, test, deploy, and monitor agents against a Nasiko
-control plane. It's a synchronous binary (no async runtime), so it starts instantly and has no
-background processes of its own. See [CLI installation](/cli/setup) if
-you haven't installed it, and the [quickstart](/quickstart) for a walkthrough of
-the core workflow.
+`nasiko` builds, tests, deploys, and monitors agents against a control plane. See [CLI installation](/cli/setup) to install it and the [quickstart](/quickstart) for the core workflow.
 
-State lives in `~/.nasiko/config.json` (registered clusters, active cluster, auth tokens) and
-`~/.nasiko/.env` (local-stack configuration).
+State lives in `~/.nasiko/config.json` (clusters, active cluster, tokens) and `~/.nasiko/.env` (local-stack config).
 
 <Note>
-  Every `nasiko` command operates against the **active cluster** — the one selected with
-  `nasiko use <name>`. Run `nasiko <command> --help` for the full flag list on any command.
+  Every command operates against the **active cluster**, selected with `nasiko use <name>`. Run `nasiko <command> --help` for full flags.
 </Note>
 
 ## Setup
-
-Register and authenticate against a control plane.
 
 | Command | Purpose |
 | --- | --- |
@@ -39,8 +31,6 @@ nasiko auth login
 
 ## Create
 
-Scaffold a new agent project.
-
 | Command | Purpose |
 | --- | --- |
 | `nasiko new [template] [name]` | Scaffold a new agent project (interactive if template is omitted) |
@@ -56,8 +46,6 @@ nasiko validate ./my-agent
 
 ## Test
 
-Run an agent locally and talk to it before deploying.
-
 | Command | Purpose |
 | --- | --- |
 | `nasiko build [dir] [--tag <tag>] [--platform <platform>]` | Build the agent's Docker image |
@@ -71,13 +59,9 @@ nasiko chat http://localhost:8000 "hello"      # talk to the local instance dire
 nasiko chat --tui                              # full-screen chat TUI
 ```
 
-`nasiko chat`'s target can be a full URL, an agent name/UUID (resolved against the active
-cluster's registry), or `orchestrator`; omit it to talk to the active cluster's routing engine. A
-lone argument containing whitespace is treated as the message, not the target.
+`nasiko chat`'s target can be a URL, an agent name or UUID, or `orchestrator`. Omit it to talk to the routing engine. A lone argument containing whitespace is treated as the message, not the target.
 
 ## Operate
-
-Deploy and manage agents on the active cluster.
 
 | Command | Purpose |
 | --- | --- |
@@ -100,13 +84,9 @@ nasiko secrets set OPENAI_API_KEY sk-... --agent my-agent
 nasiko observe session <session-id>
 ```
 
-`nasiko deploy <image>` skips the build step when you pass an existing image reference instead of
-a directory. `nasiko push` runs the build-and-push steps only, without registering or starting the
-container — useful for staging an image before deploying it.
+Pass an image reference instead of a directory to `nasiko deploy` to skip the build. `nasiko push` builds and pushes without registering or starting the container.
 
 ## Integrations
-
-Browse agents, GitHub repos, and registries beyond the active cluster.
 
 | Command | Purpose |
 | --- | --- |
@@ -122,14 +102,12 @@ nasiko mcp catalog
 nasiko mcp connect --toolkit <name>       # from the catalog output
 ```
 
-## Reference: architecture
+## What you're connecting to
 
 | Entity | What it is |
 | --- | --- |
-| Control plane | The server that deploys agents, routes queries, proxies A2A traffic, and serves the observability and registry APIs |
-| Embedded OCI registry | The control plane's own `/v2/*` endpoint — stores your deployed agent images |
-| Artifact registry | A separate service for agent templates and skills, used by `nasiko new`, `nasiko skill search`, and `nasiko registry ...` |
+| Control plane | Deploys agents, routes queries, proxies A2A traffic, serves the observability and registry APIs |
+| Embedded OCI registry | The control plane's `/v2/*` endpoint — stores your deployed agent images |
+| Artifact registry | A separate service for templates and skills, used by `nasiko new`, `skill search`, and `registry` |
 
-See the [architecture overview](/architecture/overview) for how these pieces connect, and
-[access control](/onboarding/acl/overview) for what each command requires permission-wise — the
-developer CLI only ever operates on agents you own or have been granted access to.
+The CLI only operates on agents you own or have been granted. See [access control](/onboarding/acl/overview).

@@ -1,24 +1,25 @@
 ---
 title: "API reference"
-description: "Programmatic access to Nasiko — authentication, conventions, and the full endpoint reference"
+description: "Programmatic access to Nasiko — authentication and endpoint reference."
 ---
 
-Nasiko exposes a single HTTP API from the control plane — the same API that the CLI, the web UI, and the platform admin tools use under the hood. Everything from deploying an agent to querying a trace is available as a REST or JSON-RPC call.
+The control plane exposes one HTTP API — the same one the CLI, web UI, and admin tools use. Everything from deploying an agent to querying a trace is a REST or JSON-RPC call.
 
 <Note>
-  The full interactive endpoint reference is coming soon. In the meantime, the rest of these docs document each area of the API (agents, orchestration, observability, secrets, MCP, and access control) in context, with example requests.
+  The interactive endpoint reference is coming soon. Until then, each area of the API is documented in context below with example requests.
 </Note>
 
 ## Authentication
 
-Most `/api/*` routes expect a bearer token from a normal login session. A few surfaces use other credential types suited to their caller:
+| Surface | Credential |
+| --- | --- |
+| `/api/*` | Bearer token from a login session |
+| `/api/mcp` (MCP gateway) | Scoped delegation token |
+| `/v2/*` (image registry) | Registry Basic or Bearer credentials |
 
-- The agent-facing MCP gateway (`/api/mcp`) is authenticated with a scoped delegation token, not a session token.
-- The embedded image registry (`/v2/*`) accepts registry-style Basic or Bearer credentials so that standard container tooling can push and pull images.
+See [access control](/onboarding/acl/overview) for how permissions are evaluated.
 
-See [access control](/onboarding/acl/overview) for how permissions are evaluated once a request is authenticated.
-
-## Where to find endpoint details
+## Endpoint details
 
 <CardGroup cols={2}>
   <Card title="Agent lifecycle" icon="cube" href="/adlc/deploy">
@@ -27,7 +28,7 @@ See [access control](/onboarding/acl/overview) for how permissions are evaluated
   <Card title="Orchestration & chat" icon="messages" href="/adlc/a2a-agents">
     Send a query and let Nasiko route it, or call an agent directly.
   </Card>
-  <Card title="Observability" icon="chart-line" href="/platform/observability">
+  <Card title="Observability" icon="chart-line" href="/product/observability">
     Sessions, traces, spans, and cost dashboards.
   </Card>
   <Card title="MCP gateway" icon="plug" href="/mcp-hub/overview">

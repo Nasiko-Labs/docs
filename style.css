@@ -1,0 +1,7 @@
+/* ponytail: CSS-only hide — the dashboard assistant toggle is Pro-gated.
+   Mintlify auto-includes any .css in the content root. Selectors are Mintlify
+   internals and may change on their releases; recheck if the button reappears. */
+#assistant-entry,
+#assistant-entry-mobile {
+  display: none;
+}
