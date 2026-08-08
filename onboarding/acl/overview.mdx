@@ -27,6 +27,13 @@ Neither implies the other. A department can chat with a research agent while tha
 
 ## Roles
 
+<Warning>
+  **Enterprise feature.** The ranked role tiers below (`admin` through `member`) are enforced by
+  `nasiko-ee`'s auth layer. The open-source edition has no role hierarchy — every authenticated
+  user passes the equivalent of every capability check below by default (deploy, manage secrets,
+  manage users are all unrestricted in OSS). If you're running plain `nasiko`, skip this section.
+</Warning>
+
 Every user has exactly one role. Each tier includes everything below it.
 
 | Role | Scope |
@@ -48,6 +55,11 @@ A role sets *what kind* of action a user may attempt. Whether they can act on a 
 <Note>
   **Role is not superuser.** Superuser is a separate flag. It bypasses organization-visibility scoping and unlocks platform-wide routes: creating users, creating departments and teams, OIDC group mappings, directory sync. Setting `role` to `admin` does not grant it — see [user and org management](/onboarding/acl/user-management).
 </Note>
+
+<Warning>
+  **Enterprise feature.** "Creating departments and teams," "OIDC group mappings," and "directory
+  sync" above are all `nasiko-ee` only.
+</Warning>
 
 ## Where each mechanism applies
 

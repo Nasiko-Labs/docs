@@ -3,6 +3,13 @@ title: "Setting up SSO login"
 description: "Configure single sign-on with your identity provider using OIDC."
 ---
 
+<Warning>
+  **Enterprise feature.** The open-source edition ships the underlying `oidc` client library and
+  the settings storage referenced below (`GET`/`PUT /api/settings`), but no OSS route actually
+  performs the `/api/auth/oidc/login`/`callback` redirect — that login flow, plus the group-mapping
+  and directory-sync sections further down this page, are `nasiko-ee` only.
+</Warning>
+
 Nasiko's login flow is built against generic OIDC, so Entra ID, Okta, Auth0, Keycloak, and Google all work the same way. This guide uses **Microsoft Entra ID** as the worked example.
 
 ## Two ways to configure it

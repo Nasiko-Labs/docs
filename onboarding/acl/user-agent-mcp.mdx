@@ -7,7 +7,7 @@ Agents reach external tools through the [MCP gateway](/mcp-hub/overview). This p
 
 ## Two layers, checked in order
 
-1. **Reachability** — can the calling user reach the connector at all? They can if they own it, it's shared with them (by username, team, or department), or it's a platform-managed integration they've connected their own account to. A connector that fails this check is invisible — it doesn't appear in the tool list.
+1. **Reachability** — can the calling user reach the connector at all? They can if they own it, it's shared with them (by username — team/department sharing is `nasiko-ee` only, see below), or it's a platform-managed integration they've connected their own account to. A connector that fails this check is invisible — it doesn't appear in the tool list.
 2. **Per-agent permission** — is the connector enabled for *this* agent, and is the specific tool allowed?
 
 Layer 2 is only consulted if Layer 1 passed. Reachability is re-evaluated on every call, never cached past a permission change.
@@ -61,6 +61,13 @@ Example body for the `PUT`:
 Configuring requires the ability to manage the agent (owner or superuser), *or* reachability to a connector already attached to it. The narrower path lets someone with a shared connector adjust it without gaining other control over the agent.
 
 ## Sharing a connector with a team or department
+
+<Warning>
+  **Enterprise feature.** Team/department connector sharing (this whole section) is `nasiko-ee`
+  only. The open-source edition's connector sharing (see [MCP connector-sharing
+  routes](/mcp-hub/overview)) covers public, per-user, and per-agent shares — no teams or
+  departments.
+</Warning>
 
 Owners share by username through the [MCP connector-sharing routes](/mcp-hub/overview). Team and department sharing is an admin operation:
 

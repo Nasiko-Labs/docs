@@ -3,6 +3,12 @@ title: "Secret management overview"
 description: "How Nasiko protects agent secrets and platform identity credentials."
 ---
 
+<Warning>
+  **Enterprise feature.** OSS ships the OIDC config/storage plumbing referenced elsewhere on this
+  page, but the actual SSO login redirect/callback route is `nasiko-ee` only — see [SSO
+  setup](/platform/secret-manager/entra-id).
+</Warning>
+
 Nasiko handles two categories of sensitive material, both encrypted at rest with **AES-256-GCM**:
 
 | Category | Examples |

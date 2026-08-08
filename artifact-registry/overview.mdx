@@ -3,6 +3,13 @@ title: "Artifact registry"
 description: "Push, pull, and browse agents, skills, tools, and other artifacts."
 ---
 
+<Warning>
+  **Enterprise feature.** The artifact registry is a standalone `nasiko-ee` service — no route,
+  module, or crate under the open-source edition hosts it. The OSS `nasiko` CLI ships only a
+  generic client (`nasiko registry connect/search/list`) that can point at a registry URL you
+  supply; it doesn't bundle or default to one.
+</Warning>
+
 The artifact registry is an OCI-compliant store for everything you build — agents, skills, tools, MCP servers, standalone binaries. It speaks the same protocol as `docker`, `podman`, and `oras`, with a metadata and search layer on top.
 
 Reach it three ways: its own web UI, the `nasiko` and `nasiko-ee` CLIs, or the `/v1` (metadata) and `/v2` (OCI) HTTP APIs.

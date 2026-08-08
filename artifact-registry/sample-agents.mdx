@@ -62,6 +62,14 @@ On startup the control plane registers new images, redeploys changed ones, and l
 
 ## Deploying one yourself
 
+<Warning>
+  **Enterprise feature (partially).** `nasiko registry pull` assumes a reachable registry
+  (typically the `nasiko-ee`-hosted artifact registry — see [artifact
+  registry](/artifact-registry/overview)). `nasiko deploy` itself is real OSS functionality
+  (pushes to the embedded `/v2/*` OCI registry) — you can deploy any local image with it, this
+  particular pull step is just the registry-hosted shortcut.
+</Warning>
+
 ```sh
 nasiko registry pull nasiko/weather
 nasiko deploy nasiko/weather
