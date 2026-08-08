@@ -7,6 +7,12 @@ The [lifecycle guide](/adlc/overview) covers building and deploying agents. This
 
 ## The two runtimes
 
+<Warning>
+  **Enterprise feature.** The Kubernetes/KEDA runtime below is `nasiko-ee` only — the open-source
+  `ContainerRuntime` implementation is Docker-only (no Kubernetes feature or dependency at all).
+  `AGENT_RUNTIME=kubernetes` has no effect in an OSS-only install.
+</Warning>
+
 Selected with `AGENT_RUNTIME`. The control plane's contract is the same either way: deploy, scale, restart, fetch logs, route traffic.
 
 <CardGroup cols={2}>

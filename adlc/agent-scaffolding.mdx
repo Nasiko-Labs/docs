@@ -51,6 +51,15 @@ With no arguments, `nasiko new` lists templates from the connected artifact regi
 
 Every template produces starter source that already implements the A2A contract. You fill in the skill logic.
 
+<Warning>
+  The directory name you pass (`my-agent` above) is not the agent's name — it's just where the
+  files land. Templates ship with a fixed placeholder `name` already set in `AgentCard.json`
+  (e.g. the `openai` template always scaffolds as `openai-research-agent`). Scaffold the same
+  template twice under different directory names and `nasiko deploy`/`nasiko upload` will treat
+  both as the *same* agent, silently updating one record instead of creating two. Edit
+  `AgentCard.json`'s `name` field yourself (or run `nasiko card`) if you want a distinct agent.
+</Warning>
+
 ## Generate or update the agent card
 
 ```sh

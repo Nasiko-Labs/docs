@@ -20,6 +20,21 @@ Steps 1–4 use the CLI. Step 5 uses the dashboard. To govern agents someone els
 - An account with deploy permission — see [ACL](/onboarding/acl/overview)
 - A model provider API key (`OPENAI_API_KEY` or similar)
 
+<Warning>
+  This one key actually needs to go in three separate places, and each is independent of the
+  others — having it in one doesn't mean it's set for the rest:
+
+  1. **Your project's own `.env`** — read by `nasiko run .` for local testing (step 3 below).
+  2. **A per-agent secret** — `nasiko secrets set OPENAI_API_KEY <key> --agent <name>`, read by
+     `nasiko deploy .`/`nasiko upload .` (step 4). Deploy does *not* read your project's `.env` —
+     skip this and the deployed agent chats with a 502/empty error and no explanation. See
+     [managing agent secrets](/platform/secret-manager/user-secrets).
+  3. **The control plane's own environment** — needed for the routing engine and orchestrator chat
+     (`nasiko chat "..."` with no agent name). If you're running `nasiko up` locally, answer its
+     setup wizard prompt for `OPENAI_API_KEY` rather than pressing Enter past it — see
+     [Setup Your CLI](/cli/setup) for the wizard and what happens if you skip it.
+</Warning>
+
 ## Get started
 
 <Steps>
@@ -68,6 +83,20 @@ Steps 1–4 use the CLI. Step 5 uses the dashboard. To govern agents someone els
     Builds the image, pushes it to the embedded registry, then registers and starts the agent. Writes `.nasiko/agent.json` bound to the deployed agent's ID.
 
     No local Docker? Use `nasiko upload .` and the control plane builds it. See [Deploy and Manage](/adlc/deploy).
+
+    <Warning>
+      The deployed container does **not** inherit your project's local `.env` — it starts with no
+      model credentials unless you set them as a secret first:
+
+      ```bash
+      nasiko secrets set OPENAI_API_KEY <your-key> --agent my-first-agent
+      nasiko restart my-first-agent
+      ```
+
+      Skip this and `nasiko chat my-first-agent "..."` fails with an unhelpful `agent task
+      failed` or `HTTP 502` — check `nasiko logs my-first-agent` if you see either. See
+      [managing agent secrets](/platform/secret-manager/user-secrets).
+    </Warning>
   </Step>
 
   <Step title="See it under governance">

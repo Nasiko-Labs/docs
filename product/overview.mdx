@@ -9,6 +9,11 @@ The dashboard is the web UI for your control plane. It ships inside the control 
 
 Sign in with a username and password at your control plane URL. GitHub, Google, and Microsoft buttons appear only if your organization has enabled them.
 
+<Warning>
+  **Enterprise feature.** GitHub OAuth is wired in OSS. Microsoft/Google SSO buttons imply a
+  working OIDC login route, which is `nasiko-ee` only — see [SSO setup](/platform/secret-manager/entra-id).
+</Warning>
+
 Sessions are stored in a secure cookie — you don't manage a token. When a session expires, the app returns you to the login screen.
 
 <Frame>
@@ -28,6 +33,14 @@ Some screens are view-only unless your role allows more:
 | **Users**, **Access Control** | Users with user-management permission |
 | **Departments**, **Teams** | Administrators (everyone else can view) |
 
+<Warning>
+  **Enterprise feature.** Of the screens listed above, **Departments**, **Teams**, **Team
+  Access**, **Agent Runtime**, and **Group Mappings** are all `nasiko-ee` org-hierarchy/cluster
+  features with no OSS equivalent. **Users** and **Access Control** are partially real in OSS —
+  basic account management and the per-agent access model exist — but without the role hierarchy
+  described elsewhere in this section.
+</Warning>
+
 Three screens appear only once your role qualifies:
 
 | Screen | Visible to | What it controls |
@@ -37,6 +50,12 @@ Three screens appear only once your role qualifies:
 | **Group Mappings** | Top-level administrators | How identity-provider groups map to Nasiko roles |
 
 ## Artifact registry
+
+<Warning>
+  **Enterprise feature.** The artifact registry is a standalone `nasiko-ee` service, not a
+  control-plane feature — see [Artifact registry](/artifact-registry/overview). OSS ships only a
+  generic client (`nasiko registry connect/search/list`) that can point at one if you have it.
+</Warning>
 
 Shared agents, skills, and templates live in the artifact registry — a separate app at its own URL. See [Artifact registry](/product/artifact-registry).
 

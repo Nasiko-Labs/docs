@@ -3,6 +3,13 @@ title: "User and org management"
 description: "Create users, assign roles, and organize departments and teams."
 ---
 
+<Warning>
+  **Enterprise feature.** This entire page — user/department/team management, SSO group mappings,
+  and Entra ID directory sync — is `nasiko-ee` only. The open-source edition has a much smaller
+  surface: basic account creation/deactivation via `/api/users` (superuser-gated), with no
+  departments, teams, roles, or directory sync.
+</Warning>
+
 Administrators manage users, departments, and teams through the admin CLI (`nasiko-ee`) or the equivalent API routes.
 
 ## Creating a user

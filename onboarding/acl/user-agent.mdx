@@ -27,7 +27,19 @@ A user can reach an agent if **any** of these is true:
 
 Grants are additive — an agent can stay privately owned and still be reachable by a whole department. `is_public` extends to anyone the platform's routing surfaces reach; an organization-wide grant is scoped to your authenticated users.
 
+<Warning>
+  **Enterprise feature.** "Team ownership" and team/department-scoped grants require
+  `nasiko-ee`'s org hierarchy. The open-source edition's access model has only three conditions:
+  ownership, `is_public`, and a per-user grant — there's no team or department concept to grant
+  against.
+</Warning>
+
 ## Managing grants
+
+<Warning>
+  **Enterprise feature.** Every command in this section (and "Managing an agent" below) is
+  `nasiko-ee`. There's no equivalent in the plain `nasiko` CLI.
+</Warning>
 
 ```bash
 # Grant a user, a team, and a department in one call

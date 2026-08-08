@@ -9,7 +9,13 @@ The [access control guide](/onboarding/acl/overview) covers the configuration mo
 
 ### User → agent
 
-Every route touching a specific agent — proxying a chat request, updating, deleting, reading or rotating secrets — resolves access the same way: ownership, team ownership, the public flag, or an explicit grant (user, team, or department). A soft-deleted agent is denied unconditionally.
+Every route touching a specific agent — proxying a chat request, updating, deleting, reading or rotating secrets — resolves access the same way: ownership, the public flag, or an explicit grant. A soft-deleted agent is denied unconditionally.
+
+<Warning>
+  **Enterprise feature.** Team/department ownership and grants require `nasiko-ee`'s org
+  hierarchy — the open-source edition's `can_access_agent` check has only owner, `is_public`, and
+  a per-user `agent_grants` row.
+</Warning>
 
 Mutating operations (update, delete, secrets, ACL changes) use a **stricter** check: neither a public flag nor an invoke-only grant confers the right to modify or destroy an agent. Only ownership or superuser does.
 
@@ -25,13 +31,25 @@ Whenever an authorized agent calls *another* agent, a separate check applies: is
 
 The check runs immediately before the target is invoked, in the same pass as the [flow guard's](/platform/orchestrator#the-flow-guard) cascade limits. A rejection from either aborts the call before it reaches the target container.
 
-Manage an agent's outbound allowlist with `GET`/`POST /api/agents/{id}/acl` and `DELETE /api/agents/{id}/acl/{target_id}`. All three are gated by the manage-level check (owner or superuser).
+The allowlist rows live in the `agent_acl` table. In the open-source edition there's no bundled
+endpoint for managing them yet — the corresponding grants router is defined but not mounted on the
+OSS server. `nasiko-ee` mounts its own richer version at `/api/agents/{id}/grants/agents[/{target_agent_id}]`.
+
+<Warning>
+  **Enterprise feature.** Managing this allowlist over the API is `nasiko-ee` only today.
+</Warning>
 
 <Note>
   Which agents a [MAF workflow](/platform/maf) reaches is governed at authoring time — who can create a workflow and which agents they name — not by this allowlist.
 </Note>
 
 ## Role hierarchy
+
+<Warning>
+  **Enterprise feature.** This ranked role hierarchy is enforced by `nasiko-ee`'s auth layer. The
+  open-source edition's auth has no roles — `can_deploy`, `can_manage_secrets`, and
+  `can_manage_users` all default to allow-all for every authenticated user.
+</Warning>
 
 Roles rank strictly: `admin` > `department_manager` > `team_lead` > `team_member` > `member`. An unrecognized role value ranks below all five rather than defaulting to trusted.
 
@@ -50,6 +68,12 @@ Role and superuser are independent. A superuser bypasses org-visibility scoping 
 </Note>
 
 ## Org-scoped visibility
+
+<Warning>
+  **Enterprise feature.** Visibility scoping by team/department hierarchy is `nasiko-ee` only —
+  the open-source edition's equivalent setting is unrestricted (every authenticated user can see
+  every other user).
+</Warning>
 
 The platform also scopes which *users* a caller can see. A non-superuser's visible set is bounded by their position in the hierarchy: a management role sees people within their own scope (their team, or their department and everything under it); a baseline user sees themselves and whatever their role otherwise entitles. Superusers see everyone.
 

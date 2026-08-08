@@ -5,6 +5,13 @@ description: "Create departments, teams, and users, and grant them agent access 
 
 Nasiko models an organization as a hierarchy: **departments** contain **teams**, teams contain **users**, users hold a **role**. Separately, **agent grants** control which agents a user, team, or department can reach.
 
+<Warning>
+  **Enterprise feature.** Org hierarchy — departments, teams, roles beyond a single flat account
+  list — is provisioned and managed entirely through `nasiko-ee`. The open-source edition has no
+  departments, teams, or roles; every user is simply an authenticated account. Nothing on this
+  page applies to a `nasiko`-only (OSS) install.
+</Warning>
+
 <Note>
   This page uses the platform admin CLI (`nasiko-ee`), not the developer CLI (`nasiko`). See [CLI installation](/cli/setup) and [access control](/onboarding/acl/overview).
 </Note>
