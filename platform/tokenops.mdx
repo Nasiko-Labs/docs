@@ -22,7 +22,7 @@ Two API routes back the same and deeper data. They're named `finops` in the API 
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
 | `GET` | `/api/observability/finops/dashboard` | Aggregate cost dashboard data |
-| `GET` | `/api/observability/finops/insights` | LLM-generated narrative summary over that data |
+| `POST` | `/api/observability/finops/insights` | LLM-generated narrative summary over that data |
 
 `finops/insights` returns a short narrative rather than numbers — useful for a weekly digest or an at-a-glance "what changed."
 

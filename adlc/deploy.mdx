@@ -62,7 +62,7 @@ Every command below runs against the active cluster.
 | `nasiko start <agent>` | Resume a stopped agent |
 | `nasiko restart <agent>` | Recreate the container, picking up secret and env changes |
 | `nasiko scale <agent> <n>` | Scale to `n` replicas |
-| `nasiko rm <agent>` | Terminate and deregister (`-f` skips confirmation) |
+| `nasiko rm --name <agent>` | Terminate and deregister (`-f` skips confirmation; accepts a raw UUID positionally instead of `--name`) |
 | `nasiko status` | Control plane health and metrics |
 
 <Warning>

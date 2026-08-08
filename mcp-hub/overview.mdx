@@ -145,7 +145,10 @@ Session-authenticated and access-controlled — everything the CLI and dashboard
 | `GET` / `POST` | `/api/mcp/connectors` | List visible connectors / register a custom server |
 | `POST` | `/api/mcp/connectors/probe` | Detect a server's auth type before registering |
 | `GET` | `/api/mcp/connectors/my-uploads` | Your uploaded servers and build state |
-| `GET`/`POST`/`DELETE` | `/api/mcp/connectors/{id}/share` | List, grant, or revoke a share |
+| `GET` | `/api/mcp/connectors/{id}/grants` | List a connector's shares |
+| `POST`/`DELETE` | `/api/mcp/connectors/{id}/grants/public` | Grant or revoke public access |
+| `POST`/`DELETE` | `/api/mcp/connectors/{id}/grants/users/{user_id}` | Grant or revoke access for one user |
+| `POST`/`DELETE` | `/api/mcp/connectors/{id}/grants/agents/{agent_id}` | Grant or revoke access for one agent |
 | `POST` | `/api/mcp/connectors/upload` | Upload a zip — build and deploy |
 | `POST` | `/api/mcp/connectors/upload-github` | Same, from a GitHub URL |
 | `GET` | `/api/mcp/connectors/{id}/build-status`, `/build-logs` | Poll build progress |

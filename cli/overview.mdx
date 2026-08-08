@@ -35,7 +35,7 @@ nasiko auth login
 | --- | --- |
 | `nasiko new [template] [name]` | Scaffold a new agent project (interactive if template is omitted) |
 | `nasiko skill add/remove/list/search/info` | Manage agent skills (tools) attached to a project |
-| `nasiko card [--description <text>] [dir]` | Generate or update `AgentCard.json` |
+| `nasiko card [description] [--dir <dir>]` | Generate or update `AgentCard.json` |
 | `nasiko validate [dir]` | Check `AgentCard.json`, `Dockerfile`, and `src/` are in order |
 
 ```bash
@@ -72,7 +72,7 @@ nasiko chat --tui                              # full-screen chat TUI
 | `nasiko logs <agent> [-n <count>] [-f]` | Stream agent logs (`-f` live-tails via SSE) |
 | `nasiko stop/start/restart <agent>` | Lifecycle control (`restart` picks up new secrets/env) |
 | `nasiko scale <agent> <replicas>` | Scale to N replicas |
-| `nasiko rm <agent>` | Terminate and deregister |
+| `nasiko rm --name <agent>` | Terminate and deregister (accepts a raw UUID positionally instead of `--name`) |
 | `nasiko secrets set/get/ls/rm [--agent <name>]` | Encrypted secrets (vault-wide, or per agent) |
 | `nasiko observe sessions/session/trace-detail/span/...` | Traces, tokens, and cost |
 
@@ -84,7 +84,40 @@ nasiko secrets set OPENAI_API_KEY sk-... --agent my-agent
 nasiko observe session <session-id>
 ```
 
-Pass an image reference instead of a directory to `nasiko deploy` to skip the build. `nasiko push` builds and pushes without registering or starting the container.
+Pass an image reference instead of a directory to `nasiko deploy` to skip the build. `nasiko push` builds and pushes **without starting** the container — it does still register a `registered`-status catalog entry for the agent (visible in `nasiko ps`/`agents ls`), it just never runs.
+
+## Multi-agent
+
+| Command | Purpose |
+| --- | --- |
+| `nasiko maf workflow create --name <name> --step <task> [--agent <name\|uuid\|->] ...` | Define a workflow (repeat `--step`/`--agent` per step; `-` auto-assigns) |
+| `nasiko maf workflow run <id-or-name> [--wait]` | Queue an execution |
+| `nasiko maf workflow get <id>` | Read one workflow |
+| `nasiko maf execution list` / `get <id>` / `result <id>` | Inspect executions |
+
+```bash
+nasiko maf workflow create --name "research-and-summarize" \
+  --step "Research recent news on topic X" --agent research-agent \
+  --step "Summarize the research into 3 bullet points" --agent -   # "-" auto-assigns
+nasiko maf workflow run research-and-summarize --wait
+nasiko maf execution result <execution-id> --json
+```
+
+Full flag reference: `nasiko maf --help`. See [MAF](/platform/maf) for the workflow model and REST API.
+
+## LLM configuration
+
+| Command | Purpose |
+| --- | --- |
+| `nasiko llm-config providers/create/attach/get` | Per-agent named LLM configs (provider, model, fallback, tuning) |
+| `nasiko model-registry ls/set` | Platform-wide strength-level → model table (requires superuser) |
+
+```bash
+nasiko llm-config create --name support-cheap --provider openai --model gpt-4o-mini
+nasiko llm-config attach support-bot support-cheap
+```
+
+Full command set: `nasiko llm-config --help`. See [routing engine](/platform/llm-router) for how these fit into agent selection.
 
 ## Integrations
 
