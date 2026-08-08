@@ -86,64 +86,63 @@ Installs to `~/.cargo/bin`. State lives in `~/.nasiko/config.json` (clusters, ac
 
 ## Troubleshooting `nasiko up`
 
-<Warning>
-  **The control-plane image isn't published yet.** `nasiko up` pulls `nasiko/cp:latest` from
-  Docker Hub to run the local control plane, and that image currently isn't publicly available —
-  the pull fails with `pull access denied for nasiko/cp`. Until it's published, build the control
-  plane from source instead and point the CLI at it:
+Known gaps in the current build. Find your symptom, apply the workaround.
 
-  ```bash
-  cargo build --release -p nasiko-server
-  mkdir -p ~/.nasiko/bin
-  cp target/release/nasiko-server ~/.nasiko/bin/nasiko-cp
-  ```
+<AccordionGroup>
+  <Accordion title="pull access denied for nasiko/cp">
+    `nasiko up` pulls `nasiko/cp:latest` from Docker Hub to run the local control plane, and that
+    image isn't publicly available yet. Build the control plane from source instead:
 
-  `nasiko up` only pulls the image when `~/.nasiko/bin/nasiko-cp` doesn't already exist, so once
-  it's there, `nasiko up` starts the infra containers and runs your build instead of pulling.
-</Warning>
+    ```bash
+    cargo build --release -p nasiko-server
+    mkdir -p ~/.nasiko/bin
+    cp target/release/nasiko-server ~/.nasiko/bin/nasiko-cp
+    ```
 
-<Warning>
-  **`nasiko up` needs two more environment variables it doesn't set for you.** The control plane
-  requires `ADMIN_PASSWORD` and `JWT_SECRET` at startup — neither has a default, and `nasiko up`
-  doesn't prompt for them or set them itself, so it fails immediately with `missing required env
-  var: ADMIN_PASSWORD` (then `JWT_SECRET must be set`) unless you export them first:
+    `nasiko up` only pulls the image when `~/.nasiko/bin/nasiko-cp` doesn't already exist, so once
+    it's there, `nasiko up` starts the infra containers and runs your build instead of pulling.
+  </Accordion>
 
-  ```bash
-  export ADMIN_PASSWORD=admin
-  export JWT_SECRET=dev-secret-change-me
-  nasiko up
-  ```
+  <Accordion title="missing required env var: ADMIN_PASSWORD (or JWT_SECRET must be set)">
+    The control plane requires `ADMIN_PASSWORD` and `JWT_SECRET` at startup — neither has a
+    default, and `nasiko up` doesn't prompt for them or set them itself. Export them first:
 
-  With `ADMIN_PASSWORD` set this way, the printed `nasiko auth login # admin / admin` hint is
-  accurate — log in with whatever username/password you chose.
-</Warning>
+    ```bash
+    export ADMIN_PASSWORD=admin
+    export JWT_SECRET=dev-secret-change-me
+    nasiko up
+    ```
 
-<Warning>
-  **The control plane stops if you close the terminal you ran `nasiko up` in.** Unlike the Docker
-  infrastructure (which runs detached), the control-plane process itself is a plain foreground
-  child of that shell — closing the window, an SSH disconnect, or a terminal multiplexer pane
-  closing all kill it. Keep that terminal open, or run it yourself as a background process:
+    With `ADMIN_PASSWORD` set this way, the printed `nasiko auth login # admin / admin` hint is
+    accurate — log in with whatever username/password you chose.
+  </Accordion>
 
-  ```bash
-  nohup ~/.nasiko/bin/nasiko-cp > /tmp/nasiko-cp.log 2>&1 &
-  disown
-  ```
+  <Accordion title="Control plane stops when you close the terminal">
+    Unlike the Docker infrastructure (which runs detached), the control-plane process is a plain
+    foreground child of the shell you ran `nasiko up` in — closing the window, an SSH disconnect,
+    or a multiplexer pane closing all kill it. Keep that terminal open, or run it yourself as a
+    background process:
 
-  (using the same environment variables `nasiko up` would otherwise set — see `nasiko up`'s output
-  for the full list, or export them yourself as shown above and in the next note).
-</Warning>
+    ```bash
+    nohup ~/.nasiko/bin/nasiko-cp > /tmp/nasiko-cp.log 2>&1 &
+    disown
+    ```
 
-<Warning>
-  **Sessions show up, but traces/tokens/cost stay empty.** `nasiko up` doesn't set `TEMPO_URL` or
-  `LOKI_URL`, so the control plane starts with observability disabled even though the same compose
-  file already brings up Tempo and Loki containers. Set both before starting it to see trace and
-  cost data in `nasiko observe`:
+    Use the same environment variables `nasiko up` would otherwise set — see its output for the
+    full list.
+  </Accordion>
 
-  ```bash
-  export TEMPO_URL=http://localhost:3200
-  export LOKI_URL=http://localhost:3100
-  ```
-</Warning>
+  <Accordion title="Sessions show up, but traces, tokens, and cost stay empty">
+    `nasiko up` doesn't set `TEMPO_URL` or `LOKI_URL`, so the control plane starts with
+    observability disabled even though the same compose file already brings up Tempo and Loki
+    containers. Set both before starting it to see trace and cost data in `nasiko observe`:
+
+    ```bash
+    export TEMPO_URL=http://localhost:3200
+    export LOKI_URL=http://localhost:3100
+    ```
+  </Accordion>
+</AccordionGroup>
 
 ## Platform admin CLI (`nasiko-ee`)
 
