@@ -45,10 +45,14 @@ An agent speaks A2A the moment it starts. You don't need a cluster, or even a co
 Conversations are tracked by session, keyed to the A2A `contextId` your agent returns.
 
 ```sh
-nasiko sessions                                          # list local sessions
-nasiko chat http://localhost:8000 --resume <session-id>   # continue a conversation
-nasiko history <session-id>                               # show message history
+nasiko sessions                                                    # list local sessions
+nasiko chat http://localhost:8000 --session-id <session-id> "..."  # continue a conversation, one-shot
+nasiko chat http://localhost:8000 --resume <session-id> --tui      # continue a conversation, full-screen TUI
+nasiko history <session-id>                                        # show message history
 ```
+
+`--resume` and `--session-id` are not interchangeable: `--resume` always opens the TUI (it fails
+outside a real terminal), `--session-id` sends a one-shot message into an existing session.
 
 Useful for iterating on multi-turn behavior — resume the same session after a code change instead of replaying every turn.
 

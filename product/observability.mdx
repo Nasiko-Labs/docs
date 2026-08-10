@@ -87,7 +87,7 @@ Everything these screens show is available under `/api/observability/*`:
 | `GET` | `span/{trace_id}/{span_id}` | One span's detail |
 | `GET` | `agent/{id}/stats` | Aggregate call, latency, and success stats |
 | `GET` | `finops/dashboard` | Cost dashboard data — backs [TokenOps](/product/tokenops) |
-| `GET` | `finops/insights` | LLM-generated narrative over the cost data |
+| `POST` | `finops/insights` | LLM-generated narrative over the cost data |
 | `GET` | `agents/{ref}/logs`, `agents/{ref}/logs/stream` | Log lines, with a streaming variant |
 
 ## Configuration
