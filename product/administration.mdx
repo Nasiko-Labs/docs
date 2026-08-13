@@ -13,15 +13,19 @@ Each row shows the **Key** and creation date. The **Value** is always masked, in
 
 The screen is titled **API Secrets & Credentials**; with nothing stored yet it shows **No secrets configured**.
 
+{/*
 <Frame>
   <img src="/product-images/settings/api-secrets.png" alt="API Secrets and Credentials screen with an Add secret button and a 'No secrets configured' empty state" />
 </Frame>
+*/}
 
 **Add secret** takes a **Secret name** (uppercase, numbers, underscores — `MY_API_KEY` style) and a **Secret value**, then **Save**. **Delete** removes one after confirmation.
 
+{/*
 <Frame>
   <img src="/product-images/settings/add-secret.png" alt="Add secret dialog with Secret name and Secret value fields and Cancel and Save buttons" />
 </Frame>
+*/}
 
 <Note>
   Saving a secret updates what's stored. It doesn't push the value into a running container — that happens on the next deploy or restart. See [managing agent secrets](/platform/secret-manager/user-secrets) and [secret management](/platform/secret-manager/overview).
@@ -67,9 +71,11 @@ An org-wide dashboard: counts of admins, departments, teams, users, and agents, 
 
 The folder icon next to an unassigned user opens **Assign department / team** — pick a department, optionally narrow to a team, save. Leaving both empty clears their placement.
 
+{/*
 <Frame>
   <img src="/product-images/access-control/overview.png" alt="Access control Overview with admin, department, team, user, and agent counts, warning tiles for unassigned users and a department with no manager, a Departments table, and an Unassigned members table" />
 </Frame>
+*/}
 
 Without the role to use this screen, it shows a plain error rather than data.
 
@@ -77,19 +83,25 @@ Without the role to use this screen, it shows a plain error rather than data.
 
 Every account, with name/email, role, department/team, active status, and last login. Filter by role, department, or status; search matches name, username, or email.
 
+{/*
 <Frame>
   <img src="/product-images/access-control/all-users.png" alt="All users table listing members and admins with role, department, team, last active, and status columns, plus Role, Department, and Team filters" />
 </Frame>
+*/}
 
 **Unassigned** and **Admins** are the same table pre-filtered — users with no placement, and accounts holding the admin role.
 
+{/*
 <Frame>
   <img src="/product-images/access-control/unassigned-users.png" alt="Unassigned users table showing four members with 'not assigned' in the department and team columns" />
 </Frame>
+*/}
 
+{/*
 <Frame>
   <img src="/product-images/access-control/admins.png" alt="Admins table listing two admin accounts scoped to all departments and all teams" />
 </Frame>
+*/}
 
 - **Add User** — username, email, optional display name, role. No password: the platform generates a one-time **access key** and **access secret**, shown once in the dialog with copy buttons. The secret is the user's login password and can't be shown again.
 - **Edit** — username, email, display name, or a new password (blank keeps the current one)
@@ -108,13 +120,17 @@ Roster screens: a searchable table (name, manager or lead, team or member counts
 
 Team leads and above can browse. Creating or editing is reserved for top-level administrators.
 
+{/*
 <Frame>
   <img src="/product-images/access-control/departments.png" alt="Departments screen with a Create department button and a table row for Engineering showing its team chip, no manager assigned, and member and agent counts" />
 </Frame>
+*/}
 
+{/*
 <Frame>
   <img src="/product-images/access-control/teams.png" alt="Teams screen with a Create team button and a table row for Nasiko team under Engineering showing no lead assigned and zero agents and members" />
 </Frame>
+*/}
 
 ### Team Access
 

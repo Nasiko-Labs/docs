@@ -125,7 +125,7 @@
     "primary": {
       "type": "button",
       "label": "Dashboard",
-      "href": "https://demo.nasiko.dev/app/login?from=/home"
+      "href": "https://nasiko.dev/login.html"
     }
   },
   "contextual": {
