@@ -26,7 +26,7 @@ Nasiko can shrink tool results, JSON, logs, diffs and history before they are se
 
 **Per agent.** On the agent's card in the dashboard, the token-optimization switch sets `compress_enabled`. It is off until you turn it on. The same field is on `PUT /api/agents/{id}`.
 
-**Cluster-wide defaults** (self-hosting):
+**Cluster-wide defaults** (self-hosting) are kill switches, not enablers. They default on so a dashboard toggle takes effect without a restart. Set one to `false` to stop that layer everywhere. Compression still does not run until the agent (or, for orchestrator history, every live agent you own) has `compress_enabled`.
 
 | Variable | Default | What it compresses |
 | --- | --- | --- |
@@ -34,8 +34,6 @@ Nasiko can shrink tool results, JSON, logs, diffs and history before they are se
 | `TOKEN_COMPRESS_TOOL_RESULTS_MIN_BYTES` | `2048` | Skip payloads smaller than this |
 | `TOKEN_COMPRESS_HISTORY` | `true` | Conversation history the orchestrator keeps between turns |
 | `TOKEN_COMPRESS_HISTORY_MIN_BYTES` | `2048` | Skip history smaller than this |
-
-Per-agent `compress_enabled` is the switch the dashboard exposes. Cluster-wide flags apply to the orchestrator loop even when an individual agent has not opted in.
 
 A high **Input** share on the TokenOps attributions table usually means context is being resent. Compression and the context budget below are the two ways to cut that.
 
