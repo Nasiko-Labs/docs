@@ -1,0 +1,32 @@
+---
+title: "CLI reference"
+sidebarTitle: "Overview"
+description: "Every nasiko command, grouped the way nasiko --help groups them."
+---
+
+`nasiko` discovers coding agents, deploys A2A agents, and talks to your Nasiko cluster. Install: [Install and connect](/install). Task guides stay short and link here for flags.
+
+```bash
+nasiko --help
+nasiko <command> --help
+```
+
+State: `~/.nasiko/config.json` (clusters, tokens) and `~/.nasiko/.env` (local `up`). Every command uses the **active cluster** (`nasiko use`).
+
+Hidden helpers (`__claude-token`, `__coding-agent-token`, `integration`, `agents report`) are for installed hooks. Don't call them yourself.
+
+## Groups
+
+| Group | Page |
+| --- | --- |
+| Setup, auth, budget | [Setup](/reference/cli/setup) |
+| Coding agents | [Coding agents](/reference/cli/coding-agents) |
+| Scaffold, skills, card | [Create](/reference/cli/create) |
+| Deploy, logs, scale | [Operate](/reference/cli/operate) |
+| Chat and sessions | [Chat](/reference/cli/chat) |
+| Traces and TokenOps | [Observe](/reference/cli/observe) |
+| LLM configs | [Models](/reference/cli/models) |
+| MCP gateway | [MCP](/reference/cli/mcp) |
+| MAF workflows | [Workflows](/reference/cli/workflows) |
+| GitHub, registry, agents catalog | [Integrations](/reference/cli/integrations) |
+| `nasiko-ee` | [Enterprise](/reference/cli/enterprise) |

@@ -1,0 +1,46 @@
+---
+title: "MCP commands"
+sidebarTitle: "MCP"
+description: "catalog, connect, connectors, credentials, OAuth, agent-tools."
+---
+
+Guide: [MCP gateway](/build/mcp/overview).
+
+## Connect
+
+| Command | Flags |
+| --- | --- |
+| `nasiko mcp catalog` | `-j/--json` |
+| `nasiko mcp connect` | `--connector-id` \| `--toolkit` \| `--url`, `--value`, `--redirect-url` |
+| `nasiko mcp connections` | `-j` |
+| `nasiko mcp disconnect <connector_id>` | |
+| `nasiko mcp share-targets <query>` | `-j` |
+
+## Toolkits (Composio, admin)
+
+`nasiko mcp toolkit list|register|update|delete`
+
+`register` takes `toolkit`, `--client-id`, `--client-secret`, `--scope` (repeat), `--display-name`, `--logo_url`.
+
+## Connectors
+
+| Command | Notes |
+| --- | --- |
+| `list` / `probe <url>` / `register <name> <url>` / `update` / `delete` | `--auth-type` `none\|bearer\|basic\|oauth2\|url_param`. `--header "Key: Value"` repeatable |
+| `share add\|list\|remove` | `--user` / `--public` |
+| `upload` | `--name --zip [--version v1] --env KEY=VAL` |
+| `upload-github` | `--name --github-url [--version] --env` |
+| `build-status <id>` | `-j` |
+| `logs <id>` | `--tail` default `200` |
+| `consumers` / `pin` / `unpin` / `pinned` / `recent` | |
+| `grant-agent` / `revoke-agent` `<id> <agent>` | |
+
+## Credentials, OAuth, agent-tools
+
+```bash
+nasiko mcp credential set|status|delete <connector-id> [value]
+nasiko mcp oauth authorize|status|revoke <connector-id>
+nasiko mcp agent-tools connectors|enable|disable|tools|rules|set-rule|reset
+```
+
+`upload` default version tag `v1`.

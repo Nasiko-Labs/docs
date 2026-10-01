@@ -1,0 +1,43 @@
+---
+title: "Setup commands"
+sidebarTitle: "Setup"
+description: "up, down, connect, disconnect, use, clusters, status, auth, budget, context-strategy."
+---
+
+## Cluster
+
+| Command | Flags | Purpose |
+| --- | --- | --- |
+| `nasiko up` | | Start local infra + server. Config: `~/.nasiko/.env` |
+| `nasiko down` | | Stop the local stack |
+| `nasiko connect <url>` | `--name` | Register a cluster by URL and make it active |
+| `nasiko connect <claude\|codex\|opencode>` | `--agent`, `--config` | [Route](/coding-agents/routing) that harness |
+| `nasiko disconnect <claude\|codex\|opencode>` | `--force` | Restore harness routing settings |
+| `nasiko use <name>` | | Active cluster |
+| `nasiko clusters` | | List configured clusters |
+| `nasiko status` | | Cluster health |
+| `nasiko status <claude\|codex\|opencode>` | | Routing status for one harness |
+
+`--name` is only for URLs. `--agent` and `--config` are only for harness targets.
+
+## Auth
+
+| Command | Purpose |
+| --- | --- |
+| `nasiko auth login` | Username/password or access key/secret → JWT in `~/.nasiko/config.json` |
+| `nasiko auth status` | Local expiry check |
+| `nasiko auth whoami` | `GET /api/users/me` |
+| `nasiko auth logout` | Best-effort `POST /api/auth/logout`, then clear token |
+
+Login, `connect <url>`, and `use` auto-install session reporting for detected harnesses with no install record. See [Discover](/coding-agents/discover).
+
+## Context budget
+
+| Command | Purpose |
+| --- | --- |
+| `nasiko budget get` | PACMS tier |
+| `nasiko budget set <low\|medium\|high>` | Set tier |
+| `nasiko context-strategy get` | `pacms`, `topk`, or `lastk` |
+| `nasiko context-strategy set <strategy>` | Set strategy |
+
+See [Reduce cost](/tokenops/reduce-cost).

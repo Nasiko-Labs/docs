@@ -1,0 +1,162 @@
+---
+title: "MCP gateway overview"
+description: "How agents get tool access: connectors, per-agent permissions, and the gateway endpoint."
+---
+
+Every deployed agent gets **one fixed URL** for every tool action, no matter how many tools or providers sit behind it: the **MCP gateway**. Adding, removing, sharing, or restricting a tool is a configuration change — the agent is never redeployed.
+
+The gateway speaks the [Model Context Protocol](https://modelcontextprotocol.io). Agents call it with JSON-RPC `tools/list` and `tools/call`, and it fans each call out to whichever backend implements that tool.
+
+<CardGroup cols={2}>
+  <Card title="Connect an external server" icon="link" href="/build/mcp/external-server">
+    Register a managed integration or your own running MCP server.
+  </Card>
+  <Card title="Deploy your own server" icon="upload" href="/build/mcp/deploy-server">
+    Upload source and let Nasiko build, harden, and run it.
+  </Card>
+  <Card title="Per-agent tool permissions" icon="sliders" href="/governance/tool-permissions">
+    Control which connectors and tools an agent may use.
+  </Card>
+  <Card title="MCP gateway dashboard" icon="window" href="/dashboard/mcp-gateway">
+    Register connectors and set rules in the web app.
+  </Card>
+</CardGroup>
+
+## Two kinds of provider, one interface
+
+| Term | Meaning |
+| --- | --- |
+| **Toolkit** | A managed, pre-built integration (Gmail, Slack, GitHub, Google Calendar) — OAuth and credential refresh handled for you |
+| **MCP server** | A server speaking MCP directly — one you run elsewhere and register by URL, or one you upload for Nasiko to build and deploy |
+| **Connector** | The neutral term for a registry row representing either kind |
+
+Everyone using a shared connector connects with **their own account**. Sharing never shares the underlying login.
+
+## Agent credential
+
+An agent is untrusted code serving many users. At deploy time Nasiko injects `MCP_GATEWAY_TOKEN` (and `MCP_GATEWAY_URL`) into the container. The agent sends that token on every gateway call. User identity still comes from the flow's `traceparent` — the same strict attribution as model calls. See [cost attribution](/tokenops/attribution).
+
+Two equivalent endpoints:
+
+| Method | Path | Auth |
+| --- | --- | --- |
+| `POST` | `/api/mcp` | Token in `MCP_GATEWAY_TOKEN` / header |
+| `POST` | `/api/mcp/s/{token}` | Token in the URL |
+
+JSON-RPC methods: `initialize`, `ping`, `tools/list`, `tools/call`.
+
+<Note>
+  A user session JWT is not accepted on `/api/mcp`. Management routes (`/api/mcp/catalog`, connectors, grants) use your login. The gateway JSON-RPC surface uses the deploy-time agent token.
+</Note>
+
+## The gateway endpoint
+
+JSON-RPC `tools/list` and `tools/call` examples:
+
+<CodeGroup>
+```json tools/list request
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/list"
+}
+```
+
+```json tools/list response
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "tools": [
+      { "name": "GMAIL_SEND_EMAIL", "description": "Send an email via Gmail", "inputSchema": { "...": "..." } },
+      { "name": "a1b2c3d4__search_docs", "description": "Search internal documentation", "inputSchema": { "...": "..." } }
+    ]
+  }
+}
+```
+</CodeGroup>
+
+<CodeGroup>
+```json tools/call request
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "method": "tools/call",
+  "params": {
+    "name": "GMAIL_SEND_EMAIL",
+    "arguments": { "to": "user@example.com", "subject": "Hi", "body": "..." }
+  }
+}
+```
+
+```json tools/call response
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "result": { "status": "sent" }
+}
+```
+</CodeGroup>
+
+Tool names from custom MCP server connectors are namespaced `{connector-id-prefix}__{tool_name}`, so two connectors can't collide. Managed toolkit tools keep their natural names (`GMAIL_SEND_EMAIL`, `SLACK_POST_MESSAGE`).
+
+### Blocked and approval-required calls
+
+A `tools/call` can return a JSON-RPC error instead of a result:
+
+<CodeGroup>
+```json blocked
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "error": { "code": -32000, "message": "Tool 'GMAIL_SEND_EMAIL' is blocked or disabled for this agent." }
+}
+```
+
+```json approval required
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "error": {
+    "code": -32001,
+    "message": "Tool 'GMAIL_SEND_EMAIL' requires user approval. Grant access in the agent settings.",
+    "data": { "server": "gmail" }
+  }
+}
+```
+</CodeGroup>
+
+## Permissions
+
+Every tool call resolves through two layers, in order:
+
+1. **Reachability** — can the calling user reach this connector? (They own it, it's shared with them, or it's a globally available toolkit.)
+2. **Per-agent permission** — is the connector enabled for this agent, and is this tool allowed, blocked, or gated behind approval?
+
+Nothing needs configuring to grant an agent access to a connector its caller can already reach — access propagates the moment a connector is shared. Full model: [per-agent tool permissions](/governance/tool-permissions).
+
+## Management routes
+
+Session-authenticated and access-controlled — everything the CLI and dashboard use:
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `GET` | `/api/mcp/catalog` | Browse connectable services |
+| `POST` | `/api/mcp/connect` | Unified connect, any auth type |
+| `GET` / `POST` | `/api/mcp/connectors` | List visible connectors / register a custom server |
+| `POST` | `/api/mcp/connectors/probe` | Detect a server's auth type before registering |
+| `GET` | `/api/mcp/connectors/my-uploads` | Your uploaded servers and build state |
+| `GET` | `/api/mcp/connectors/{id}/grants` | List a connector's shares |
+| `POST`/`DELETE` | `/api/mcp/connectors/{id}/grants/public` | Grant or revoke public access |
+| `POST`/`DELETE` | `/api/mcp/connectors/{id}/grants/users/{user_id}` | Grant or revoke access for one user |
+| `POST`/`DELETE` | `/api/mcp/connectors/{id}/grants/agents/{agent_id}` | Grant or revoke access for one agent |
+| `POST` | `/api/mcp/connectors/upload` | Upload a zip — build and deploy |
+| `POST` | `/api/mcp/connectors/upload-github` | Same, from a GitHub URL |
+| `GET` | `/api/mcp/connectors/{id}/build-status`, `/build-logs` | Poll build progress |
+| `GET`/`PUT` | `/api/mcp/agents/{agent_id}/tools` | View / bulk-update per-tool rules |
+| `DELETE` | `/api/mcp/agents/{agent_id}/permissions` | Reset to full default-allow |
+
+## Related
+
+- [Artifact registry](/build/registry/overview) — MCP server packages as reusable artifacts
+- [Access control overview](/governance/access-control/overview)

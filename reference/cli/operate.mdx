@@ -1,0 +1,45 @@
+---
+title: "Operate commands"
+sidebarTitle: "Operate"
+description: "deploy, push, upload, import, ps, logs, lifecycle, deployments, versions, rollback, secrets."
+---
+
+Guides: [Deploy](/build/deploy), [Operate](/build/operate), [Versions](/build/versions).
+
+## Ship
+
+| Command | Flags | Purpose |
+| --- | --- | --- |
+| `nasiko deploy <image-or-dir>` | `--name`, `--port` default `8000`, `--env-file`, `-e`, `--writable`, `--writable-path`, `-v`, `-y` | Build + push + deploy |
+| `nasiko push <image-or-dir>` | `--name`, `-v`, `-y` | Build + push, no start |
+| `nasiko upload [source]` | `-n`, `-v`, `--port` default `8000`, `--env-file`, `-e`, `--writable`, `--writable-path` | Server builds. Default source `.` |
+| `nasiko import <reference>` | | Cluster pulls `owner/name[:tag]` or `host/owner/name[:tag]` |
+| `nasiko reupload` | `--id` or `-n`, `[source]`, `-v`, `--changelog` | Rebuild an existing agent |
+
+`--writable` mounts persistent storage at `/workspace`. `--writable-path PATH` implies `--writable`.
+
+## Run
+
+| Command | Flags | Purpose |
+| --- | --- | --- |
+| `nasiko ps` | `-j/--json` | Running agents |
+| `nasiko logs <agent>` | `-n/--tail` default `50`, `-f/--follow` | Logs |
+| `nasiko stop/start/restart <agent>` | | Lifecycle. `restart` picks up secrets |
+| `nasiko scale <agent> <replicas>` | | Scale (Docker clamps to 1) |
+| `nasiko rm` | `[id]` or `-n/--name`, `-f/--force` | Terminate + deregister |
+| `nasiko deployments ls` | alias `list` | Deployments |
+| `nasiko deployments get <agent>` | | One agent |
+| `nasiko deployments restart <deployment_id>` | | Restart by deployment ID |
+| `nasiko versions` | `[id]` or `-n` | History |
+| `nasiko rollback` | `[id]` or `-n`, `-t/--version`, `--reason` | Roll back |
+
+## Secrets
+
+| Command | Flags |
+| --- | --- |
+| `nasiko secrets set <key> <value>` | `--agent` |
+| `nasiko secrets get <key>` | `--agent` |
+| `nasiko secrets ls` | `--agent` |
+| `nasiko secrets rm <key>` | `--agent` |
+
+Omit `--agent` for vault-wide secrets.

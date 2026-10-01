@@ -1,10 +1,40 @@
 ---
 title: "Changelog"
-description: "What's new in Nasiko"
+description: "What changed in Nasiko, most recent first."
 ---
 
-Notable changes to the Nasiko platform, most recent first.
+Customer-facing changes from the open-source tree. Dates are approximate.
 
-<Update label="Unreleased">
-  This page will track platform releases going forward. Check back here for new features, improvements, and fixes.
+<Update label="September 2026">
+  **Coding agents.** Discover, register, and report sessions for Claude Code, Codex, OpenCode, and the Cursor CLI. Route Claude Code, Codex, and OpenCode through the LLM router. Durable local telemetry queue; install bound to the cluster at install time.
+
+  **TokenOps and Overview.** Landing Overview screen; spend timeseries, calendar, attributions, agent hours; cache-aware token accounting.
+
+  **Compression.** Per-agent token-optimization switch; orchestrator tool-result and history compression.
+
+  **HITL.** Inline approvals in `nasiko chat` and `maf run --wait`; `/api/hitl/*`.
+
+  **Custom providers.** LiteLLM, vLLM, Ollama, Azure OpenAI, AWS Bedrock Converse, OpenRouter.
+
+  **PACMS.** `nasiko budget` and `nasiko context-strategy`.
+
+  **Versions.** `reupload`, `versions`, `rollback`, immutable image tags.
+
+  **SCIM / SSO UI** in Settings (OIDC login and directory sync backends are Enterprise).
+
+  **OSS cleanup.** Flutter control-plane UI removed; vanilla dashboard is the UI.
+</Update>
+
+<Update label="August 2026">
+  **MCP gateway.** Catalog, connectors, OAuth, uploads, per-agent allow/ask/block, CLI `nasiko mcp`.
+
+  **LLM configs.** Reusable library, attach/detach, model registry.
+
+  **TokenOps APIs.** `finops/dashboard` and `insights`; Portkey price-book sync.
+
+  **OIDC session handoff** in open-source; full SSO login in Enterprise.
+</Update>
+
+<Update label="July 2026">
+  **MCP and MAF foundations.** Workflows CLI, default-deny tool permissions, per-user LLM configs.
 </Update>

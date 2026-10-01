@@ -1,0 +1,108 @@
+---
+title: "Session reporting"
+description: "What Nasiko records for each coding-agent turn, how turns are queued and delivered, and where they show up."
+---
+
+Session reporting records each completed turn in a coding harness and delivers it to your Nasiko cluster. Turn it on with `nasiko agents install <agent>`, or let `nasiko auth login` do it for you. See [Discover and register coding agents](/coding-agents/discover).
+
+A **turn** is one prompt from the developer and everything the harness did to answer it: its model calls, its tool calls, and its final response. A **session** is the harness's own conversation, made of one or more turns.
+
+## What is captured
+
+Nasiko reports a turn once it is complete — it has a final response and at least one model call.
+
+| Captured | Always | Only with content capture |
+| --- | --- | --- |
+| Turn start and end time | Yes | |
+| Each model call: provider, model, input, output, cache-read and cache-write tokens, start and end time | Yes | |
+| Each tool call: name, status, start and end time, duration | Yes | |
+| Prompt and final response text | | Yes |
+| Session title (Claude Code) | | Yes |
+| Tool call arguments, output, and error text | | Yes |
+
+Content capture is on by default. Install with `--no-content` to turn it off:
+
+```sh
+nasiko agents install claude --no-content
+```
+
+Each text field is capped at 1 MiB and truncated past that.
+
+## Hooks used by each harness
+
+Every harness calls the same Nasiko script, `hooks/nasiko-session-report.sh`, inside its config directory.
+
+| Harness | Mechanism | Events |
+| --- | --- | --- |
+| Claude Code | Command hook in `~/.claude/settings.json` | `Stop` |
+| Codex | Command hooks in `hooks.json` in the Codex config directory | `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `Stop` |
+| OpenCode | Plugin `plugins/nasiko-session-report.js` in the OpenCode config directory | `session.idle` |
+| Cursor CLI | Command hooks in `hooks.json` in the Cursor config directory | `beforeSubmitPrompt`, `afterAgentResponse`, `stop`, `preToolUse`, `postToolUse`, `postToolUseFailure` |
+
+Install adds the Nasiko entries next to any hooks you already have and leaves yours untouched. Uninstall removes only the Nasiko entries.
+
+## The harness never waits on Nasiko
+
+Reporting fails open for the harness:
+
+- The hook script always exits successfully. If anything goes wrong, the error goes to `~/.nasiko/integrations/report.log`, never to the harness.
+- The hook only reads the turn and writes it to a local queue. It does no network work, and it finishes within the 10-second hook timeout Nasiko registers.
+- Delivery happens afterwards, in a separate background `nasiko agents sync` process.
+- The OpenCode plugin waits at most 8 seconds for the hook and swallows any error.
+
+If your Nasiko cluster is down, slow, or unreachable, the harness carries on and turns wait in the queue.
+
+## Local state
+
+All reporting state lives under `~/.nasiko/integrations/`. The queue and rejected directories are readable only by your user.
+
+| Path | Contents |
+| --- | --- |
+| `config.json` | One install record per harness: its identity name, whether content is captured, the hook version, and the cluster and user it is bound to |
+| `queue/` | Turns waiting for delivery, grouped by destination |
+| `rejected/` | Turns that will not be delivered, each with its last error |
+| `watermarks/` | Per-session record of which turns have already been queued, so each turn is queued once |
+| `events/` | Partial turns for Codex and Cursor CLI, whose turns arrive across several hook events |
+| `report.log` | Hook diagnostics |
+
+## Delivery, retries, and quarantine
+
+After queueing a turn, the hook starts `nasiko agents sync` in the background. You can also run it yourself:
+
+```sh
+nasiko agents sync
+```
+
+`sync` sends queued turns to `POST /api/telemetry/coding-agent/events/batch` on the bound cluster, up to 100 per request, and keeps going until the queue is empty or about five minutes have passed.
+
+- **Accepted or duplicate:** the server stored the turn, or already had it. Nasiko removes it from the queue. Replaying a turn is safe.
+- **Network or server error:** Nasiko retries with backoff (1, 2, 4, then 8 seconds). After 5 failed attempts the turn moves to `rejected/`.
+- **Rejected by the server:** the turn moves to `rejected/` straight away. This happens when the event is invalid, or when the server has no active coding-agent identity for that harness and user — for example, because the registration was deleted.
+
+Files in `rejected/` are not retried and are safe to delete. Read the `last_error` field in each file to see why it was rejected.
+
+## Cluster or user changes
+
+Turns are bound to the cluster and user active at install time. Before delivering, `sync` checks that binding against your current CLI config. It refuses to deliver, and keeps the turns queued, when:
+
+- the bound cluster is no longer configured,
+- the bound cluster's URL has changed,
+- you are not logged in to the bound cluster, or your login has expired, or
+- you are logged in to the bound cluster as a different user.
+
+Refused turns stay in the queue and don't use up any retry attempts. Fix the cause — for example, run `nasiko use <cluster>` and `nasiko auth login` as the same user — then run `nasiko agents sync`.
+
+To report new turns somewhere else, run `nasiko agents install <agent>` while the new cluster is active. That changes the binding for future turns only. Turns already queued are never sent to a different cluster or user.
+
+## Where sessions appear
+
+With content capture on, each accepted turn becomes a message pair in a chat session right away, with its tokens, model, and cost:
+
+- **Sessions** in the dashboard. Coding-agent sessions open read-only.
+- `nasiko sessions` lists them, and `nasiko history <session-id>` prints the turns.
+
+With `--no-content`, the session is created, but no prompts or responses are stored, so no messages show in the transcript. Token counts, models, and tool metadata are still exported as traces.
+
+Traces, and the cost views built on them in **Observability** and [TokenOps](/tokenops/dashboard), also need the server to export coding-agent telemetry. Set `CODING_AGENT_OTLP_ENDPOINT` on the Nasiko server to an OTLP/HTTP endpoint. The bundled Docker Compose stack points it at its OpenTelemetry Collector. When it is unset, sessions still appear, but no coding-agent traces reach the trace store. See [Server configuration](/self-hosting/configuration).
+
+For every flag, see the [coding agents CLI reference](/reference/cli/coding-agents).

@@ -1,0 +1,92 @@
+---
+title: "Operate agents"
+description: "Logs, scale, restarts, deployments, writable storage, and teardown after an agent is deployed."
+---
+
+Day-2 operations use the same commands whether the agent was deployed with `deploy`, `upload`, or `import`. Every command runs against the [active cluster](/install).
+
+## Status and logs
+
+```bash
+nasiko ps                     # running agents; --json for machines
+nasiko logs my-agent          # last 50 lines
+nasiko logs my-agent -n 200 -f
+nasiko status                 # cluster health
+```
+
+`-f` live-tails via SSE.
+
+## Start, stop, restart, scale
+
+```bash
+nasiko stop my-agent
+nasiko start my-agent
+nasiko restart my-agent
+nasiko scale my-agent 3
+```
+
+`restart` tears down and recreates the container — this is what picks up changed secrets or environment variables. `stop` / `start` pause and resume without touching configuration.
+
+Under Docker, any scale above `1` is clamped to `1`. Horizontal scaling needs the Kubernetes runtime (Enterprise). See [Agent hosting](/self-hosting/agent-hosting).
+
+## Deployments
+
+A deployment is one running instance of an agent, with crash reason and restart count.
+
+```bash
+nasiko deployments ls
+nasiko deployments get my-agent
+nasiko deployments restart <deployment-id>
+```
+
+`deployments restart` restarts by deployment ID (from `ls`), not by agent name. Container-level `nasiko restart <agent>` is the usual choice.
+
+## Writable storage
+
+By default an agent's filesystem is ephemeral. To keep a directory across restarts, redeploys, and code updates:
+
+```bash
+nasiko deploy . --writable
+nasiko deploy . --writable-path /data
+nasiko upload . --writable
+```
+
+`--writable` mounts a private-per-agent volume at `/workspace`. `--writable-path` mounts at that absolute path instead (and implies `--writable`). Pick a dedicated state directory — the mount hides whatever the image ships at that path.
+
+## Import from a registry
+
+```bash
+nasiko import owner/name:tag
+nasiko import registry.example.com/owner/name:tag
+```
+
+The cluster pulls the image itself. No local Docker needed. The registry host must be listed in `REGISTRY_IMPORT_ALLOWED_HOSTS` on the server.
+
+## Remove
+
+```bash
+nasiko rm --name my-agent
+nasiko rm <uuid> -f
+```
+
+Terminates the container and deregisters the catalog entry. `-f` skips confirmation.
+
+## Secrets and env
+
+```bash
+nasiko secrets set OPENAI_API_KEY sk-xxx --agent my-agent
+nasiko restart my-agent
+```
+
+Precedence, highest first: `nasiko deploy -e` → agent-specific secret → vault secret. Full model: [agent secrets](/governance/secrets/agent-secrets).
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Versions and rollback" href="/build/versions">
+    Version history, reupload, rollback.
+  </Card>
+  <Card title="CLI operate reference" href="/reference/cli/operate">
+    Every flag.
+  </Card>
+</CardGroup>

@@ -1,0 +1,19 @@
+---
+title: "Observe commands"
+sidebarTitle: "Observe"
+description: "sessions, traces, spans, project stats, TokenOps dashboard and insights."
+---
+
+Guide: [Sessions and traces](/dashboard/sessions-and-traces), [TokenOps](/tokenops/dashboard).
+
+| Command | Flags | Purpose |
+| --- | --- | --- |
+| `nasiko observe sessions` | `--start-time`, `--json` | List. Default window 7d |
+| `nasiko observe session <session_id>` | `--json` | Detail |
+| `nasiko observe trace-detail <trace_id>` | `--json` | Span tree + costs |
+| `nasiko observe span <trace_id> <span_id>` | `--json` | Prompt/completion |
+| `nasiko observe project-stats <agent_id>` | `--start-time`, `--json` | Default window 24h |
+| `nasiko observe finops-dashboard` | `--start-time`, `--json` | TokenOps KPIs. Default 24h |
+| `nasiko observe insights` | `--start-time` | Narrative insights |
+
+`--start-time` is ISO-8601.

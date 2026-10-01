@@ -1,7 +1,8 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "maple",
-  "name": "Mintlify Starter Kit",
+  "name": "Nasiko",
+  "description": "The OpenRuntime for agents, coding harnesses, frameworks and tools.",
   "colors": {
     "primary": "#BB8F06",
     "light": "#EEC239",
@@ -12,105 +13,222 @@
     "family": "Inter"
   },
   "navigation": {
-    "pages": [
+    "tabs": [
       {
-        "group": "Getting Started",
-        "pages": [
-          "index",
-          "quickstart",
-          "setup_page",
-          "multi-tenant",
+        "tab": "Documentation",
+        "groups": [
           {
-            "group": "Onboarding",
+            "group": "Get started",
+            "pages": [
+              "index",
+              "quickstart",
+              "quickstart-deploy",
+              "install"
+            ]
+          },
+          {
+            "group": "Coding agents",
+            "pages": [
+              "coding-agents/overview",
+              "coding-agents/discover",
+              "coding-agents/session-reporting",
+              "coding-agents/routing",
+              {
+                "group": "Harnesses",
+                "pages": [
+                  "coding-agents/claude-code",
+                  "coding-agents/codex",
+                  "coding-agents/opencode",
+                  "coding-agents/cursor"
+                ]
+              },
+              "coding-agents/troubleshooting"
+            ]
+          },
+          {
+            "group": "TokenOps",
+            "pages": [
+              "tokenops/dashboard",
+              "tokenops/attribution",
+              "tokenops/reduce-cost",
+              "tokenops/pricing"
+            ]
+          },
+          {
+            "group": "Model routing",
+            "pages": [
+              "models/llm-router",
+              "models/llm-configs",
+              "models/providers",
+              "models/model-registry"
+            ]
+          },
+          {
+            "group": "Policy, security and governance",
             "pages": [
               {
-                "group": "ACL",
+                "group": "Access control",
                 "pages": [
-                  "onboarding/acl/overview",
-                  "onboarding/acl/user-management",
-                  "onboarding/acl/user-agent",
-                  "onboarding/acl/user-agent-mcp"
+                  "governance/access-control/overview",
+                  "governance/access-control/users-and-teams",
+                  "governance/access-control/agent-access",
+                  "governance/access-control/reference"
+                ]
+              },
+              "governance/tool-permissions",
+              "governance/approvals",
+              "governance/flow-limits",
+              {
+                "group": "Secrets",
+                "pages": [
+                  "governance/secrets/overview",
+                  "governance/secrets/agent-secrets"
+                ]
+              },
+              "governance/sso-and-scim",
+              "governance/organizations"
+            ]
+          },
+          {
+            "group": "Build and deploy agents",
+            "pages": [
+              "build/overview",
+              "build/scaffold",
+              "build/run-locally",
+              "build/deploy",
+              "build/versions",
+              "build/operate",
+              "build/a2a",
+              "build/routing-engine",
+              "build/workflows",
+              {
+                "group": "Connect tools (MCP gateway)",
+                "pages": [
+                  "build/mcp/overview",
+                  "build/mcp/external-server",
+                  "build/mcp/deploy-server",
+                  "build/mcp/agent-integration"
+                ]
+              },
+              {
+                "group": "Registry and sample agents",
+                "pages": [
+                  "build/registry/overview",
+                  "build/registry/sample-agents"
                 ]
               }
             ]
-          }
-        ]
-      },
-      {
-        "group": "CLI",
-        "pages": [
-          "cli/setup",
-          "cli/overview"
-        ]
-      },
-      {
-        "group": "ADLC",
-        "pages": [
-          "adlc/overview",
-          "adlc/agent-scaffolding",
-          "adlc/a2a-agents",
-          "adlc/build-run-test",
-          "adlc/deploy",
-          "adlc/versions-lifecycle"
-        ]
-      },
-      {
-        "group": "Dashboard",
-        "pages": [
-          "product/overview",
-          "product/chat",
-          "product/agents",
-          "product/mcp-gateway",
-          "product/llm-router",
-          "product/observability",
-          "product/tokenops",
-          "product/administration",
-          "product/artifact-registry"
-        ]
-      },
-      {
-        "group": "Platform",
-        "pages": [
-          "platform/agent-registry",
-          "platform/orchestrator",
-          "platform/maf",
-          "platform/llm-router",
-          "platform/tokenops",
-          "platform/acl",
-          "platform/backup-and-restore",
+          },
           {
-            "group": "Secret manager",
+            "group": "Dashboard",
             "pages": [
-              "platform/secret-manager/overview",
-              "platform/secret-manager/entra-id",
-              "platform/secret-manager/user-secrets"
+              "dashboard/overview",
+              "dashboard/chat",
+              "dashboard/sessions-and-traces",
+              "dashboard/agents",
+              "dashboard/workflows",
+              "dashboard/mcp-gateway",
+              "dashboard/settings",
+              "dashboard/artifact-registry"
+            ]
+          },
+          {
+            "group": "Self-hosting",
+            "pages": [
+              "self-hosting/deploy",
+              "self-hosting/configuration",
+              "self-hosting/agent-hosting",
+              "self-hosting/backup-and-restore"
             ]
           }
         ]
       },
       {
-        "group": "MCP Gateway",
-        "pages": [
-          "mcp-gateway/agent-integration"
-        ]
-      },
-      {
-        "group": "MCP Hub",
-        "pages": [
-          "mcp-hub/overview",
-          "mcp-hub/external-mcp-server",
-          "mcp-hub/internal-mcp-deployment"
-        ]
-      },
-      {
-        "group": "Agents in Artifact Registry",
-        "pages": [
-          "artifact-registry/overview",
-          "artifact-registry/sample-agents"
+        "tab": "Reference",
+        "groups": [
+          {
+            "group": "CLI reference",
+            "pages": [
+              "reference/cli/overview",
+              "reference/cli/setup",
+              "reference/cli/coding-agents",
+              "reference/cli/create",
+              "reference/cli/operate",
+              "reference/cli/chat",
+              "reference/cli/observe",
+              "reference/cli/models",
+              "reference/cli/mcp",
+              "reference/cli/workflows",
+              "reference/cli/integrations",
+              "reference/cli/enterprise"
+            ]
+          },
+          {
+            "group": "API reference",
+            "pages": [
+              "api-reference/overview",
+              "api-reference/llm-router",
+              "api-reference/coding-agents",
+              "api-reference/approvals",
+              "api-reference/oci-registry"
+            ]
+          },
+          {
+            "group": "OpenAPI endpoints",
+            "openapi": "api-reference/openapi.json"
+          },
+          {
+            "group": "More",
+            "pages": [
+              "reference/config-files",
+              "changelog"
+            ]
+          }
         ]
       }
     ]
   },
+  "redirects": [
+    { "source": "/setup_page", "destination": "/install" },
+    { "source": "/cli/setup", "destination": "/install" },
+    { "source": "/cli/overview", "destination": "/reference/cli/overview" },
+    { "source": "/multi-tenant", "destination": "/governance/organizations" },
+    { "source": "/onboarding/acl/overview", "destination": "/governance/access-control/overview" },
+    { "source": "/onboarding/acl/user-management", "destination": "/governance/access-control/users-and-teams" },
+    { "source": "/onboarding/acl/user-agent", "destination": "/governance/access-control/agent-access" },
+    { "source": "/onboarding/acl/user-agent-mcp", "destination": "/governance/tool-permissions" },
+    { "source": "/platform/acl", "destination": "/governance/access-control/reference" },
+    { "source": "/platform/secret-manager/overview", "destination": "/governance/secrets/overview" },
+    { "source": "/platform/secret-manager/user-secrets", "destination": "/governance/secrets/agent-secrets" },
+    { "source": "/platform/secret-manager/entra-id", "destination": "/governance/sso-and-scim" },
+    { "source": "/adlc/overview", "destination": "/build/overview" },
+    { "source": "/adlc/agent-scaffolding", "destination": "/build/scaffold" },
+    { "source": "/adlc/build-run-test", "destination": "/build/run-locally" },
+    { "source": "/adlc/deploy", "destination": "/build/deploy" },
+    { "source": "/adlc/versions-lifecycle", "destination": "/build/versions" },
+    { "source": "/adlc/a2a-agents", "destination": "/build/a2a" },
+    { "source": "/platform/llm-router", "destination": "/build/routing-engine" },
+    { "source": "/platform/orchestrator", "destination": "/governance/flow-limits" },
+    { "source": "/platform/maf", "destination": "/build/workflows" },
+    { "source": "/platform/agent-registry", "destination": "/self-hosting/agent-hosting" },
+    { "source": "/platform/tokenops", "destination": "/tokenops/attribution" },
+    { "source": "/platform/backup-and-restore", "destination": "/self-hosting/backup-and-restore" },
+    { "source": "/mcp-hub/overview", "destination": "/build/mcp/overview" },
+    { "source": "/mcp-hub/external-mcp-server", "destination": "/build/mcp/external-server" },
+    { "source": "/mcp-hub/internal-mcp-deployment", "destination": "/build/mcp/deploy-server" },
+    { "source": "/mcp-gateway/agent-integration", "destination": "/build/mcp/agent-integration" },
+    { "source": "/artifact-registry/overview", "destination": "/build/registry/overview" },
+    { "source": "/artifact-registry/sample-agents", "destination": "/build/registry/sample-agents" },
+    { "source": "/product/overview", "destination": "/dashboard/overview" },
+    { "source": "/product/chat", "destination": "/dashboard/chat" },
+    { "source": "/product/agents", "destination": "/dashboard/agents" },
+    { "source": "/product/mcp-gateway", "destination": "/dashboard/mcp-gateway" },
+    { "source": "/product/llm-router", "destination": "/models/llm-router" },
+    { "source": "/product/observability", "destination": "/dashboard/sessions-and-traces" },
+    { "source": "/product/tokenops", "destination": "/tokenops/dashboard" },
+    { "source": "/product/administration", "destination": "/dashboard/settings" },
+    { "source": "/product/artifact-registry", "destination": "/dashboard/artifact-registry" }
+  ],
   "logo": {
     "light": "/logo/light.svg",
     "dark": "/logo/dark.png"
@@ -141,7 +259,7 @@
   },
   "footer": {
     "socials": {
-      "github": "https://github.com/Nasiko-Labs/nasiko-rs",
+      "github": "https://github.com/nasiko-labs/nasiko",
       "linkedin": "https://www.linkedin.com/company/nasikolabs/",
       "x": "https://x.com/nasikolabs",
       "discord": "https://discord.gg/a4aU2kcAyy"

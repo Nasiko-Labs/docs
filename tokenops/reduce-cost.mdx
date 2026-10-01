@@ -1,0 +1,73 @@
+---
+title: "Reduce cost"
+description: "Compression, context budgets, caching and routing cheaper models — the cost levers that ship today."
+---
+
+TokenOps tells you what you spent. These are the settings that change what you spend next. None of them require a wrapper in your agent code.
+
+There are no spend caps or alerts. The limits that ship are flow token budgets and per-user context budgets.
+
+## Route to a cheaper model
+
+The largest lever is which model a call is routed to. Attach an [LLM config](/models/llm-configs) with a smaller model, or set fallbacks so a failure retries cheaper rather than more expensive:
+
+```bash
+nasiko llm-config create --name cheap --provider openai --model gpt-4o-mini \
+  --api-key-secret OPENAI_API_KEY
+nasiko llm-config attach my-agent cheap
+nasiko connect claude --config cheap
+```
+
+Reasoning-level configs on the [LLM router](/models/llm-router) screen assign a fast model to simple work and a stronger model to hard work.
+
+## Compress payloads
+
+Nasiko can shrink tool results, JSON, logs, diffs and history before they are sent back into the model. Compression is structural (it keeps the shape of the data) and fails closed: if a compressor errors, the original payload is sent.
+
+**Per agent.** On the agent's card in the dashboard, the token-optimization switch sets `compress_enabled`. It is off until you turn it on. The same field is on `PUT /api/agents/{id}`.
+
+**Cluster-wide defaults** (self-hosting) are kill switches, not enablers. They default on so a dashboard toggle takes effect without a restart. Set one to `false` to stop that layer everywhere. Compression still does not run until the agent (or, for orchestrator history, every live agent you own) has `compress_enabled`.
+
+| Variable | Default | What it compresses |
+| --- | --- | --- |
+| `TOKEN_COMPRESS_TOOL_RESULTS` | `true` | Tool results in the orchestrator ReAct loop |
+| `TOKEN_COMPRESS_TOOL_RESULTS_MIN_BYTES` | `2048` | Skip payloads smaller than this |
+| `TOKEN_COMPRESS_HISTORY` | `true` | Conversation history the orchestrator keeps between turns |
+| `TOKEN_COMPRESS_HISTORY_MIN_BYTES` | `2048` | Skip history smaller than this |
+
+A high **Input** share on the TokenOps attributions table usually means context is being resent. Compression and the context budget below are the two ways to cut that.
+
+## Context budget and selection
+
+Each user has a PACMS budget tier and a context-selection strategy. They control how much chat history a request carries, not how much the cluster may spend overall.
+
+```bash
+nasiko budget get
+nasiko budget set medium          # low | medium | high
+
+nasiko context-strategy get
+nasiko context-strategy set pacms # pacms | topk | lastk
+```
+
+| Tier | Default token budget |
+| --- | --- |
+| `low` | 500 (`PACMS_BUDGET_LOW`) |
+| `medium` | 1000 (`PACMS_BUDGET_MEDIUM`) — default |
+| `high` | 5000 (`PACMS_BUDGET_HIGH`) |
+
+| Strategy | What it keeps |
+| --- | --- |
+| `pacms` | Relevance-scored history, plus a few most-recent messages always |
+| `topk` | The highest-scoring messages in the pool |
+| `lastk` | The most recent messages only |
+
+API: `GET`/`PATCH /api/me/pacms-budget` and `GET`/`PATCH /api/me/context-strategy`.
+
+## Provider prompt cache
+
+When the outbound provider supports prompt caching, Nasiko records cache-read and cache-write tokens separately. Cached input is not billed as fresh input. You do not configure this; it follows the provider.
+
+## What is not here
+
+- Spend caps, alerts, chargeback, and kill switches are not a product surface.
+- Flow-level token, depth, fan-out and timeout limits *are* — see [Flow limits](/governance/flow-limits).

@@ -1,0 +1,62 @@
+---
+title: "Coding agents"
+description: "Find the coding agents already running on your machines, see what each one costs, and route them to the models you choose."
+---
+
+Find the coding agents already running. See what each one costs, by harness, model and team. Reach any model from any harness. One command on a laptop, the same command across an estate — and nothing changes about how anyone works.
+
+Nasiko works with the coding harnesses your developers already use: Claude Code, Codex, OpenCode, and the Cursor CLI. It does three things for them:
+
+- **Finds them.** `nasiko agents discover` lists the supported harnesses on a machine and whether each one reports to Nasiko.
+- **Measures them.** Session reporting records every completed turn — tokens, model, latency, tool calls, and optionally the conversation — so you can see what each harness costs in [TokenOps](/tokenops/dashboard).
+- **Routes them.** Model routing points a harness at your Nasiko cluster instead of its vendor, so its calls go to the model and provider you choose.
+
+## Non-invasive and non-intrusive
+
+**Non-invasive:** the harness you already run keeps running unchanged. Nasiko adds no wrapper around it and no SDK to your code. Reporting uses the harness's own hook or plugin mechanism. Routing uses the harness's own provider settings.
+
+**Non-intrusive:** setup is one command per harness. After that, developers start `claude`, `codex`, `opencode`, or `cursor-agent` the same way they always have.
+
+Discovery on its own is read-only. It changes no harness settings, needs no account, and sends nothing off the machine.
+
+## Supported harnesses
+
+| Harness | Binary | Config directory | Session reporting | Model routing |
+| --- | --- | --- | --- | --- |
+| [Claude Code](/coding-agents/claude-code) | `claude` | `~/.claude` | Yes | Yes |
+| [Codex](/coding-agents/codex) | `codex` | `$CODEX_HOME`, else `~/.codex` | Yes | Yes |
+| [OpenCode](/coding-agents/opencode) | `opencode` | `$OPENCODE_CONFIG_DIR`, else `$XDG_CONFIG_HOME/opencode`, else `~/.config/opencode` | Yes | Yes |
+| [Cursor CLI](/coding-agents/cursor) | `cursor-agent` | `$CURSOR_CONFIG_DIR`, else `$XDG_CONFIG_HOME/cursor`, else `~/.cursor` | Yes | No |
+
+Cursor CLI supports session reporting only. Model routing is available for Claude Code, Codex, and OpenCode.
+
+For Claude Code, model routing honors `$CLAUDE_CONFIG_DIR` when it is set. Session reporting always uses `~/.claude`.
+
+A harness counts as detected when its binary is on your `PATH` or its config directory exists. Detection is local to the machine you run the command on.
+
+## Two independent opt-ins
+
+Session reporting and model routing are separate. You can turn on either one, both, or neither, per harness.
+
+| | Session reporting | Model routing |
+| --- | --- | --- |
+| What it does | Records completed turns and sends them to your Nasiko cluster | Sends the harness's model calls through the Nasiko LLM router |
+| Turn on | `nasiko agents install <agent>` (or automatically at login) | `nasiko connect <agent>` |
+| Turn off | `nasiko agents uninstall <agent>` | `nasiko disconnect <agent>` |
+| Check | `nasiko agents discover` | `nasiko status <agent>` |
+| Harnesses | Claude Code, Codex, OpenCode, Cursor CLI | Claude Code, Codex, OpenCode |
+| If Nasiko is unreachable | Fails open: turns queue locally and the harness keeps working | Fails closed: the harness gets an error and never falls back to the vendor |
+
+Both use the same coding-agent identity on the server: one per harness per developer. That identity is what ties a routed call and a reported session to the same developer and harness.
+
+- [Discover and register coding agents](/coding-agents/discover)
+- [Session reporting](/coding-agents/session-reporting)
+- [Model routing](/coding-agents/routing)
+
+## Get started
+
+<Card title="Quickstart: find and measure your coding agents" href="/quickstart">
+  Install the CLI, run discovery, and see your first reported session.
+</Card>
+
+Every flag is listed in the [coding agents CLI reference](/reference/cli/coding-agents).

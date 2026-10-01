@@ -1,0 +1,38 @@
+---
+title: "Pricing"
+description: "Where TokenOps rates come from, how estimated costs are marked, and how custom providers are priced."
+---
+
+Token counts become dollars by looking up a per-model rate that was in effect when the call happened. A later price change never re-costs last month.
+
+## Rate lookup
+
+For each model Nasiko knows:
+
+1. A versioned **price book** row: input and output rate per million tokens, with an effective-date window.
+2. If no row matches, a **built-in fallback table** is used and the cost is marked **estimated**.
+3. Nasiko never reports a null cost. Unknown rates still produce a number, flagged as estimated.
+
+The TokenOps KPI tooltip shows how much of the window is estimated and how many operations had unknown pricing confidence. An estimated figure is a real cost priced at a fallback rate, not a guess at usage.
+
+Cache-read and cache-write tokens use the provider's cache rates when the book has them.
+
+## Where the book is filled
+
+On an open-source cluster the book is seeded with the models Nasiko ships. Optionally, at boot Nasiko can sync published rates from the Portkey price book into `model_pricing`. That sync is fail-open: if it cannot reach the network, existing rows stay.
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `MODEL_PRICING_SYNC_ENABLED` | `true` | Sync published rates at boot |
+
+Custom providers you register (LiteLLM, vLLM, Ollama, Azure, Bedrock, OpenRouter, an internal gateway) need a rate before TokenOps can price them precisely. Until a row exists they fall through to the built-in table and show as estimated. Superusers add mappings with the [model registry](/models/model-registry) and provider catalog; see [Providers](/models/providers).
+
+## CLI
+
+```bash
+nasiko llm-config providers          # catalog with pricing where known
+nasiko observe finops-dashboard
+nasiko observe insights
+```
+
+`providers` is the same catalog the LLM router screen uses. Models listed without a rate still route; their TokenOps line is estimated until a rate exists.

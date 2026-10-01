@@ -1,0 +1,72 @@
+---
+title: "Versions and rollback"
+description: "Immutable deploy versions, history, reupload, and rollback."
+---
+
+Each deploy records an immutable version. Bump the version, redeploy, and you can roll back to an earlier one without rebuilding.
+
+## Version on deploy
+
+The `version` field in `AgentCard.json` is the image tag — the deployed image is `name:version`. Pass `-v` to set it on the command, or `-y` to accept the suggested version without a prompt.
+
+```bash
+nasiko deploy . -v 0.2.0
+nasiko deploy . -y
+nasiko push . -v 0.2.0 -y
+```
+
+Agent names are unique per cluster. Deploying the same name creates a new version on that agent. Re-pushing a version that is already in use is rejected.
+
+## History, reupload, rollback
+
+```bash
+nasiko versions --name my-agent
+nasiko versions <uuid>
+
+nasiko reupload --name my-agent
+nasiko reupload --name my-agent -v 0.3.0 --changelog "fix tool timeout"
+
+nasiko rollback --name my-agent
+nasiko rollback --name my-agent -t 0.2.0 --reason "bad prompt"
+```
+
+| Command | What it does |
+| --- | --- |
+| `versions` | Version history for a deployed agent |
+| `reupload` | Upload source again and rebuild. Version resolution: `--version` → `AgentCard.json` → `pyproject.toml` → `Cargo.toml` → server auto-patch |
+| `rollback` | Return the running agent to a previous version. Omit `-t` to roll back one version. `--reason` is stored in the audit log |
+
+API: `GET /api/agents/{id}/versions`, `POST /api/agents/{id}/rollback`, `PUT /api/agents/{id}/update` (reupload), `DELETE /api/agents/{id}/versions/{version}`.
+
+`nasiko restart` recreates the container from the **current** image and secrets. It does not change versions. Use `rollback` to change which version is current.
+
+## Registry artifacts (Enterprise)
+
+<Info>
+  **Enterprise.** This section describes the standalone artifact registry (`nasiko-ee`), not the built-in image registry at `/v2/*`. Open-source clusters keep images in that embedded registry; they do not host publish/yank.
+</Info>
+
+Each publish creates a new version row under that artifact's name. Versions are free-text, not enforced semver. "Latest" means most recently published and non-yanked.
+
+Every version starts at `preview`. An administrator can label it `stable` or `verified` — display only.
+
+Yanking hides a version from browse, list, and search. Anyone who pinned `owner/name/version` can still fetch it.
+
+```bash
+nasiko-ee registry publish <path|image> --owner <org> [--type]
+nasiko-ee registry yank <name> <version>
+nasiko registry search "code review" -t agent
+```
+
+See [Registry](/build/registry/overview).
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Deploy an agent" href="/build/deploy">
+    Push, upload, import.
+  </Card>
+  <Card title="Operate agents" href="/build/operate">
+    Logs, scale, writable storage.
+  </Card>
+</CardGroup>

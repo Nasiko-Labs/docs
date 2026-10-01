@@ -1,0 +1,74 @@
+---
+title: "Access control overview"
+description: "Who can chat with, manage, and deploy agents — and which agents may call each other."
+---
+
+Nasiko has two independent access-control mechanisms, checked separately:
+
+1. **User → agent** — which people can view, chat with, update, delete, or manage an agent's secrets.
+2. **Agent → agent** — which agents may call which other agents.
+
+Neither implies the other. A department can chat with a research agent while that agent's ability to call a billing agent stays locked to an explicit allowlist.
+
+<CardGroup cols={2}>
+  <Card title="User and org management" icon="users" href="/governance/access-control/users-and-teams">
+    Create users, assign roles, build teams and departments.
+  </Card>
+  <Card title="User → agent access" icon="key" href="/governance/access-control/agent-access">
+    Ownership, the public flag, and explicit grants.
+  </Card>
+  <Card title="Agent → agent MCP access" icon="plug" href="/governance/tool-permissions">
+    Per-agent connector and tool permissions.
+  </Card>
+  <Card title="Platform reference" icon="shield" href="/governance/access-control/reference">
+    Full technical reference.
+  </Card>
+</CardGroup>
+
+## Roles
+
+<Warning>
+  **Enterprise feature.** The ranked role tiers below (`admin` through `member`) are enforced by
+  `nasiko-ee`'s auth layer. The open-source edition has no role hierarchy — every authenticated
+  user passes the equivalent of every capability check below by default (deploy, manage secrets,
+  manage users are all unrestricted in OSS). If you're running plain `nasiko`, skip this section.
+</Warning>
+
+Every user has exactly one role. Each tier includes everything below it.
+
+| Role | Scope |
+| --- | --- |
+| `admin` | Full platform administration |
+| `department_manager` | A department's teams, agents, and members |
+| `team_lead` | A team's agents and secrets |
+| `team_member` | Contributor on a team |
+| `member` | Baseline user, no team |
+
+A role sets *what kind* of action a user may attempt. Whether they can act on a *specific* agent is decided by [user → agent access](/governance/access-control/agent-access).
+
+| Capability | Minimum role |
+| --- | --- |
+| Deploy and run agents | `member` |
+| Manage an agent's secrets | `team_lead` |
+| Manage platform users | `admin` |
+
+<Note>
+  **Role is not superuser.** Superuser is a separate flag. It bypasses organization-visibility scoping and unlocks platform-wide routes: creating users, creating departments and teams, OIDC group mappings, directory sync. Setting `role` to `admin` does not grant it — see [user and org management](/governance/access-control/users-and-teams).
+</Note>
+
+<Warning>
+  **Enterprise feature.** "Creating departments and teams," "OIDC group mappings," and "directory
+  sync" above are all `nasiko-ee` only.
+</Warning>
+
+## Where each mechanism applies
+
+| Mechanism | Governs | See |
+| --- | --- | --- |
+| User → agent | Chat, view, update, delete, secrets | [User → agent access](/governance/access-control/agent-access) |
+| Agent → agent | Which agents an agent may invoke | [Platform reference](/governance/access-control/reference) |
+| Per-agent MCP tools | Which tools an agent may call | [MCP access](/governance/tool-permissions) |
+
+<Warning>
+  Agent-to-agent calls are **default-deny**. Both the caller and the target need an explicit allowlist row. If a workflow between two agents fails, check for a missing allowlist entry first.
+</Warning>

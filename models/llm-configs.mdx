@@ -1,0 +1,75 @@
+---
+title: "LLM configs"
+description: "Reusable named configs that say which provider, model, key and fallbacks an agent or harness is routed to."
+---
+
+An LLM config is a named routing choice: provider, model, API key secret, optional fallbacks, and optional pin. Create it once, then attach it to any deployed agent you own or pass it to `nasiko connect` for a coding harness.
+
+Configs live in your library on the cluster. They are not stored in the harness.
+
+## Create and list
+
+```bash
+nasiko llm-config create --name my-openai --provider openai --model gpt-4o \
+  --api-key-secret OPENAI_API_KEY --secret-value "$OPENAI_API_KEY"
+nasiko llm-config ls
+nasiko llm-config ls --json
+nasiko llm-config providers          # valid provider and model values
+```
+
+| Flag | Purpose |
+| --- | --- |
+| `--name` | Library name |
+| `--provider` | Provider id from `providers` |
+| `--model` | Model id. If you omit it on a later update, the router falls through [tier mappings](/models/model-registry) then the cluster default |
+| `--fallback` | Repeatable fallback model |
+| `--temperature`, `--max-tokens` | Sampling |
+| `--api-key-secret` | Name of a vault secret holding the key |
+| `--secret-value` | Plaintext to store under that secret name if it does not exist yet |
+| `--pin` / `--pinned-model` | Pin routing so the smart router never re-selects |
+| `--default` | Mark this as your default config |
+
+## Update, default, delete
+
+```bash
+nasiko llm-config update my-openai --model gpt-4o-mini
+nasiko llm-config update my-openai --clear-fallbacks --no-pin
+nasiko llm-config set-default my-openai
+nasiko llm-config delete my-openai          # must be detached from all agents first
+nasiko llm-config delete my-openai --force
+```
+
+## Attach to a deployed agent
+
+```bash
+nasiko llm-config attach my-agent my-openai
+nasiko llm-config attach my-agent my-openai --inbound-format anthropic
+nasiko llm-config get my-agent
+nasiko llm-config detach my-agent           # falls back to your default, if any
+```
+
+`--inbound-format` is `openai`, `anthropic`, or `gemini`: the SDK format the agent's code speaks. Nasiko translates to the outbound provider.
+
+The dashboard **LLM router** screen creates the same configs with a model per reasoning level. CLI `--model` is the explicit model; reasoning levels are the screen's way to fill the same library.
+
+## Attach to a coding harness
+
+```bash
+nasiko connect claude --config my-openai
+nasiko connect codex --config my-openai
+nasiko connect opencode --config my-openai
+```
+
+Omit `--config` to use your default. See [Route models](/coding-agents/routing).
+
+## API
+
+| Method | Path |
+| --- | --- |
+| `GET`, `POST` | `/api/llm-configs` |
+| `GET`, `PATCH`, `DELETE` | `/api/llm-configs/{id}` |
+| `POST`, `DELETE` | `/api/llm-configs/{id}/default` |
+| `GET`, `PATCH`, `DELETE` | `/api/agents/{id}/llm-config` |
+| `POST` | `/api/agents/{id}/llm-token` |
+
+Every flag: [CLI reference](/reference/cli/models).

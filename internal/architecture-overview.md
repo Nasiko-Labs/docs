@@ -8,7 +8,7 @@ containers, routes user queries to the best agent for the job, proxies all agent
 and gives you end-to-end observability — traces, logs, and cost (TokenOps) data — across every hop.
 
 This page is a tour of the moving parts. For definitions of the terms used here (session, flow,
-routing engine, and so on), see [core concepts](/architecture/core-concepts).
+routing engine, and so on), see [core concepts](core-concepts.md).
 
 ## The big picture
 
@@ -107,7 +107,7 @@ A request lands in one of five places:
 | --- | --- | --- |
 | Public endpoints | `/health`, login, OAuth callbacks | Anyone |
 | Authenticated API | `/api/*` | Signed-in users, gated by role |
-| Agent proxy | `/api/agents/{id}/*` | Callers with [access](/onboarding/acl/overview) to that agent |
+| Agent proxy | `/api/agents/{id}/*` | Callers with access to that agent |
 | Embedded registry | `/v2/*` | Registry-style credentials (see below) |
 | Web UI | Everything else | Served as the fallback route |
 
@@ -130,7 +130,7 @@ tells registry clients to retry with credentials.
 
 ## Agent containers
 
-Agents speak the [A2A protocol](/adlc/a2a-agents) and run as containers behind the
+Agents speak the A2A protocol and run as containers behind the
 control plane. Nasiko can run them two ways:
 
 <CardGroup cols={2}>
@@ -147,23 +147,12 @@ control plane. Nasiko can run them two ways:
 Whichever runtime you use, the contract is the same from the control plane's point of view: deploy,
 scale, restart, fetch logs, and route traffic to an endpoint. Agents are never given a public IP or
 DNS name — the only way to reach one is through the control plane's proxy, which checks
-[access control](/onboarding/acl/overview) before every call and enforces [flow guard](/architecture/core-concepts#flow)
+[access control](acl-internals.md) before every call and enforces [flow guard](core-concepts.md)
 limits on every inter-agent hop.
 
 ## Where to go next
 
-<CardGroup cols={2}>
-  <Card title="Core concepts" href="/architecture/core-concepts">
-    The vocabulary — control plane, agent, session, flow, routing engine, access control — defined
-    in one place.
-  </Card>
-  <Card title="Routing engine" href="/platform/orchestrator">
-    How the platform picks which agent should handle a query.
-  </Card>
-  <Card title="Access control" href="/onboarding/acl/overview">
-    User-to-agent grants and agent-to-agent allowlists.
-  </Card>
-  <Card title="Observability" href="/platform/observability">
-    Traces, logs, and TokenOps dashboards built on the same telemetry the control plane collects.
-  </Card>
-</CardGroup>
+- [Core concepts](core-concepts.md)
+- [Orchestrator internals](orchestrator-internals.md)
+- [ACL internals](acl-internals.md)
+- [Observability internals](observability-internals.md)

@@ -1,0 +1,47 @@
+---
+title: "Workflows"
+description: "The dashboard screens for multi-agent workflows and their executions."
+---
+
+**Workflows** (`/workflows`) and **Executions** (`/executions`) are the dashboard for [MAF](/build/workflows): named pipelines of agent steps. They sit under the **Orchestrator** module, next to live orchestrator chat.
+
+## Workflows
+
+`/workflows` lists every workflow you can see: name, step count, updated time. **New workflow** opens `/workflow-new`. Opening a row loads `/workflow` with the step list, assigned agents, and **Run**.
+
+Creating a workflow in the UI is the same model as:
+
+```bash
+nasiko maf workflow create --name research-and-summarize \
+  --step "Research recent news on topic X" --agent research-agent \
+  --step "Summarize into 3 bullets" --agent -
+```
+
+`-` (and omitting an agent in the UI) lets the [routing engine](/build/routing-engine) assign that step.
+
+**Generate a draft** calls `POST /api/maf/generate`: describe the workflow in plain language, review the suggested steps, then save. Needs a model configured on the cluster; returns `503` if none is.
+
+Soft-delete from the workflow page. Executions already queued keep running.
+
+## Executions
+
+`/executions` lists runs across workflows: status, started time, workflow name. Open one for step-level status, output, and cost (TokenOps can also attribute by workflow).
+
+```bash
+nasiko maf workflow run research-and-summarize --wait
+nasiko maf execution list
+nasiko maf execution result <execution-id>
+```
+
+`--wait` polls until the run finishes and prompts for any [HITL pause](/governance/approvals) inline.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="MAF workflows" href="/build/workflows">
+    The workflow model, CLI, and API.
+  </Card>
+  <Card title="Orchestrator chat" href="/dashboard/chat">
+    Live ReAct over accessible agents, without a pre-defined pipeline.
+  </Card>
+</CardGroup>

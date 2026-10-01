@@ -6,12 +6,10 @@ customers. There is no longer a customer-facing MCP gateway *reference* page.
 
 What survives publicly:
 
-- `mcp-hub/overview.mdx` — the delegation-token model, the two permission layers stated
-  behaviorally, the agent-facing `POST /api/mcp` route, and the management route table
-  relocated there because customers integrate against it.
-- `mcp-hub/internal-mcp-deployment.mdx` — the hardened build-and-deploy sequence, the
-  readiness handshake, and self-heal, all as behavior.
-- `onboarding/acl/user-agent-mcp.mdx` — the allow/ask/block rules Layer 2 enforces.
+- `build/mcp/overview.mdx` — deploy-time `MCP_GATEWAY_TOKEN`, `/api/mcp` and `/api/mcp/s/{token}`,
+  permission layers, management routes
+- `build/mcp/deploy-server.mdx` — hardened upload pipeline
+- `governance/tool-permissions.mdx` — allow/ask/block
 
 ## Permission resolution order
 
@@ -36,12 +34,15 @@ failed build never leaves an orphaned workload behind.
 Uploads ride the same background build pipeline as agent source uploads — see
 `agent-runtime-internals.md` for the retry cap and stuck-job recovery that path inherits.
 
-## Delegation token — why it's minted and validated in one process
+## Agent credential (deploy-time token)
 
-The actor-pattern JWT binds two identities (`sub = user_id`, `act = agent_id`,
-`aud = "mcp"`) with a short expiry, minted by the same server process that forwards a
-user's request to an agent container. Two properties follow from not splitting that across
-a network hop:
+Public docs: agents authenticate to `/api/mcp` with deploy-time `MCP_GATEWAY_TOKEN` (or
+`/api/mcp/s/{token}`), and user identity comes from `traceparent` / the flow row. The older
+per-request actor-pattern JWT (`sub = user_id`, `act = agent_id`, `aud = "mcp"`) is historical.
+Keep the properties below as the reason validation stays in-process; do not document minting a
+fresh user-delegation token on every proxy hop as current behavior.
+
+## Why validation stays in one process
 
 - **Stateless.** No database write per request to mint or validate — cost doesn't scale
   with traffic.

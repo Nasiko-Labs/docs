@@ -1,37 +1,44 @@
 ---
 title: "API reference"
-description: "Programmatic access to Nasiko — authentication and endpoint reference."
+description: "Authentication, conventions, and where each surface is documented."
 ---
 
-The control plane exposes one HTTP API — the same one the CLI, web UI, and admin tools use. Everything from deploying an agent to querying a trace is a REST or JSON-RPC call.
+The Nasiko server exposes one HTTP API — the same one the CLI, dashboard, and admin tools use.
 
-<Note>
-  The interactive endpoint reference is coming soon. Until then, each area of the API is documented in context below with example requests.
-</Note>
+Live spec (annotated routes only): [http://localhost:8080/api/openapi.json](http://localhost:8080/api/openapi.json) on a local cluster, Swagger UI at `/api/docs`. The copy in this docs site is that generated spec. Routes without `#[utoipa::path]` are documented on the pages below.
 
 ## Authentication
 
 | Surface | Credential |
 | --- | --- |
-| `/api/*` | Bearer token from a login session |
-| `/api/mcp` (MCP gateway) | Scoped delegation token |
-| `/v2/*` (image registry) | Registry Basic or Bearer credentials |
+| `/api/*` | `Authorization: Bearer` session JWT from `POST /api/auth/login` (or the dashboard cookie) |
+| `/api/mcp` JSON-RPC | Deploy-time `MCP_GATEWAY_TOKEN` (or `/api/mcp/s/{token}`) plus `traceparent` |
+| `/v1/*` LLM router | Agent JWT (`Authorization` or `x-api-key`) plus `traceparent` |
+| `/v2/*` image registry | Registry Basic or Bearer |
 
-See [access control](/onboarding/acl/overview) for how permissions are evaluated.
+See [access control](/governance/access-control/overview). Strict attribution: [Cost attribution](/tokenops/attribution).
 
-## Endpoint details
+## Conventions
+
+Responses are JSON objects. Errors use HTTP status plus `{ "error", "code" }`. Field names are snake_case. IDs are UUIDs. There is no `/api/v1` prefix — evolution is additive.
+
+## Hand-written surfaces
+
+These are **not** in the generated OpenAPI file:
 
 <CardGroup cols={2}>
-  <Card title="Agent lifecycle" icon="cube" href="/adlc/deploy">
-    Deploy, scale, restart, and inspect agents.
+  <Card title="LLM router (/v1)" href="/api-reference/llm-router">
+    Chat Completions, Responses, Messages, Gemini, embeddings.
   </Card>
-  <Card title="Orchestration & chat" icon="messages" href="/adlc/a2a-agents">
-    Send a query and let Nasiko route it, or call an agent directly.
+  <Card title="Coding agents" href="/api-reference/coding-agents">
+    Register integrations and ingest telemetry.
   </Card>
-  <Card title="Observability" icon="chart-line" href="/product/observability">
-    Sessions, traces, spans, and cost dashboards.
+  <Card title="Approvals (HITL)" href="/api-reference/approvals">
+    Pending, resolve, cancel, stream, requeue.
   </Card>
-  <Card title="MCP gateway" icon="plug" href="/mcp-hub/overview">
-    Tool access for agents via connectors.
+  <Card title="OCI registry (/v2)" href="/api-reference/oci-registry">
+    Embedded Distribution v2 for agent images.
   </Card>
 </CardGroup>
+
+TokenOps extra routes (`finops/spend-timeseries`, `spend-calendar`, `attributions`, `/api/usage/*`) are listed in [cost attribution](/tokenops/attribution). MCP management routes are in the generated spec and in [MCP gateway](/build/mcp/overview). Custom providers: [Providers](/models/providers).

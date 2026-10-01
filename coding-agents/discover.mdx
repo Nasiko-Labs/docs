@@ -1,0 +1,111 @@
+---
+title: "Discover and register coding agents"
+description: "List the coding harnesses on a machine, register them with your Nasiko cluster, and turn session reporting on or off."
+---
+
+## Discover what is installed
+
+```sh
+nasiko agents discover
+```
+
+Discovery reads the local machine, prints one row per supported harness, and exits. It changes no harness settings, needs no login, and sends nothing to your Nasiko cluster.
+
+```text
+AGENT      DETECTED   CONNECTED   VERSION              CONFIG
+----------------------------------------------------------------------------------------
+claude     yes        yes         v3                   ~/.claude
+codex      yes        no          -                    ~/.codex
+opencode   -          no          -                    ~/.config/opencode
+cursor     yes        no          -                    ~/.cursor
+
+Install session reporting:  nasiko agents install <agent>
+```
+
+| Column | Meaning |
+| --- | --- |
+| `AGENT` | The ID you pass to other commands: `claude`, `codex`, `opencode`, or `cursor`. |
+| `DETECTED` | `yes` when the harness binary is on your `PATH` or its config directory exists. `-` when neither is found. |
+| `CONNECTED` | `yes` when session reporting is installed and current. This column is about reporting only; check model routing with `nasiko status <agent>`. |
+| `VERSION` | The installed reporting hook version, such as `v3`. `-` means not installed. `v2 -> v3` means the hook is out of date. `v3 (state v2)` means the hook and the saved install record disagree. In both of the last two cases, run `nasiko agents install <agent>` again. |
+| `CONFIG` | The harness config directory Nasiko reads and writes. |
+
+A config directory with no binary still counts as detected: it means the harness was used on this machine before.
+
+## Install session reporting
+
+```sh
+nasiko agents install claude
+nasiko agents install codex --no-content
+```
+
+`install` needs an active cluster and a current login (`nasiko auth login`). It does three things:
+
+1. Registers the harness with your Nasiko cluster, or finds the existing registration.
+2. Adds a reporting hook (or plugin, for OpenCode) to the harness config directory.
+3. Saves a local install record that binds reporting to the cluster and user that are active right now.
+
+`--no-content` reports tokens, latency, models, and tool metadata but leaves out prompts, responses, session titles, and tool inputs and outputs. See [what is captured](/coding-agents/session-reporting#what-is-captured).
+
+Some harnesses need one more step:
+
+- **Codex:** open Codex, run `/hooks`, and trust the new Nasiko command hooks.
+- **OpenCode:** restart OpenCode so it loads the new plugin.
+
+Then start a new session in the harness. Completed turns show up in **Sessions** in the dashboard, and in `nasiko sessions` and `nasiko observe sessions`.
+
+`install` fails if the harness is not detected on the machine, if you are not logged in, or if the harness config file it needs to edit is not valid JSON.
+
+## Automatic install on login
+
+These commands also set up session reporting for you:
+
+- `nasiko auth login`
+- `nasiko connect <cluster-url>`
+- `nasiko use <cluster>`
+
+After the command succeeds, Nasiko installs reporting for every detected harness that has **no install record yet**, with content capture on. It runs only when the active cluster has a current login; otherwise it prints that setup was skipped. One harness failing does not stop the others — you get a warning and a `nasiko agents install <agent>` command to retry.
+
+Automatic install never rebinds a harness that is already installed. If you switch clusters, a harness you installed earlier keeps reporting to its original cluster. To move it, run `nasiko agents install <agent>` while the new cluster is active.
+
+Model routing commands such as `nasiko connect claude` do not trigger automatic install.
+
+## Cluster binding
+
+Each install is bound to the cluster name, cluster URL, and user that were active when you ran it. Every turn is queued for that destination and no other. Nasiko never reroutes queued turns to a different cluster or user.
+
+To change the binding, or to switch `--no-content` on or off, run `nasiko agents install <agent>` again with the cluster you want active. Turns queued before that stay bound to their original destination. See [cluster or user changes](/coding-agents/session-reporting#cluster-or-user-changes).
+
+## What registration creates
+
+Registering a harness creates one coding-agent identity per harness per user on your Nasiko server. Registering again returns the same identity.
+
+| Harness | Identity name | Dashboard label |
+| --- | --- | --- |
+| Claude Code | `<username>-claude-code` | Claude Code (`<your email>`) |
+| Codex | `<username>-codex` | Codex (`<your email>`) |
+| OpenCode | `<username>-opencode` | OpenCode (`<your email>`) |
+| Cursor CLI | `<username>-cursor` | Cursor (`<your email>`) |
+
+The identity is owned by you and tagged `local` and `coding-agent`. Reported sessions and routed model calls are both attributed to it, so cost rolls up by harness and developer. [Model routing](/coding-agents/routing) reuses the same identity.
+
+## Where coding agents appear in the dashboard
+
+- **Agents** lists each registered coding agent under its label, such as **Claude Code (alice@example.com)**, alongside your deployed agents. Nothing runs on Nasiko for a coding agent, so its agent page has no **Configure** or **Logs** tab.
+- **Sessions** lists reported coding sessions next to your other chats. A coding-agent session opens read-only, with the note "This is a recorded coding-agent conversation. Continue it in the original coding agent."
+- **Observability** shows the same sessions with traces, tokens, and latency.
+- **TokenOps** shows their cost. See [TokenOps dashboard](/tokenops/dashboard).
+
+From the CLI, `nasiko agents ls` lists registered coding agents with the same label.
+
+## Uninstall session reporting
+
+```sh
+nasiko agents uninstall claude
+```
+
+`uninstall` removes the Nasiko hook entries from the harness config, deletes the hook script, and removes the local install record. It leaves everything else in the harness config alone.
+
+The coding-agent identity and its past sessions stay on the server. Turns already in the local queue are still delivered. `uninstall` does not change model routing; use `nasiko disconnect <agent>` for that.
+
+For every flag, see the [coding agents CLI reference](/reference/cli/coding-agents).

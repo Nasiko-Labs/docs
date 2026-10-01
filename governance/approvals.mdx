@@ -1,0 +1,68 @@
+---
+title: "Human-in-the-loop approvals"
+sidebarTitle: "Approvals"
+description: "Pause an agent for a human decision — tool approval, extra input, or auth — then resume."
+---
+
+Some agent steps should not run unattended: calling a destructive tool, asking the user a question, or starting an OAuth flow. Nasiko pauses the run, records a HITL request, and resumes when a human resolves it.
+
+Approvals surface in:
+
+- `nasiko chat` (orchestrator and `nasiko chat -a`)
+- `nasiko maf workflow run … --wait`
+- MCP tool calls whose permission is **ask**
+- The HTTP API below
+
+There is no separate Approvals screen in the open-source dashboard. Pending requests are prompted inline in the CLI. Superusers can requeue a stuck resume via the API.
+
+## Kinds of pause
+
+| Kind | What the human does |
+| --- | --- |
+| `tool_approval` | Approve once, approve for the rest of the session, or reject. Optional audit note. |
+| `input_required` | Answer a free-text question, or pick from a structured single- or multi-select list. |
+| `auth_required` | Start an OAuth or credential flow, then confirm or deny. |
+
+MCP connectors with per-agent tool stance **ask** raise `tool_approval`. See [Tool permissions](/governance/tool-permissions).
+
+## Resolve from the CLI
+
+When `nasiko chat` or `maf run --wait` hits a pause, the CLI prints the request and waits for a decision. Ctrl+C cancels the prompt without killing the session; the HITL row stays `pending` until you resolve or cancel it.
+
+`NO_COLOR` is honored.
+
+## API
+
+All routes except requeue require the user who owns the pause (or an admin). Requeue is superuser only.
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/api/hitl/pending` | List pending requests |
+| `GET` | `/api/hitl/{id}` | One request |
+| `POST` | `/api/hitl/{id}/resolve` | Submit a decision |
+| `POST` | `/api/hitl/{id}/cancel` | Cancel |
+| `GET` | `/api/hitl/{id}/stream` | Resume SSE stream |
+| `POST` | `/api/hitl/{id}/requeue` | Superuser: requeue a stuck resume |
+
+### Resolve body
+
+Fields used depend on the kind. Unused fields are ignored.
+
+```json
+{
+  "answer": "Summary",
+  "custom_answer": null,
+  "auth_action": "confirm",
+  "decision": "approve",
+  "scope": "session",
+  "note": "optional audit note"
+}
+```
+
+| Kind | Fields |
+| --- | --- |
+| `input_required` | `answer` — string, or string array for multi-select. `custom_answer` is extra "something else" text for multi-select. |
+| `tool_approval` | `decision`: `approve` or `reject`. `scope`: `once` or `session`. `note` is stored, not interpreted. |
+| `auth_required` | `auth_action`: `start` then `confirm`, or deny. |
+
+A 403 from the LLM router or MCP gateway is not a HITL pause — it is [attribution](/tokenops/attribution) or a permission denial.

@@ -1,0 +1,124 @@
+---
+title: "Quickstart: deploy an agent"
+sidebarTitle: "Quickstart: deploy an agent"
+description: "Scaffold an agent, run it locally, deploy it to your Nasiko cluster, and see its sessions and spend."
+---
+
+Scaffold an agent in any framework, run it on your laptop, deploy it to your Nasiko cluster, and chat with it. Every model call it makes is routed through Nasiko and attributed in TokenOps. You don't add an SDK or change the agent's code.
+
+<Tip>
+  Here to measure the coding agents you already use? Start with the [Quickstart](/quickstart) instead.
+</Tip>
+
+## Prerequisites
+
+- [Docker](https://docs.docker.com/get-docker/), to build and run agent images
+- [Rust](https://rustup.rs), to install the CLI
+- A Nasiko cluster with a model provider key configured — run one locally with [Deploy the stack](/self-hosting/deploy), or use your organization's
+- An account with deploy permission — see [access control](/governance/access-control/overview)
+
+## Build and deploy
+
+<Steps>
+  <Step title="Install the CLI and sign in">
+    ```bash
+    git clone https://github.com/Nasiko-Labs/nasiko.git && cd nasiko
+    cargo install --path cli --force
+    nasiko connect http://localhost:8080 --name local   # or your organization's URL
+    nasiko auth login
+    ```
+
+    Your token is stored in `~/.nasiko/config.json`. More options, including `nasiko up`: [Install and connect](/install).
+  </Step>
+
+  <Step title="Scaffold an agent">
+    ```bash
+    nasiko new openai my-first-agent
+    cd my-first-agent
+    ```
+
+    This writes an `AgentCard.json` (the agent's identity and skills), a `Dockerfile`, and starter source in `src/`. Run `nasiko new` with no arguments to pick a framework interactively. See [Scaffold an agent](/build/scaffold).
+  </Step>
+
+  <Step title="Run it locally">
+    ```bash
+    nasiko run .
+    ```
+
+    This builds the image and runs it on `localhost:8000`. When a cluster is connected, the local container gets the same model settings the cluster injects at deploy time, so you don't need to copy an API key into the project. A project `.env` file, if present, is loaded too.
+
+    In a second terminal:
+
+    ```bash
+    nasiko chat http://localhost:8000 "Customer says their invoice is wrong"
+    ```
+
+    More: [Run and chat locally](/build/run-locally).
+  </Step>
+
+  <Step title="Deploy it">
+    ```bash
+    nasiko deploy .
+    ```
+
+    This builds the image, pushes it to your cluster's built-in registry, then registers and starts the agent. It prompts for a version (use `-y` to accept the suggested one) and writes `.nasiko/agent.json`, which binds this directory to the deployed agent.
+
+    No local Docker? Run `nasiko upload .` and the cluster builds the image for you. See [Deploy an agent](/build/deploy).
+  </Step>
+
+  <Step title="Chat with the deployed agent">
+    ```bash
+    nasiko chat -a my-first-agent "Customer says their invoice is wrong"
+    nasiko ps                     # status of your running agents
+    nasiko logs my-first-agent    # if something looks wrong
+    ```
+
+    Omit the agent name (`nasiko chat "..."`) to let the orchestrator pick from every agent you can access.
+  </Step>
+
+  <Step title="See it in the dashboard">
+    Sign in at your cluster URL. Your agent is already:
+
+    - listed under **Your agents**, with status and owner — see [Agents](/dashboard/agents)
+    - recording every conversation in **Sessions** — see [Sessions and traces](/dashboard/sessions-and-traces)
+    - reporting spend by model in **TokenOps** — see [the TokenOps dashboard](/tokenops/dashboard)
+  </Step>
+</Steps>
+
+## How the agent reaches a model
+
+At deploy time, Nasiko points the agent's model SDK at the cluster's [LLM router](/models/llm-router) and gives it a short-lived identity credential instead of a real provider key. The router selects the provider and key server-side, so no agent and no log ever holds the real key. To route this agent to a different model or provider, attach an [LLM config](/models/llm-configs):
+
+```bash
+nasiko llm-config attach my-first-agent my-openai
+```
+
+To give the agent its own provider key or any other secret, store it encrypted and restart:
+
+```bash
+nasiko secrets set MY_API_KEY <value> --agent my-first-agent
+nasiko restart my-first-agent
+```
+
+See [agent secrets](/governance/secrets/agent-secrets).
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Versions and rollback" icon="code-branch" href="/build/versions">
+    Ship a new version, or roll back to an earlier one.
+  </Card>
+  <Card title="Set access policy" icon="shield-check" href="/governance/access-control/agent-access">
+    Control who can use and manage this agent.
+  </Card>
+  <Card title="Connect tools over MCP" icon="plug" href="/build/mcp/overview">
+    Give the agent permission-filtered tools.
+  </Card>
+  <Card title="Compose agents" icon="diagram-project" href="/build/workflows">
+    Chain agents into a multi-agent workflow.
+  </Card>
+</CardGroup>
+
+<Tip>
+  Stuck? Ask in [Discord](https://discord.com/invite/HmnfkTfjFv) or email [support@nasiko.com](mailto:support@nasiko.com).
+</Tip>

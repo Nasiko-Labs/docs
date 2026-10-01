@@ -1,0 +1,27 @@
+---
+title: "Workflow commands"
+sidebarTitle: "Workflows"
+description: "nasiko maf workflow and execution."
+---
+
+Guide: [MAF workflows](/build/workflows). `--wait` prompts for [HITL](/governance/approvals) inline.
+
+## workflow
+
+| Command | Flags |
+| --- | --- |
+| `list` / `ls` | `--json` |
+| `create` | `--name --description --step` (repeat) `--agent` (repeat; `-` auto-assigns) |
+| `get <workflow>` | `--json` |
+| `update <workflow>` | `--name --description --clear-description`; replace with `--step/--agent`; append `--add-step/--add-agent`; edit `--edit-step` + `--edit-description` / `--edit-agent` |
+| `delete` / `rm <workflow>` | `-f/--force` (soft-delete) |
+| `run <workflow>` | `--wait` |
+| `executions <workflow>` | `--json` |
+
+## execution
+
+| Command | Flags |
+| --- | --- |
+| `list` / `ls` | `--json` |
+| `get <execution_id>` | `--json` |
+| `result <execution_id>` | `--json` |

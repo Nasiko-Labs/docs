@@ -1,0 +1,43 @@
+---
+title: "Backup and restore"
+description: "What state the platform holds where, and what's on you to back up."
+---
+
+<Note>
+  Nasiko ships no backup command, snapshot job, or disaster-recovery runbook today. This page tells you what state exists and where, so you can back it up the way you'd back up any stateful service.
+</Note>
+
+## Where state lives
+
+The Nasiko server holds no durable in-process state. Everything survives a restart because it lives in one of three external stores.
+
+| Store | Holds | Loss impact |
+| --- | --- | --- |
+| **Postgres** | Users, agents, access grants, sessions, MAF workflow definitions and history, connector registry and permissions, router decision logs, model pricing | Total — this is the source of truth. Losing it means losing every account, agent record, and grant, even if containers and images survive. |
+| **S3** (or MinIO, self-hosted) | Agent image layers pushed to the embedded registry, and build contexts staged for in-cluster builds | Images become unrecoverable unless you have the original source or a copy elsewhere. The platform keeps no second copy. |
+| **Redis** | Flow-guard cascade-limit state, MCP gateway caches, and the MAF execution queue | Mostly safe to lose — cache state is short-TTL and rebuilds from Postgres. The MAF queue is the exception, below. |
+
+The server applies its own migrations at startup, so a Postgres instance restored at an older schema version is brought up to date automatically. No manual migration replay.
+
+<Warning>
+  Redis isn't purely disposable. Flow-guard and MCP permission state genuinely are — short TTLs, recomputed from Postgres on demand. But the MAF worker queues executions on a Redis stream, and a queued-but-unclaimed execution has no second copy anywhere. If you run MAF workflows in production, size Redis durability accordingly.
+</Warning>
+
+## What to do
+
+- **Postgres** — `pg_dump` / point-in-time recovery, or your provider's managed snapshots
+- **S3 / MinIO** — your object storage's replication or versioning, or cross-region replication for self-hosted MinIO
+- **Redis** — if you rely on MAF, treat it as a job queue (AOF persistence or managed Redis with replication), not a cache
+
+If you provisioned Postgres and MinIO through the self-hosted Helm chart, both run as single-replica StatefulSets on a `PersistentVolumeClaim` with no backup CronJob or snapshot policy. Durability is whatever your storage class provides. For production, prefer a managed database service — it gives you backups, replication, and failover without building them on a self-managed PVC.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="MAF" href="/build/workflows">
+    Workflow executions are the one thing in Redis that isn't safe to lose.
+  </Card>
+    <Card title="Agent hosting" href="/self-hosting/agent-hosting">
+    The two runtimes and what each expects from storage.
+  </Card>
+</CardGroup>

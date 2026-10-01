@@ -1,0 +1,28 @@
+---
+title: "Model commands"
+sidebarTitle: "Models"
+description: "llm-config and model-registry."
+---
+
+Guides: [LLM configs](/models/llm-configs), [Model registry](/models/model-registry).
+
+## llm-config
+
+| Command | Notable flags |
+| --- | --- |
+| `create` | `--name --provider --model --fallback` (repeat) `--temperature --max-tokens --api-key-secret --secret-value --pin --pinned-model --default` |
+| `update <config>` | Same fields optional; `--clear-fallbacks --no-pin --clear-pinned-model` |
+| `delete` / `rm <config>` | `-f/--force` |
+| `list` / `ls` | `--json` |
+| `set-default <config>` | |
+| `attach <agent> <config>` | `--inbound-format` `openai` \| `anthropic` \| `gemini` |
+| `detach <agent>` | |
+| `get <agent>` | `--json` |
+| `providers` | `--json` |
+
+## model-registry
+
+| Command | Flags | Who |
+| --- | --- | --- |
+| `ls` / `list` | `--json` | Authenticated |
+| `set` | `--provider --tier --model` | Superuser. Tier `1` strongest … `3` smallest |

@@ -1,0 +1,113 @@
+---
+title: "Administration"
+description: "Manage agent secrets, platform settings, users, teams, departments, and access."
+---
+
+**Secrets** and **Settings** are available to everyone with a login. The organization screens appear only once your role includes org or infrastructure management. For the role model, see [access control](/governance/access-control/overview).
+
+## Secrets
+
+Lists an agent's credentials — API keys, connection strings, tokens — as key/value pairs the agent reads from its container environment.
+
+Each row shows the **Key** and creation date. The **Value** is always masked, in the table and while typing. Secrets are write-only from the UI: you can set and overwrite them, never read one back.
+
+The screen is titled **API Secrets & Credentials**; with nothing stored yet it shows **No secrets configured**.
+
+
+**Add secret** takes a **Secret name** (uppercase, numbers, underscores — `MY_API_KEY` style) and a **Secret value**, then **Save**. **Delete** removes one after confirmation.
+
+
+<Note>
+  Saving a secret updates what's stored. It doesn't push the value into a running container — that happens on the next deploy or restart. See [managing agent secrets](/governance/secrets/agent-secrets) and [secret management](/governance/secrets/overview).
+</Note>
+
+## Settings
+
+Three tabs of platform-wide configuration:
+
+| Tab | Contains |
+| --- | --- |
+| **General** | Instance name, default chat model, max output tokens per request |
+| **Models** | Anthropic API key for Claude routing, optional OpenAI key |
+| **Registry** | OCI registry URL, username, and password for pulling agent images |
+
+API keys and the registry password use masked fields — stored encrypted, never displayed back. Click **Save Changes** to apply.
+
+## Organization and access screens
+
+<Warning>
+  **Enterprise feature.** Everything from here to "Doing this from the CLI" — Departments, Teams,
+  Team Access, Agent Runtime (cluster provisioning), Group Mappings, and the org-wide Access
+  Control rollup — is `nasiko-ee` functionality with no OSS equivalent. The plain **Users** screen
+  has a partial OSS basis (basic account create/list/deactivate) but without the role hierarchy or
+  team/department placement described below.
+</Warning>
+
+| Screen | Who sees it | What it does |
+| --- | --- | --- |
+| **Access Control** | Org administrators | Org-wide stats, health warnings, placement shortcut for unassigned members |
+| **Users** | Org administrators | Create, edit, deactivate, and delete accounts; assign roles and placement |
+| **Departments** | Team leads and above view; org admins manage | Browse departments and rollups |
+| **Teams** | Team leads and above view; org admins manage | Browse teams and rollups |
+| **Team Access** | Team leads, department managers, admins | Adjust role and placement within your own team or department |
+| **Agent Runtime** | Administrators | View and manage compute clusters |
+| **Group Mappings** | Top-level administrators | Map identity-provider groups to roles, teams, departments |
+
+Roles are `admin`, `department_manager`, `team_lead`, `team_member`, and `member`. The separate **superuser** flag unlocks several of these screens regardless of role — see [access control](/governance/access-control/overview).
+
+### Access Control
+
+An org-wide dashboard: counts of admins, departments, teams, users, and agents, then warning cards for anything needing attention (users with no team or department, for example). Below, a **Departments** table rolls up each department's manager, team, member, and agent counts, and **Unassigned Members** lists users with no placement.
+
+The folder icon next to an unassigned user opens **Assign department / team** — pick a department, optionally narrow to a team, save. Leaving both empty clears their placement.
+
+
+Without the role to use this screen, it shows a plain error rather than data.
+
+### Users
+
+Every account, with name/email, role, department/team, active status, and last login. Filter by role, department, or status; search matches name, username, or email.
+
+
+**Unassigned** and **Admins** are the same table pre-filtered — users with no placement, and accounts holding the admin role.
+
+
+
+- **Add User** — username, email, optional display name, role. No password: the platform generates a one-time **access key** and **access secret**, shown once in the dialog with copy buttons. The secret is the user's login password and can't be shown again.
+- **Edit** — username, email, display name, or a new password (blank keeps the current one)
+- **Assign department/team** (folder icon) — the same placement dialog as above
+- **Activate / Deactivate** — toggle sign-in
+- **Delete** — permanently remove the account
+- **Sync Azure AD Directory** — trigger a directory sync; a toast reports how many departments, teams, and users were created
+
+<Note>
+  Without administrator access, this screen loads but says full user management requires it, and points you to Team Access.
+</Note>
+
+### Departments and Teams
+
+Roster screens: a searchable table (name, manager or lead, team or member counts, agent count) plus stats. Every team belongs to a department, so creating one requires picking a department.
+
+Team leads and above can browse. Creating or editing is reserved for top-level administrators.
+
+
+
+### Team Access
+
+The scoped version of Users. Shows only your own team — or your whole department, for a department manager — with **Edit Access** per person to change their role and, for admins and department managers, reassign their team.
+
+You can only grant a role below your own. A team lead can hand out team member or team lead, never department manager or admin.
+
+### Agent Runtime
+
+The compute clusters backing your agents: provider (DigitalOcean, AWS, Azure), region, node size, and status from provisioning through ready to destroyed. Open a live provisioning log per cluster, or **Destroy Cluster** once it's no longer transitional.
+
+### Group Mappings
+
+Connects identity-provider security groups to Nasiko roles. Each mapping ties an external group's object ID to a role, a department, a team, or any combination — at least one is required. New logins are placed by the highest-ranked matching mapping. **Sync Azure AD Directory** is available here too.
+
+## Doing this from the CLI
+
+- [User and org management](/governance/access-control/users-and-teams) — creating users, teams, departments
+- [Managing agent secrets](/governance/secrets/agent-secrets) — secrets from the command line
+- [Access control reference](/governance/access-control/reference) — the full model behind roles, grants, and agent-to-agent access
