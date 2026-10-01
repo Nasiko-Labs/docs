@@ -1,0 +1,65 @@
+---
+title: "Artifact registry"
+description: "Browse, inspect, and publish agents, skills, and other artifacts in the registry's web app."
+---
+
+The artifact registry has its own web app, separate from the control-plane dashboard — its own navigation (**Artifacts** and **Publish**) and its own sign-in, scoped to that registry instance.
+
+For the CLI and API side, see [Artifact registry](/build/registry/overview). For a curated set of artifacts, see [Sample agents](/build/registry/sample-agents).
+
+<Note>
+  Open whatever address your organization gave you for the registry — this page describes the screens, not a fixed hostname.
+</Note>
+
+## Browsing artifacts
+
+The landing page is a card grid. Type tabs narrow it to **All**, **Agents**, **Skills**, **MCP**, or **Miscellaneous** (which appears only when something falls outside the three headline types). Each tab shows a count.
+
+Search is live and debounced. **Framework** and **Format** facet dropdowns appear only when the catalog has two or more distinct values to filter on.
+
+Each card shows:
+
+- Type icon, owner, and name
+- A type badge, plus a status badge when the latest version isn't `stable` (`preview`, `verified`, `yanked`)
+- Description, or "No description provided"
+- Up to three tags, with a "+N" badge for more
+- Latest version, version count, size, and last updated
+
+An empty result suggests adjusting filters. An empty catalog hints at pushing an artifact with `oras`, `docker`, or `nasiko-ee`.
+
+## Artifact detail
+
+- Owner, name, type, status badges, description
+- License, framework, packaging format, last updated
+- Stat tiles: latest version, version count, size, first published
+- A ready-to-copy pull command — `docker pull` for Docker-packaged artifacts, `oras pull` otherwise — plus `nasiko skill add <name>` for a skill, or the OCI reference to import an agent into the cluster
+- **Overview** tab — tags and a details grid (type, format, license, framework, first published, latest digest, custom metadata), plus a copyable `.well-known/agent.json` link for agents
+- **Versions** tab — every version with digest, size, age, and a lifecycle status badge
+
+## Publishing
+
+The **Publish** screen takes owner, name, version, type (**Agent**, **Skill**, or **Tool**), framework, description, tags, license, and a `.tar.gz` archive. Success or failure is reported inline.
+
+This screen is hidden from the registry's navigation — reach it via a direct link to `publish.html`.
+
+## Admin sign-in and edits
+
+Some detail-page actions require a registry admin sign-in — a separate username/password form, distinct from your Nasiko login. Once signed in, an admin can:
+
+- **Edit details** — description, tags, license, framework, custom metadata, and the artifact's type (useful when a push landed as `unknown`)
+- **Change a version's lifecycle status** between `preview`, `stable`, and `verified`
+- **Yank a version** — a confirmed action that hides it from search and installs
+
+Browsing, searching, and downloading stay open to anyone who can reach the registry.
+
+<CardGroup cols={2}>
+  <Card title="Artifact registry (Guides)" href="/build/registry/overview">
+    The CLI and API side — publishing, pulling, the MCP interface.
+  </Card>
+  <Card title="Sample agents" href="/build/registry/sample-agents">
+    Ready-to-deploy agents in the registry.
+  </Card>
+  <Card title="Dashboard overview" href="/dashboard/overview">
+    The control-plane app this registry is separate from.
+  </Card>
+</CardGroup>

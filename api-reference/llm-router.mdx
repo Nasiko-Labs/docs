@@ -1,0 +1,20 @@
+---
+title: "LLM router API"
+description: "OpenAI-, Anthropic-, and Gemini-compatible endpoints the Nasiko LLM router serves."
+---
+
+Not in the generated OpenAPI spec. Agents and coding harnesses call these on the Nasiko server, not on the vendor.
+
+Auth: agent JWT (`Authorization: Bearer` or `x-api-key`). User/session: W3C `traceparent` whose trace ID is a live flow. Missing or unresolvable `traceparent` → **403**. Empty `AGENT_JWT_SECRET` → **401**. See [Providers](/models/providers) and [Cost attribution](/tokenops/attribution).
+
+| Method | Path | Protocol |
+| --- | --- | --- |
+| `GET` | `/v1/health` | Liveness, no auth |
+| `POST` | `/v1/chat/completions` | OpenAI Chat Completions |
+| `POST` | `/v1/responses` | OpenAI Responses (Codex) |
+| `POST` | `/v1/messages` | Anthropic Messages (Claude Code) |
+| `POST` | `/v1beta/models/{model_method}` | Gemini generate / stream |
+| `POST` | `/v1/embeddings` | Embeddings (same attribution rule) |
+| `GET` | `/v1/models` | List models |
+
+Library management (in the generated spec): `/api/llm-configs`, `/api/agents/{id}/llm-config`, `/api/agents/{id}/llm-token`, `/api/llm-router/providers`, `/api/model-registry`, `/api/custom-providers`.

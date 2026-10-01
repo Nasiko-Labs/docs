@@ -1,0 +1,104 @@
+---
+title: "Deploy your own MCP server"
+description: "Upload your MCP server's source and have Nasiko build, harden, and deploy it as a connector."
+---
+
+Upload a `.zip` or point at a GitHub repo, and the platform builds a container image, deploys it hardened, waits for a healthy handshake, and registers it as a connector. From then on it behaves like any other connector — shareable, permissioned per agent, callable through the [gateway](/build/mcp/overview).
+
+Already have a running server? See [Connect an external MCP server](/build/mcp/external-server).
+
+## What your server must provide
+
+- **A `Dockerfile` at the source root.** The only hard requirement — a missing `Dockerfile`, or one with no `FROM`, is rejected before any build.
+- **Read `$PORT` and bind `0.0.0.0:$PORT`.** The platform assigns the port (8080 by default).
+- **Serve MCP over Streamable HTTP at `/mcp`.**
+
+Language and SDK detection is a diagnostic hint only, never enforced. An unrecognized layout still gets a real build attempt — the correctness gate is the live handshake after deploy.
+
+<Note>
+  Uploaded zips are capped at 50 MB by default. For private-repo access, use the GitHub path — it clones over HTTPS from allow-listed hosts and can use your connected GitHub account.
+</Note>
+
+## Upload it
+
+<CodeGroup>
+```bash CLI — local zip
+nasiko mcp connector upload \
+  --name my-mcp-server \
+  --zip ./my-mcp-server.zip \
+  --version v1 \
+  --env "STRIPE_KEY=sk_live_..."
+```
+
+```bash CLI — GitHub repo
+nasiko mcp connector upload-github \
+  --name my-mcp-server \
+  --github-url https://github.com/yourorg/my-mcp-server \
+  --version v1 \
+  --env "STRIPE_KEY=sk_live_..."
+```
+
+```json REST — zip (multipart/form-data)
+POST /api/mcp/connectors/upload
+  name=my-mcp-server
+  version_tag=v1
+  env={"STRIPE_KEY":"sk_live_..."}
+  source=@my-mcp-server.zip
+```
+</CodeGroup>
+
+`--env` (repeatable) sets secrets your server reads at runtime — encrypted at rest, injected at deploy time. This is distinct from a connector *credential* (`nasiko mcp credential set`), which authenticates the gateway to your server, not your server to the API it wraps.
+
+Both commands return immediately; the build runs asynchronously:
+
+```json
+{
+  "data": { "connector_id": "a1b2c3d4-...", "build_id": "e5f6a7b8-..." },
+  "status_code": 202,
+  "message": "MCP server build queued"
+}
+```
+
+<Note>
+  Uploading requires the same permission as deploying an agent — any authenticated user by default. See [access control](/governance/access-control/overview).
+</Note>
+
+## Watch it build
+
+```bash
+nasiko mcp connector build-status <connector-id>
+nasiko mcp connector logs <connector-id> --tail 200
+```
+
+```
+GET /api/mcp/connectors/{id}/build-status
+GET /api/mcp/connectors/{id}/build-logs?tail=200
+```
+
+`build-status` reports `pending`, `building`, `running`, or `failed`. Poll it — there's no push notification. `logs` returns the container's stdout and stderr.
+
+## What happens during the build
+
+1. **Source acquired** — the zip is extracted, or the repo is cloned.
+2. **Validation** — the `Dockerfile` requirement is checked. Language detection is a hint, never a rejection.
+3. **Image build** — built from your `Dockerfile`.
+4. **Hardened deploy** — a fixed non-root user, read-only root filesystem, all Linux capabilities dropped, no privilege escalation. Placed on a network segment dedicated to uploaded MCP servers, separate from agent traffic and the platform's database and cache. Its network policy allows receiving tool calls but not initiating outbound agent-to-agent traffic.
+5. **Readiness check** — the platform calls `tools/list` against your server, retrying for a few minutes to absorb a cold start. The connector flips to `running` — and becomes visible — only once this succeeds.
+6. **Tool catalog sync** — every reported tool is recorded so permission screens show them instantly. Missing descriptions are generated automatically.
+
+If a **first-time** upload fails at build or readiness, the connector record is removed so you can re-upload under the same name. If the connector had deployed successfully before, a failed re-upload marks it `failed` while keeping its history and grants intact.
+
+## Self-heal
+
+A restart, redeploy, or host reboot can change a container's address. Because the platform resolved that address itself — unlike a user-typed external URL — the gateway is allowed to refresh it: if a tool call fails to connect, it looks up the current address and retries once. On demand after a real failure, never as a background poll.
+
+## Once it's running
+
+- [Connect an external MCP server](/build/mcp/external-server) — sharing commands apply the same way
+- [Per-agent tool permissions](/governance/tool-permissions) — enable per agent, set per-tool rules
+- [Artifact registry](/build/registry/overview) — publish your source as a reusable artifact
+
+## Related
+
+- [MCP overview](/build/mcp/overview) — the gateway and delegation token
+- [Agent hosting](/self-hosting/agent-hosting) — how builds are queued, retried, recovered

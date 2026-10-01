@@ -1,0 +1,108 @@
+---
+title: "Server configuration"
+sidebarTitle: "Configuration"
+description: "Environment variables for a self-hosted Nasiko server. Names only — never paste secrets into docs or tickets."
+---
+
+Copy `.env.example` to `.env` (Compose) or set the same names in `server/.env` / `~/.nasiko/.env` (`nasiko up`). The server reads them at start. This page lists **names**. Do not commit `.env`.
+
+## Required to start
+
+| Variable | Purpose |
+| --- | --- |
+| `SECRETS_ENCRYPTION_KEY` | AES-256-GCM key for secrets at rest (`openssl rand -base64 32`) |
+| `JWT_SECRET` | Signs user session tokens (`openssl rand -base64 48`) |
+| `ADMIN_USERNAME` / `ADMIN_PASSWORD` | Bootstrap admin. Optional `ADMIN_EMAIL` |
+| `S3_BUCKET`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_REGION` | Object storage for the embedded OCI registry. Must match the rustfs service when using Compose |
+| `AGENT_RUNTIME` | `docker` on Compose. `kubernetes` is Enterprise only |
+| `RUST_LOG` | Tracing filter, e.g. `info` |
+
+## Model routing and agents
+
+| Variable | Purpose |
+| --- | --- |
+| `OPENAI_API_KEY` | Default provider key injected for routing-engine and agent-card generation |
+| `OPENAI_BASE_URL` | Override, e.g. Azure or a gateway |
+| `OPENAI_MODEL` | Default model |
+| `AGENT_JWT_SECRET` | Signs short-lived agent JWTs. **Empty ⇒ every router request is 401** |
+| `LLM_GATEWAY_BASE_URL` | URL deployed agents use to reach the router (Compose sets this) |
+| `ROUTER_MODEL`, `EMBEDDING_MODEL` | Routing engine models |
+| `MCP_DESCRIPTION_MODEL` | Fallback for connector descriptions |
+| `MODEL_PRICING_SYNC_ENABLED` | Sync published rates at boot (default `true`) |
+
+## Observability and coding agents
+
+| Variable | Purpose |
+| --- | --- |
+| `TEMPO_URL` | Trace store. Unset with `LOKI_URL` leaves observability off |
+| `LOKI_URL` | Log store |
+| `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_EXPORTER_OTLP_PROTOCOL`, `OTEL_EXPORTER_OTLP_HEADERS` | Server and agent export |
+| `OTEL_SERVICE_NAME`, `OTEL_SAMPLE_RATIO` | |
+| `CODING_AGENT_OTLP_ENDPOINT` | OTLP/HTTP base for coding-agent traces (server appends `/v1/traces` and `/v1/logs`). Unset: sessions ingest, traces never reach Tempo |
+
+## Flow limits
+
+| Variable | Default |
+| --- | --- |
+| `NASIKO_FLOW_MAX_DEPTH` | 5 |
+| `NASIKO_FLOW_MAX_FAN_OUT` | 20 |
+| `NASIKO_FLOW_MAX_TOKENS` | 100000 |
+| `NASIKO_FLOW_TIMEOUT_SECS` | 120 |
+
+Also configurable in the dashboard **Settings → Flow limits**. See [Flow limits](/governance/flow-limits).
+
+## Context budgets and compression
+
+| Variable | Default |
+| --- | --- |
+| `PACMS_BUDGET_LOW` / `_MEDIUM` / `_HIGH` | 500 / 1000 / 5000 |
+| `PACMS_HISTORY_POOL_SIZE` | 150 |
+| `PACMS_HISTORY_MANDATORY_RECENT` | 3 |
+| `TOKEN_COMPRESS_TOOL_RESULTS` | `true` |
+| `TOKEN_COMPRESS_TOOL_RESULTS_MIN_BYTES` | 2048 |
+| `TOKEN_COMPRESS_HISTORY` | `true` |
+| `TOKEN_COMPRESS_HISTORY_MIN_BYTES` | 2048 |
+
+See [Reduce cost](/tokenops/reduce-cost).
+
+## MCP gateway
+
+| Variable | Purpose |
+| --- | --- |
+| `COMPOSIO_API_KEY` | Enables Composio toolkits. Unset: custom MCP still works |
+| `COMPOSIO_BASE_URL`, `COMPOSIO_WEBHOOK_SECRET` | |
+| `SEED_TOOLKITS` | Comma-separated toolkits to register at boot (no-op without the API key) |
+| `MCP_GATEWAY_PUBLIC_URL` | Injected into agents as `MCP_GATEWAY_URL` |
+| `MCP_OAUTH_REDIRECT_BASE_URL`, `COMPOSIO_CALLBACK_BASE_URL` | Browser OAuth redirects |
+| `MCP_UPLOAD_MAX_BYTES` | Default 50 MiB |
+| `MCP_UPLOAD_DEFAULT_PORT`, `MCP_SERVERS_NETWORK`, `MCP_UPLOAD_MAX_REPLICAS` | Uploaded MCP servers |
+
+## Source-run connection URLs
+
+Used when the server is not the Compose `server` service:
+
+| Variable | Typical local value |
+| --- | --- |
+| `DATABASE_URL` | `postgres://nasiko:nasiko@localhost:5432/nasiko_dev` |
+| `REDIS_URL` | `redis://localhost:6379` |
+| `S3_ENDPOINT` | `http://localhost:9000` |
+| `DOCKER_AGENT_NETWORK` | Compose network name |
+| `OCI_REGISTRY_HOST` | Host agents pull from |
+| `APP_BASE_URL` | Public URL of this server |
+| `CP_BIND` | Default `0.0.0.0:8080` |
+
+## SSO, GitHub, multi-tenant, imports
+
+| Variable | Purpose |
+| --- | --- |
+| `OIDC_ISSUER_URL`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `OIDC_REDIRECT_URI` | OIDC. Login redirect is Enterprise — see [SSO and SCIM](/governance/sso-and-scim) |
+| `OIDC_SCOPES`, `OIDC_PROVIDER_LABEL`, `OIDC_ALLOWED_REDIRECT_ORIGINS`, `OIDC_CENTRAL_CALLBACK_URL` | |
+| `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `GITHUB_CALLBACK_URL` | Import-from-GitHub |
+| `MULTI_TENANT_MODE`, `NASIKO_BFF_URL`, `ALLOW_PERSONAL_EMAILS` | Hosted / multi-tenant |
+| `REGISTRY_IMPORT_ALLOWED_HOSTS` | Comma-separated hosts allowed for `nasiko import`. Empty rejects all |
+| `GIT_CLONE_ALLOWED_HOSTS` | Default github.com, gitlab.com, bitbucket.org |
+| `CORS_ALLOWED_ORIGINS` | Empty = same-origin |
+| `SEED_AGENTS` | Space-separated images to deploy on boot |
+| `TENANT_ID` | Optional tenant label |
+
+Full behavioral reference for flow and hosting: [Flow limits](/governance/flow-limits), [Agent hosting](/self-hosting/agent-hosting).

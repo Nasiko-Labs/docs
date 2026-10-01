@@ -1,0 +1,119 @@
+---
+title: "User and org management"
+description: "Create users, assign roles, and organize departments and teams."
+---
+
+<Warning>
+  **Enterprise feature.** This entire page — user/department/team management, SSO group mappings,
+  and Entra ID directory sync — is `nasiko-ee` only. The open-source edition has a much smaller
+  surface: basic account creation/deactivation via `/api/users` (superuser-gated), with no
+  departments, teams, roles, or directory sync.
+</Warning>
+
+Administrators manage users, departments, and teams through the admin CLI (`nasiko-ee`) or the equivalent API routes.
+
+## Creating a user
+
+```bash
+nasiko-ee users create --username alice --email alice@example.com --role team_member
+```
+
+No password is set. The platform returns a one-time key pair:
+
+```json
+{
+  "id": "5b1e...",
+  "username": "alice",
+  "access_key": "ak_...",
+  "access_secret": "as_...",
+  "message": "Store access_secret securely — it won't be shown again."
+}
+```
+
+<Warning>
+  `access_secret` is shown once and is the user's initial login password. There is no recovery endpoint — if lost, an admin resets the account.
+</Warning>
+
+`--role` defaults to `member`. Place the user at creation time:
+
+```bash
+# into a team (also sets their department)
+nasiko-ee users create --username bob --email bob@example.com --team platform-eng
+
+# into a department, no team
+nasiko-ee users create --username carol --email carol@example.com --dept engineering
+```
+
+Add `--superuser` for superuser privileges (separate from `--role` — see below).
+
+Move or remove users later:
+
+```bash
+nasiko-ee users place bob --team platform-eng
+nasiko-ee users place bob --dept engineering
+nasiko-ee users place bob --clear
+nasiko-ee users ls
+nasiko-ee users deactivate alice     # keeps the record, blocks login
+nasiko-ee users delete alice
+```
+
+## Role vs. superuser
+
+| | What it does |
+| --- | --- |
+| **`role`** | Places the user on the five-tier hierarchy, driving capability thresholds ([overview](/governance/access-control/overview)) |
+| **Superuser** | Bypasses org-visibility scoping; required for creating users, creating or deleting departments and teams, OIDC group mappings, and directory sync |
+
+They're checked separately everywhere. `role: admin` does not grant superuser. Set it with `--superuser` at creation, or on the Users page afterward.
+
+## Departments and teams
+
+A department contains teams; a team belongs to exactly one department. Creating, updating, or deleting either requires superuser.
+
+```bash
+# Departments
+nasiko-ee department create --name Engineering --manager <user-id>
+nasiko-ee department ls
+nasiko-ee department get <dept-id>
+nasiko-ee department update <dept-id> --manager <user-id>
+nasiko-ee department members <dept-id>
+nasiko-ee department agents <dept-id>
+nasiko-ee department delete <dept-id>
+
+# Teams
+nasiko-ee team create --name Platform --dept <dept-id> --lead <user-id>
+nasiko-ee team ls --dept <dept-id>
+nasiko-ee team get <team-id>
+nasiko-ee team update <team-id> --lead <user-id>
+nasiko-ee team members <team-id>
+nasiko-ee team agents <team-id>
+nasiko-ee team delete <team-id>
+```
+
+Assigning a `--manager` or `--lead` does not change that user's `role`. Bump it separately if they need the matching permission tier.
+
+## Single sign-on and automatic placement
+
+Nasiko supports OIDC SSO with any standards-compliant provider. See [SSO setup](/governance/sso-and-scim).
+
+**Group-to-role mapping** works with any OIDC provider that emits a group claim. Map an external group to an internal role, team, and/or department; it applies on sign-in. A user matching several mappings gets the highest-ranked role's mapping applied in full — rows are not merged field by field. A user matching none keeps their current role, so manual promotions are never reset.
+
+**Directory sync** pre-provisions your whole hierarchy before anyone logs in. It requires Microsoft Graph and is Entra ID only.
+
+```bash
+nasiko-ee admin directory-sync
+```
+
+It infers the hierarchy from each user's department attribute and manager chain: the person with no in-department manager becomes department head, their reports who manage others become team leads, everyone else joins the nearest lead's team. Users with no department attribute become plain members.
+
+Sync is insert-only and safe to re-run — it never touches a user it already created, and never reverts a manual placement. If your directory changes significantly, reassign affected users by hand.
+
+<Note>
+  A user who signs in via SSO with no mapping or sync record lands as a plain `member` with no team or department. An admin promotes and places them afterward.
+</Note>
+
+## Next
+
+- [Access control overview](/governance/access-control/overview) — roles and permission tiers
+- [User → agent access](/governance/access-control/agent-access) — granting access to specific agents
+- [Secret management](/governance/secrets/overview)

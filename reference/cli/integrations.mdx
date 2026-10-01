@@ -1,0 +1,37 @@
+---
+title: "Integration commands"
+sidebarTitle: "Integrations"
+description: "agents catalog, github, registry."
+---
+
+Coding-agent `discover` / `install` live on [Coding agents](/reference/cli/coding-agents).
+
+## agents (catalog)
+
+| Command | Flags |
+| --- | --- |
+| `ls` / `list` | Deployed + registered coding agents |
+| `get` | `--agent-id` / `--name`, `-f/--format` default `details` |
+| `deploy <source>` | `-n/--name` |
+| `search [query]` | `-t --artifact-type`, `-f --framework`, `--tags`, `-o --owner`, `-l` default `50` |
+| `info <name>` | `-o` default `nasiko`, `-v` |
+| `frameworks` | |
+| `list-uploaded` | |
+| `chat` | `-u` default `http://localhost:8000`, `[message]`, `-s/--session-id` |
+
+## github
+
+| Command | Flags |
+| --- | --- |
+| `status` / `repos` / `connect` / `disconnect` | |
+| `clone [owner/repo]` | `--branch` default `main` |
+
+## registry
+
+Artifact registry client (separate host from the cluster).
+
+| Command | Flags |
+| --- | --- |
+| `connect <url>` / `disconnect` / `status` | |
+| `search` alias `discover` | `[query]`, `-t/--type`, `-f/--framework`, `--top` default `10`, `--min-score`, `-j` |
+| `list` | `-t`, `-j` |

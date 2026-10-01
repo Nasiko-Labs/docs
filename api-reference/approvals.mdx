@@ -1,0 +1,17 @@
+---
+title: "Approvals API"
+description: "Human-in-the-loop request lifecycle."
+---
+
+Not in the generated OpenAPI spec. Behavioral guide: [Approvals](/governance/approvals).
+
+| Method | Path | Who |
+| --- | --- | --- |
+| `GET` | `/api/hitl/pending` | Owner |
+| `GET` | `/api/hitl/{id}` | Owner |
+| `POST` | `/api/hitl/{id}/resolve` | Owner |
+| `POST` | `/api/hitl/{id}/cancel` | Owner |
+| `GET` | `/api/hitl/{id}/stream` | Owner (SSE) |
+| `POST` | `/api/hitl/{id}/requeue` | Superuser |
+
+Resolve body fields depend on kind (`tool_approval`, `input_required`, `auth_required`) — see the guide.

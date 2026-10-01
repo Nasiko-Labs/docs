@@ -1,0 +1,74 @@
+---
+title: "Cost attribution"
+description: "One cost schema across harnesses, frameworks, models and teams — and why every call is attributed."
+---
+
+Every model call that goes through Nasiko is attributed before it is served. Unattributed usage is rejected, not billed later. That is what lets TokenOps join spend across vendors whose own invoices cannot be joined.
+
+## What is attributed
+
+A cost row always has:
+
+| Dimension | Comes from |
+| --- | --- |
+| **Agent** | The coding-agent identity or the deployed agent that made the call |
+| **Developer** | The logged-in user who started the flow |
+| **Session** | The chat or harness conversation |
+| **Model and provider** | The outbound model the [LLM router](/models/llm-router) selected |
+| **Workflow** | The MAF workflow, when the call ran as a workflow step |
+
+Team and tenant dimensions exist when an [organization](/governance/organizations) is configured (Enterprise). On an open-source cluster, spend still resolves to a person and an agent.
+
+The routing engine's agent-selection call is a separate line item. It is never folded into the agent it picked.
+
+## Strict attribution
+
+Two identities ride on every model call and every MCP `tools/call`:
+
+| Identity | Carrier |
+| --- | --- |
+| **Agent** | A short-lived JWT (`Authorization: Bearer` or `x-api-key`), minted for that agent |
+| **User / session** | W3C `traceparent`, whose trace ID is the flow ID |
+
+Nasiko writes a flow record before the call is dispatched. The router looks up that flow. If the header is missing, malformed, names no live flow, or names a flow this agent is not part of, the call is **rejected with 403**. Embeddings (`POST /v1/embeddings`) use the same rule.
+
+Consequence: an agent cannot spend tokens outside a user flow, and cannot spend against another user's flow. MCP tool calls are held to the same standard, because permissions and flow token limits key off that user identity.
+
+Coding-agent routed calls use the coding-agent identity created at [registration](/coding-agents/discover#what-registration-creates). Reported sessions attach to the same identity, so harness spend and routed spend roll up together.
+
+## Cache-aware accounting
+
+Provider cache hits (prompt cache reads and writes) are recorded as their own token counts, not billed as fresh input. TokenOps will not overcharge a cached prompt as if it were sent in full.
+
+## TokenOps API
+
+The product name is **TokenOps**. The HTTP path is `finops`.
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/api/observability/finops/dashboard` | KPI strip and period totals |
+| `GET` | `/api/observability/finops/spend-timeseries` | Spend over time |
+| `GET` | `/api/observability/finops/spend-calendar` | Month grid |
+| `GET` | `/api/observability/finops/spend-calendar/day` | One day's hourly drilldown |
+| `GET` | `/api/observability/finops/attributions` | Per-agent or per-workflow table |
+| `GET` | `/api/observability/finops/agent-hours` | Agent hours |
+| `POST` | `/api/observability/finops/insights` | Short narrative over a KPI snapshot you send |
+| `GET` | `/api/usage/summary` | Usage summary |
+| `GET` | `/api/usage/history` | Usage history |
+| `GET` | `/api/usage/by-agent` | Usage by agent |
+| `GET` | `/api/usage/by-model` | Usage by model |
+
+All of these require a login. The dashboard **Overview** and **TokenOps** screens call the same routes. CLI: `nasiko observe finops-dashboard` and `nasiko observe insights`.
+
+There are no spend caps or alerts. Flow token limits ([flow limits](/governance/flow-limits)) and [context budgets](/tokenops/reduce-cost) are the limits that ship.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="TokenOps dashboard" href="/tokenops/dashboard">
+    The screens that plot these numbers.
+  </Card>
+  <Card title="Pricing" href="/tokenops/pricing">
+    Where rates come from.
+  </Card>
+</CardGroup>

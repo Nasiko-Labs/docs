@@ -1,0 +1,72 @@
+---
+title: "Codex"
+description: "Discover Codex, report its sessions, and route its model calls through Nasiko."
+---
+
+Nasiko treats Codex as a coding harness. Discovery and session reporting use Codex hooks. Model routing adds a Nasiko provider to Codex's `config.toml`. No wrapper, no SDK in your code.
+
+| | |
+| --- | --- |
+| Binary | `codex` |
+| Config directory | `$CODEX_HOME`, else `~/.codex` |
+| Session reporting | Yes (`UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `Stop`; hook version v2) |
+| Model routing | Yes (OpenAI Responses protocol in, any provider out) |
+
+## Discover and report
+
+```bash
+nasiko agents discover
+nasiko agents install codex
+nasiko agents install codex --no-content
+```
+
+Install writes Nasiko command hooks into Codex's hooks config and a launcher under the Codex config directory. Existing hooks stay.
+
+<Note>
+  Open Codex, run `/hooks`, and trust the new Nasiko command hooks. Codex will not fire them until you do.
+</Note>
+
+Codex turns arrive across several hook events. Nasiko assembles them under `~/.nasiko/integrations/events/` and queues a turn once it is complete. See [Session reporting](/coding-agents/session-reporting).
+
+## Route models
+
+```bash
+nasiko llm-config create --name my-anthropic --provider anthropic --model claude-sonnet-4-5 \
+  --api-key-secret ANTHROPIC_API_KEY --secret-value "$ANTHROPIC_API_KEY"
+nasiko connect codex --config my-anthropic
+nasiko status codex
+```
+
+`connect codex` edits `{CODEX_HOME}/config.toml`:
+
+- `model_provider = "nasiko"`
+- `[model_providers.nasiko]` with `wire_api = "responses"` and `base_url = {cluster}/v1`
+- Command-based auth that runs `nasiko __coding-agent-token codex`
+
+Codex talks OpenAI Responses (`POST /v1/responses`). Nasiko translates and routes to the provider in your config. Codex refreshes the JWT on a timer rather than minting one per request.
+
+Connection state is stored in `~/.nasiko/integrations/codex-router.json`.
+
+## Disconnect and uninstall
+
+```bash
+nasiko disconnect codex           # restore config.toml; --force if Codex is running
+nasiko agents uninstall codex     # remove reporting hooks
+```
+
+The two are independent.
+
+## Identity in Nasiko
+
+Registration creates a coding-agent identity named `<username>-codex`, labelled **Codex (`<your email>`)** in the dashboard.
+
+## Troubleshooting
+
+| Symptom | What to check |
+| --- | --- |
+| `DETECTED` is `-` | `codex` is not on `PATH` and `$CODEX_HOME` / `~/.codex` does not exist. |
+| Hooks never fire | Trust them with `/hooks` inside Codex. |
+| Routing fails with authentication error | `AGENT_JWT_SECRET` is unset, or login expired. |
+| Turns never appear | Run `nasiko agents sync`. Partial turns sit in `~/.nasiko/integrations/events/` until `Stop`. |
+
+More: [Troubleshooting](/coding-agents/troubleshooting) and [Route models](/coding-agents/routing).

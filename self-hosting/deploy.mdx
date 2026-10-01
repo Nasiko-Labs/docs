@@ -1,0 +1,80 @@
+---
+title: "Deploy the stack"
+description: "Run Nasiko with Docker Compose or nasiko up, and what each service is for."
+---
+
+Two local paths. Docker Compose runs the full stack as containers. `nasiko up` runs infrastructure in Docker and the Nasiko server as a local process. A remote cluster is just a URL — see [Install and connect](/install).
+
+## Docker Compose (recommended)
+
+From a clone of the [nasiko](https://github.com/Nasiko-Labs/nasiko) repo:
+
+```bash
+cp .env.example .env
+```
+
+Set at least:
+
+- `ADMIN_PASSWORD` — password for the `admin` account
+- `OPENAI_API_KEY` — a model provider key
+- `AGENT_JWT_SECRET` — uncomment and set (`openssl rand -base64 48`) if you will [route coding agents](/coding-agents/routing)
+- `SECRETS_ENCRYPTION_KEY` and `JWT_SECRET` — already filled with dev values in the example; replace them outside a laptop trial
+
+```bash
+docker compose up -d
+```
+
+The dashboard is [http://localhost:8080](http://localhost:8080). Sign in as `admin` with `ADMIN_PASSWORD`. First start compiles the server image and takes several minutes.
+
+```bash
+docker compose logs -f server
+docker compose down
+```
+
+Compose sets `TEMPO_URL`, `LOKI_URL`, `CODING_AGENT_OTLP_ENDPOINT`, `MCP_GATEWAY_PUBLIC_URL`, and `LLM_GATEWAY_BASE_URL` for you. That is why coding-agent traces and model routing work on Compose without extra exports.
+
+## Services and ports
+
+| Service | Host port | Role |
+| --- | --- | --- |
+| `nasiko-server` | **8080** | API, dashboard, LLM router, MCP gateway, OCI registry |
+| Postgres (pgvector/pg16) | **5432** | Catalog, sessions, TokenOps, secrets |
+| Redis | **6379** | Flow guards, caches |
+| rustfs (S3) | **9000** | Images, uploads, OCI blobs |
+| OpenTelemetry Collector | **4317** gRPC, **4318** HTTP | Traces and logs from the server and coding agents |
+| Tempo | **3200** | Trace store |
+| Loki | **3100** | Log store |
+
+Network name: `nasiko`. Agent containers join it.
+
+For a Rust developer loop (infra in Docker, server via cargo): `docker compose -f docker-compose.infra.yml up -d`, then `just run` / `just dev`. Same ports; the server binds 8080 on the host.
+
+## nasiko up
+
+```bash
+nasiko up
+nasiko down
+```
+
+Starts Compose infrastructure and runs the server from `~/.nasiko/bin/nasiko-cp` (pulled as `nasiko/cp:latest` if missing). Config is `~/.nasiko/.env`. The CLI registers the cluster as `local`.
+
+`nasiko up` does **not** set `ADMIN_PASSWORD`, `JWT_SECRET`, `AGENT_JWT_SECRET`, `TEMPO_URL`, `LOKI_URL`, or `CODING_AGENT_OTLP_ENDPOINT`. Export them in that shell, or use Compose. The server is a child of the terminal — closing it stops Nasiko. Details: [Install and connect](/install#troubleshooting-nasiko-up).
+
+If the image pull fails, build from source:
+
+```bash
+cargo build --release -p nasiko-server
+mkdir -p ~/.nasiko/bin
+cp target/release/nasiko-server ~/.nasiko/bin/nasiko-cp
+```
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Configuration" href="/self-hosting/configuration">
+    Environment variables.
+  </Card>
+  <Card title="Backup and restore" href="/self-hosting/backup-and-restore">
+    What to snapshot.
+  </Card>
+</CardGroup>

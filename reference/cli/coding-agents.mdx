@@ -1,0 +1,31 @@
+---
+title: "Coding agents commands"
+sidebarTitle: "Coding agents"
+description: "discover, install, uninstall, sync, connect, disconnect, status, claude."
+---
+
+Guides: [Coding agents](/coding-agents/overview).
+
+## Session reporting
+
+| Command | Flags | Purpose |
+| --- | --- | --- |
+| `nasiko agents discover` | | Local detection table |
+| `nasiko agents install <agent>` | `--no-content` | Register + install hooks. `agent`: `claude`, `codex`, `opencode`, `cursor` |
+| `nasiko agents uninstall <agent>` | | Remove Nasiko hooks only |
+| `nasiko agents sync` | | Drain `~/.nasiko/integrations/queue/` |
+
+`--no-content` omits prompts, responses, titles, and tool I/O. Tokens, models, and tool metadata still report.
+
+## Model routing
+
+| Command | Flags | Purpose |
+| --- | --- | --- |
+| `nasiko connect <claude\|codex\|opencode>` | `--agent`, `--config` | Point the harness at Nasiko |
+| `nasiko disconnect <claude\|codex\|opencode>` | `--force` | Restore settings |
+| `nasiko status <claude\|codex\|opencode>` | | Binding |
+| `nasiko claude` | `--agent` (required), `--config`, `[args...]` | One-shot Claude Code with env injected. Args after `--` go to `claude` |
+
+Cursor has no `connect` / `disconnect` / `status` target.
+
+Credential helpers `__claude-token` and `__coding-agent-token` are hidden.

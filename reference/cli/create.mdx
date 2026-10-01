@@ -1,0 +1,25 @@
+---
+title: "Create commands"
+sidebarTitle: "Create"
+description: "new, build, run, validate, card, skill."
+---
+
+Guide: [Scaffold an agent](/build/scaffold).
+
+| Command | Flags | Purpose |
+| --- | --- | --- |
+| `nasiko new [template] [name]` | | Scaffold. Omit template for interactive. Writes `AgentCard.json`, `Dockerfile`, `src/` |
+| `nasiko build [dir]` | `--tag`, `--platform`, `-v/--version`, `-y/--yes` | Build image. Default dir `.` |
+| `nasiko run [path]` | `--port` default `8000` | Build + run locally |
+| `nasiko validate [dir]` | | Check card, Dockerfile, `src/` |
+| `nasiko card [description]` | `--dir` default `.` | Generate or update `AgentCard.json` |
+
+## Skills
+
+| Command | Flags |
+| --- | --- |
+| `nasiko skill add <name>` | `--dir` default `.` |
+| `nasiko skill remove <name>` | `--dir` |
+| `nasiko skill list` | `--dir` |
+| `nasiko skill search [query]` | `--framework` |
+| `nasiko skill info <name>` | |

@@ -1,0 +1,45 @@
+---
+title: "Config files"
+description: "Where the CLI, server, and coding harnesses keep state."
+---
+
+## CLI and cluster
+
+| Path | Purpose |
+| --- | --- |
+| `~/.nasiko/config.json` | Clusters (URL, user, token), `active`, optional `registry_url`. Mode `0600` |
+| `~/.nasiko/.env` | Local `nasiko up` / server env |
+| `~/.nasiko/bin/nasiko-cp` | Local server binary for `nasiko up` |
+| `~/.nasiko/.ee.env` | Enterprise cloud credentials template |
+| `~/.nasiko/registry-values.json` | Enterprise registry pull token from `nasiko-ee activate` |
+
+Env overrides: `NASIKO_REGISTRY_URL`, `NASIKO_REGISTRY_USER`, `NASIKO_REGISTRY_PASS`, `NASIKO_CONTAINER_CLI` (`docker` or `podman`).
+
+## Coding-agent integrations
+
+| Path | Purpose |
+| --- | --- |
+| `~/.nasiko/integrations/config.json` | Install records and cluster binding |
+| `~/.nasiko/integrations/queue/` | Turns waiting for delivery |
+| `~/.nasiko/integrations/rejected/` | Failed turns |
+| `~/.nasiko/integrations/watermarks/` | Per-session queue cursor |
+| `~/.nasiko/integrations/events/` | Partial Codex / Cursor turns |
+| `~/.nasiko/integrations/report.log` | Hook diagnostics |
+| `~/.nasiko/integrations/claude.json` | Claude routing state |
+| `~/.nasiko/integrations/codex-router.json` | Codex routing state |
+| `~/.nasiko/integrations/opencode-router.json` | OpenCode routing state |
+
+Harness files Nasiko may edit: `~/.claude/settings.json`, Codex `config.toml` / `hooks.json`, OpenCode `plugins/*.js`, Cursor `hooks.json`. See [Route models](/coding-agents/routing) and [Session reporting](/coding-agents/session-reporting).
+
+## Agent project
+
+| Path | Purpose |
+| --- | --- |
+| `AgentCard.json` | Identity and skills |
+| `Dockerfile` | Image |
+| `.nasiko/agent.json` | Bind this directory to a deployed agent ID |
+| Project `.env` | Loaded by `nasiko run` only |
+
+## Server
+
+Compose: `.env` at the repo root. Source run: `server/.env`. Names: [Server configuration](/self-hosting/configuration).

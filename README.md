@@ -1,55 +1,63 @@
-# Mintlify Starter Kit
+# Nasiko documentation
 
-Use the starter kit to get your docs deployed and ready to customize.
+Customer-facing docs for Nasiko, the OpenRuntime for agents, coding harnesses, frameworks and tools. Built with [Mintlify](https://mintlify.com).
 
-Click the green **Use this template** button at the top of this repo to copy the Mintlify starter kit. The starter kit contains examples with
+**Headline:** Nasiko — The OpenRuntime for agents, coding harnesses, frameworks and tools.
 
-- Guide pages
-- Navigation
-- Customizations
-- API reference pages
-- Use of popular components
+**Byline:** Use any harness. Reach any model. Measure every token. Change nothing.
 
-**[Follow the full quickstart guide](https://starter.mintlify.com/quickstart)**
+Authoring rules, vocabulary, and accuracy constraints: [AGENTS.md](AGENTS.md).
 
-## AI-assisted writing
-
-Set up your AI coding tool to work with Mintlify:
+## Preview
 
 ```bash
-npx skills add https://mintlify.com/docs
-```
-
-This command installs Mintlify's documentation skill for your configured AI tools like Claude Code, Cursor, Windsurf, and others. The skill includes component reference, writing standards, and workflow guidance.
-
-See the [AI tools guides](/ai-tools) for tool-specific setup.
-
-## Development
-
-Install the [Mintlify CLI](https://www.npmjs.com/package/mint) to preview your documentation changes locally. To install, use the following command:
-
-```
 npm i -g mint
-```
-
-Run the following command at the root of your documentation, where your `docs.json` is located:
-
-```
 mint dev
 ```
 
-View your local preview at `http://localhost:3000`.
+Open http://localhost:3000. `docs.json` is the nav, theme, and redirects.
 
-## Publishing changes
+Local search and the assistant stay off until you authenticate the CLI with a Mintlify account:
 
-Install our GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app) to propagate changes from your repo to your deployment. Changes are deployed to production automatically after pushing to the default branch.
+```bash
+mint login
+mint status
+mint dev
+```
 
-## Need help?
+That login is only for your laptop (`~/.config/mintlify/`). It is not required in the PR and does not turn on search on the published site.
 
-### Troubleshooting
+## After merge (Mintlify deploy)
 
-- If your dev environment isn't running: Run `mint update` to ensure you have the most recent version of the CLI.
-- If a page loads as a 404: Make sure you are running in a folder with a valid `docs.json`.
+Search and the live site come from a **successful Mintlify deploy** of this repo, not from anything in the PR.
 
-### Resources
-- [Mintlify documentation](https://mintlify.com/docs)
+1. In the [Mintlify dashboard](https://dashboard.mintlify.com), confirm this GitHub repo is the connected source and that the **Mintlify GitHub App** is installed on the org that owns it.
+2. Confirm the dashboard **production branch** is the branch this PR merges into (usually `main`).
+3. After merge, wait until the dashboard Overview shows a **successful** deploy of that commit. A green GitHub check is not enough if Mintlify failed to build.
+4. Open the live docs URL and search for a new page title (for example "TokenOps" or "Route models"). Indexing usually finishes with the deploy. If results are empty or stale, wait a few minutes or click **Deploy** again on the Overview page.
+5. Spot-check a few old URLs from the `redirects` list in `docs.json` so bookmarks still land.
+
+If the Mintlify build fails with `ENAMETOOLONG` on an OpenAPI page, an operation `summary` in `api-reference/openapi.json` is too long for a filename. Keep summaries to one short line; put the rest in `description`. Refresh the snapshot from a running server's `/api/openapi.json` when routes change.
+
+Preview deployments on the PR (if the GitHub App is installed) are optional. They do not replace the production deploy or its search index.
+
+## Sources of truth
+
+Do not copy commands or routes from other pages. Check:
+
+- CLI: `nasiko/cli/src/commands/` and `nasiko <command> --help`
+- HTTP: `nasiko/server/src/lib.rs` and `/api/openapi.json` on a running server
+- Refresh `api-reference/openapi.json` from that URL when routes change
+
+## Layout
+
+| Area | Role |
+| --- | --- |
+| Get started | Introduction, coding-agent quickstart, deploy quickstart, install |
+| Coding agents | Discovery, reporting, routing, per-harness |
+| TokenOps / Model routing / Governance / Build | The three pillars plus deploy lifecycle |
+| Dashboard / Self-hosting | UI and operators |
+| Reference | CLI, OpenAPI, config files, changelog |
+| `internal/` | Not published (`.mintignore`) |
+
+When you move a page, add a redirect in `docs.json`.

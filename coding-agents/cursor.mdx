@@ -1,0 +1,51 @@
+---
+title: "Cursor CLI"
+description: "Discover the Cursor CLI and report its sessions to Nasiko."
+---
+
+Nasiko treats the Cursor CLI (`cursor-agent`) as a coding harness. Discovery and session reporting use Cursor's hook events. **Model routing is not available** for Cursor: `nasiko connect cursor` is not a command. Developers keep using Cursor's own model settings.
+
+| | |
+| --- | --- |
+| Binary | `cursor-agent` |
+| Config directory | `$CURSOR_CONFIG_DIR`, else `$XDG_CONFIG_HOME/cursor`, else `~/.cursor` |
+| Session reporting | Yes (`beforeSubmitPrompt`, `afterAgentResponse`, `stop`, `preToolUse`, `postToolUse`, `postToolUseFailure`; hook version v2) |
+| Model routing | No |
+
+## Discover and report
+
+```bash
+nasiko agents discover
+nasiko agents install cursor
+nasiko agents install cursor --no-content
+```
+
+Install writes Nasiko command hooks into `hooks.json` in the Cursor config directory. Existing hooks stay. Uninstall removes only the Nasiko entries.
+
+Cursor turns arrive across several hook events. Nasiko assembles them under `~/.nasiko/integrations/events/` and queues a turn once it is complete. See [Session reporting](/coding-agents/session-reporting).
+
+After install, keep using `cursor-agent` the way you always do. Completed turns show up in **Sessions** and in [TokenOps](/tokenops/dashboard) under the **Cursor (`<your email>`)** agent.
+
+## What you cannot do
+
+```bash
+nasiko connect cursor     # not supported
+nasiko status cursor      # not a routing target
+nasiko disconnect cursor  # not supported
+```
+
+Routing targets are `claude`, `codex`, and `opencode` only. Cursor spend is still attributed when reporting is installed, using whatever model Cursor itself called.
+
+## Identity in Nasiko
+
+Registration creates a coding-agent identity named `<username>-cursor`, labelled **Cursor (`<your email>`)** in the dashboard. The agent page has no **Configure** or **Logs** tab — nothing runs on Nasiko for a coding agent.
+
+## Troubleshooting
+
+| Symptom | What to check |
+| --- | --- |
+| `DETECTED` is `-` | `cursor-agent` is not on `PATH` and no Cursor config directory exists. The Cursor **editor** is not the same as the Cursor CLI. |
+| Turns never appear | Confirm hooks in the Cursor `hooks.json`. Run `nasiko agents sync`. Check `~/.nasiko/integrations/report.log`. |
+| Want to change Cursor's model | Change it in Cursor. Nasiko does not intercept Cursor model calls. |
+
+More: [Troubleshooting](/coding-agents/troubleshooting).

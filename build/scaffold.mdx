@@ -1,0 +1,92 @@
+---
+title: "Scaffolding a new agent"
+description: "Generate an agent project from a template and manage its AgentCard.json."
+---
+
+Every agent project is built around two files: `AgentCard.json` — the source of truth for the agent's identity — and a `Dockerfile`. `nasiko new` scaffolds both.
+
+## Project structure
+
+```
+my-agent/
+  AgentCard.json          # you manage this (or `nasiko card` generates it)
+  Dockerfile              # you manage this (or `nasiko new` scaffolds it)
+  src/                    # your agent source code
+  .nasiko/agent.json      # auto-created by `nasiko deploy` — don't edit, gitignore it
+```
+
+`AgentCard.json` carries:
+
+| Field | What it is |
+| --- | --- |
+| `name` | The agent's unique identifier on a cluster |
+| `version` | The image tag used for deploys, e.g. `0.1.0` |
+| `description`, `skills` | What the agent does and exposes — see [A2A agents](/build/a2a) |
+| `capabilities` | Streaming, push notifications, and other flags |
+| `url`, `protocolVersion` | The agent's endpoint and A2A version |
+
+`.nasiko/agent.json` is written on your first `nasiko deploy`. It links the directory to an agent ID on the cluster, so later deploys update that agent instead of creating a new one.
+
+## Scaffold a project
+
+```sh
+nasiko new                      # interactive — pick a template
+nasiko new openai my-agent      # from a named template
+nasiko new claude-sdk my-agent
+```
+
+With no arguments, `nasiko new` lists templates from the connected artifact registry (Nasiko's public registry is connected by default — see [artifact registry](/build/registry/overview)).
+
+<Tabs>
+  <Tab title="Python">
+    Templates for OpenAI's Agents SDK, Anthropic's SDK, CrewAI, LangChain/LangGraph, and Google's ADK.
+  </Tab>
+  <Tab title="Rust">
+    A thin `main.rs` plus `tools.rs` for your domain logic, built against an A2A server implementation.
+  </Tab>
+  <Tab title="Go">
+    Same shape as the Rust templates.
+  </Tab>
+</Tabs>
+
+Every template produces starter source that already implements the A2A contract. You fill in the skill logic.
+
+<Warning>
+  The directory name you pass (`my-agent` above) is not the agent's name — it's just where the
+  files land. Templates ship with a fixed placeholder `name` already set in `AgentCard.json`
+  (e.g. the `openai` template always scaffolds as `openai-research-agent`). Scaffold the same
+  template twice under different directory names and `nasiko deploy`/`nasiko upload` will treat
+  both as the *same* agent, silently updating one record instead of creating two. Edit
+  `AgentCard.json`'s `name` field yourself (or run `nasiko card`) if you want a distinct agent.
+</Warning>
+
+## Generate or update the agent card
+
+```sh
+nasiko card "A code review agent that finds bugs in PRs"
+nasiko card                     # auto-detect from source
+nasiko card --dir ./my-agent
+```
+
+Connected to a cluster, `nasiko card` uses an LLM to read your source and produce the card. Disconnected, it falls back to interactive prompts.
+
+Re-run it whenever you add or change a skill. The platform reads the card at deploy time to populate the agent registry — it doesn't watch your source.
+
+## Validate before you build
+
+```sh
+nasiko validate
+```
+
+Checks that `AgentCard.json` and `Dockerfile` exist and are well-formed. Run it after scaffolding and before your first deploy.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Run and chat locally" href="/build/run-locally">
+    Build the image and start chatting.
+  </Card>
+  <Card title="A2A agents and frameworks" href="/build/a2a">
+    What your agent must expose to be a valid A2A peer.
+  </Card>
+</CardGroup>

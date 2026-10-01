@@ -1,0 +1,68 @@
+---
+title: "Dashboard overview"
+description: "The Nasiko web app — Overview, TokenOps, sessions, agents, routing, and settings."
+---
+
+The dashboard ships inside the Nasiko server. Open your cluster URL — nothing extra to install. It reads the same data the CLI and API do.
+
+## Signing in
+
+Sign in with a username and password at your cluster URL. GitHub, Google, and Microsoft buttons appear only if your organization has enabled them.
+
+<Info>
+  **Enterprise.** GitHub OAuth is wired in the open-source server. Microsoft/Google SSO buttons need the OIDC login route, which is `nasiko-ee` only — see [SSO and SCIM](/governance/sso-and-scim).
+</Info>
+
+Sessions are stored in a secure cookie. When a session expires, the app returns you to the login screen.
+
+## Navigation (open-source)
+
+The rail, left to right:
+
+| Screen | Path | What it is |
+| --- | --- | --- |
+| **Overview** | `/` | Fleet health and spend. See [TokenOps dashboard](/tokenops/dashboard) |
+| **Orchestrator** | `/orchestrator` | Chat without naming an agent. [Chat](/dashboard/chat) |
+| **Agents** | `/agents` | Catalog, Your Agents, Add Agent, Builds. [Agents](/dashboard/agents) |
+| **Sessions** | `/chats` | Transcripts, including coding-agent sessions. [Sessions](/dashboard/sessions-and-traces) |
+| **Observability** | `/sessions` | Traces, tokens, latency over the same rows |
+| **MCP gateway** | `/mcp` | Connectors and toolkits. [MCP](/dashboard/mcp-gateway) |
+| **LLM router** | `/llm-router` | Providers and reasoning-level configs. [LLM router](/models/llm-router) |
+| **TokenOps** | `/tokenops` | Cost view. [TokenOps](/tokenops/dashboard) |
+| **Settings** | `/settings` | General, flow limits, registry, SSO. [Settings](/dashboard/settings) |
+
+Also in the module trees, not all on the rail: **Workflows** and **Executions** ([Workflows](/dashboard/workflows)), **Set up CLI**, **Flows**, **Resources**, **Secrets**.
+
+<Info>
+  **Enterprise.** **Departments**, **Teams**, **Users** (full org hierarchy), **Team Access**, **Agent Runtime**, and **Group Mappings** appear in `nasiko-ee` only. Open-source **Users** and access grants still exist without that hierarchy.
+</Info>
+
+## Artifact registry
+
+<Info>
+  **Enterprise.** The artifact registry is a standalone `nasiko-ee` service. Open-source ships the embedded image registry at `/v2/*` and a client (`nasiko registry connect/search/list`) that can point at an Enterprise registry if you have one.
+</Info>
+
+## Screens
+
+<CardGroup cols={2}>
+  <Card title="Chat" icon="messages" href="/dashboard/chat">
+    Orchestrator or a named agent.
+  </Card>
+  <Card title="Agents" icon="layers" href="/dashboard/agents">
+    Catalog, deploy, manage.
+  </Card>
+  <Card title="Workflows" icon="diagram-project" href="/dashboard/workflows">
+    MAF pipelines and executions.
+  </Card>
+  <Card title="MCP gateway" icon="plug" href="/dashboard/mcp-gateway">
+    Connectors and per-agent tools.
+  </Card>
+  <Card title="Sessions and traces" icon="chart-line" href="/dashboard/sessions-and-traces">
+    Transcripts and traces.
+  </Card>
+  <Card title="Settings" icon="users" href="/dashboard/settings">
+    Secrets, SSO, flow limits.
+  </Card>
+</CardGroup>
+

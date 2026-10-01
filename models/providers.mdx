@@ -1,0 +1,57 @@
+---
+title: "Providers"
+description: "Built-in model providers and custom OpenAI-compatible endpoints — LiteLLM, vLLM, Ollama, Azure, Bedrock, OpenRouter."
+---
+
+Nasiko does not host models. It routes to the providers you already have. Built-in providers ship in the catalog. Custom providers are any OpenAI-compatible endpoint you register.
+
+## Built-in catalog
+
+```bash
+nasiko llm-config providers
+```
+
+The **LLM router** screen lists the same catalog under **Available providers**, with a model count and a **Requires API key** chip. Click a provider to create a config with it preselected. Keys are stored as [secrets](/governance/secrets/overview); they are never displayed back.
+
+API: `GET /api/llm-router/providers`.
+
+## Custom providers
+
+On the LLM router screen, **Register any OpenAI-compatible endpoint** adds a provider whose models then appear for tier routing. Supported kinds:
+
+| Kind | What to point it at |
+| --- | --- |
+| `openai` | LiteLLM, vLLM, Ollama, OpenRouter, or any internal OpenAI-compatible gateway |
+| `azure-openai` | Azure OpenAI |
+| `bedrock-converse` | AWS Bedrock Runtime (Converse API). Models are discovered from the account. API key starts with `ABSK`. |
+
+Superuser only for create, update, delete, test and sync. Any authenticated user can list providers and list a provider's models.
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/api/custom-providers` | List |
+| `POST` | `/api/custom-providers` | Register (superuser) |
+| `POST` | `/api/custom-providers/test` | Probe an endpoint (superuser) |
+| `GET` | `/api/custom-providers/{id}/models` | Models |
+| `PATCH`, `DELETE` | `/api/custom-providers/{id}` | Update / delete (superuser) |
+| `POST` | `/api/custom-providers/{id}/sync` | Refresh the model catalog (superuser) |
+
+Until a [price book](/tokenops/pricing) row exists for a custom model, TokenOps marks its cost **estimated**.
+
+## How agents reach a provider
+
+Deployed agents never hold the real key. At deploy time Nasiko points the agent's SDK at the cluster (`LLM_GATEWAY_BASE_URL`) and injects a short-lived identity JWT as `OPENAI_API_KEY`. Coding harnesses use the same router through [model routing](/coding-agents/routing).
+
+The router endpoints:
+
+| Method | Path | Inbound protocol |
+| --- | --- | --- |
+| `POST` | `/v1/chat/completions` | OpenAI Chat Completions |
+| `POST` | `/v1/responses` | OpenAI Responses (Codex) |
+| `POST` | `/v1/messages` | Anthropic Messages (Claude Code) |
+| `POST` | `/v1beta/models/{model_method}` | Gemini generate / stream |
+| `POST` | `/v1/embeddings` | Embeddings |
+| `GET` | `/v1/models` | List models |
+| `GET` | `/v1/health` | Liveness (no auth) |
+
+All except `/v1/health` require an agent JWT. Missing or unresolvable `traceparent` is a 403 — see [cost attribution](/tokenops/attribution).

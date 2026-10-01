@@ -1,0 +1,55 @@
+---
+title: "Enterprise CLI"
+sidebarTitle: "Enterprise"
+description: "nasiko-ee: provision, organizations, access, registry publish."
+---
+
+<Info>
+  **Enterprise.** `nasiko-ee` is not in the open-source tree. Commands below are documented from the published Enterprise CLI surface and [organizations](/governance/organizations). Confirm against a built `nasiko-ee` binary before treating a flag as exact.
+</Info>
+
+Install: [Install and connect](/install#admin-cli-nasiko-ee).
+
+Most commands accept `--deployment <name>`. Default: `nasiko-ee use <name>`.
+
+## Provision
+
+| Command | Purpose |
+| --- | --- |
+| `nasiko-ee init --setup` | Write `~/.nasiko/.ee.env` template |
+| `nasiko-ee init --provider --region --domain --admin-password` | Provision a cluster |
+| `nasiko-ee activate <token>` | Save registry pull token to `~/.nasiko/registry-values.json` |
+
+Lightweight install stubs `cluster create` and `init --agent-runtime kubernetes`.
+
+## Organization
+
+```bash
+nasiko-ee department create|ls|get|update|members|agents|delete
+nasiko-ee team create|ls|get|update|members|agents|delete
+nasiko-ee users create|place|ls|deactivate|delete
+nasiko-ee admin directory-sync
+```
+
+`users create`: `--username --email [--role] [--team|--dept] [--superuser]`. No `--password` — the server prints a one-time access key and secret.
+
+## Access
+
+```bash
+nasiko-ee access grant <agent-id> [--user|--team|--dept|--public]
+nasiko-ee access revoke <agent-id> [...]
+nasiko-ee access org <agent-id> --team --dept
+nasiko-ee access ls|visibility|list-users|dept-grants|team-grants
+nasiko-ee access accessible-agents|my-agents|user-agents
+nasiko-ee access rename|owner
+nasiko-ee access mcp share|unshare|consumers
+```
+
+## Registry
+
+```bash
+nasiko-ee registry publish <path|image> --owner <org> [--type]
+nasiko-ee registry yank <name> <version>
+nasiko-ee registry init --host --domain --admin-password
+nasiko-ee registry status|upgrade|logs
+```

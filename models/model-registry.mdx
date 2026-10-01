@@ -1,0 +1,35 @@
+---
+title: "Model registry"
+description: "The cluster-wide (provider, tier) → model table the smart router falls through when a config does not pin a model."
+---
+
+The model registry maps a **provider** and a **strength tier** to a model id. When an [LLM config](/models/llm-configs) has no `model` (or is not pinned), the smart router uses this table, then the cluster default.
+
+Tiers:
+
+| Tier | Meaning |
+| --- | --- |
+| `1` | Strongest — matches **Advanced reasoning** on the LLM router screen |
+| `2` | Balanced |
+| `3` | Smallest / fastest |
+
+## List and set
+
+```bash
+nasiko model-registry ls
+nasiko model-registry ls --json
+nasiko model-registry set --provider openai --tier 3 --model gpt-4o-mini
+```
+
+`set` is **superuser only**. `ls` is available to any authenticated user.
+
+## API
+
+| Method | Path | Who |
+| --- | --- | --- |
+| `GET` | `/api/model-registry` | Authenticated |
+| `PUT` | `/api/model-registry` | Superuser |
+
+Body for `PUT`: `provider`, `tier`, `model`.
+
+The dashboard LLM router screen writes reasoning-level models into your LLM config library. The model registry is the cluster-wide fallback underneath that library, not a second place to assign per-agent models.

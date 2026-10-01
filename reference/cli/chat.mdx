@@ -1,0 +1,17 @@
+---
+title: "Chat commands"
+sidebarTitle: "Chat"
+description: "chat, sessions, create-session, history, delete-session."
+---
+
+Guide: [Run and chat locally](/build/run-locally), [Approvals](/governance/approvals).
+
+| Command | Flags | Purpose |
+| --- | --- | --- |
+| `nasiko chat [url] [message]` | `-a/--agent`, `--tui`, `--resume`, `--session-id` | A2A chat. Omit target → orchestrator. A lone argument with whitespace is the message |
+| `nasiko sessions` | `--endpoint`, `--cursor`, `--limit` | List (includes coding-agent sessions) |
+| `nasiko create-session` | `--agent` | Create. Omit `--agent` for orchestrator |
+| `nasiko history <session_id>` | | Messages |
+| `nasiko delete-session <session_id>` | `-y/--yes` | Delete |
+
+HITL pauses prompt inline in `chat` and in `maf workflow run --wait`.

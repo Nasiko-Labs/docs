@@ -1,0 +1,156 @@
+---
+title: "TokenOps dashboard"
+description: "Read spend, tokens, latency and attribution on the Overview and TokenOps screens, and export what you see."
+---
+
+Two dashboard screens read the same TokenOps data. **Overview** (`/`) is the landing screen: fleet health, activity and spend on one page. **TokenOps** (`/tokenops`) is the cost view: what you spent, where it concentrated, and which agents or workflows drove it.
+
+Both screens take a period and a time range, compare every headline figure against the previous window, and export the attribution table as CSV.
+
+## Filters both screens share
+
+| Control | What it does |
+| --- | --- |
+| **Period** | The current month or any of the previous five. A past month is bounded to that month, not "that month through today". |
+| **Time range** | **24h**, **7d** or **30d**. Narrows the window back from the end of the selected period (or from now, for the current month). |
+| **Org unit** | Scopes the screen to the users in one unit of your organization. |
+
+<Info>
+  **Enterprise.** The **Org unit** filter needs an organization hierarchy and manager-level access or above. On open-source clusters, or for users without that access, it stays disabled with a tooltip explaining why. See [organizations](/governance/organizations).
+</Info>
+
+Every KPI carries a movement chip: the change against the previous window of the same length. The arrow shows the direction; the color shows whether that direction is good news. Rising spend is an up arrow in a warning color.
+
+## Overview
+
+The Overview screen answers "is the fleet healthy, and what is it costing?" in one place.
+
+### Filter bar
+
+Alongside **Period**, **Time range** and **Org unit**, Overview adds a **Scope** control:
+
+- **Org** (default) counts every agent you can see.
+- **Myself** narrows the KPI strip and the attributions table to agents you own. The activity, performance and spend charts stay fleet-wide, and the screen says so under the filter bar while **Myself** is selected.
+
+<Note>
+  **Myself** means agents you *own*, not traffic you generated. If you mostly use agents other people deployed, **Myself** reads close to zero.
+</Note>
+
+### KPI strip
+
+| Tile | What it shows |
+| --- | --- |
+| **Agents** | Agents deployed in the workspace |
+| **Active** | Agents that ran in the window, out of the total |
+| **Runs** | Operations in the window; the tooltip adds the last-24-hours count and tool calls |
+| **Spend** | Spend and tokens together, for example `$412/18.2M` |
+| **Avg latency** | Median (p50) latency across every operation; the tooltip adds p95 and p99 |
+
+The gap between **Active** and **Agents** is often the most useful number on the screen: it counts agents that are deployed but idle.
+
+### Panels
+
+- **Agent activity** plots calls over time. Switch between **All**, **Agent calls** (one per trace) and **Tool calls** (tool-call spans inside those traces).
+- **Performance** plots p50, p95 and p99 latency over time. When the gap between p95 and p99 moves, a note under the chart reports it, for example "Latency tail widened 74% since Wednesday".
+- **Spend over time** stacks each bucket's heaviest agent against everyone else. Toggle **$** for dollars or **%** for each bucket's share of the window. The **Agent** and **Provider** selects in this panel filter this panel only.
+- **Attributions** lists every agent with **Runs**, **Tokens**, **Spend**, **Cost/Op** and **Avg latency**. Hover **Runs** for tool-call counts and **Avg latency** for p95/p99. Sort by **Most run**, **Highest spend**, **Most tokens**, **Slowest (p50)**, **Slowest (p95)** or **Name**.
+
+Buckets are hourly for short windows and daily for longer ones.
+
+With no agents deployed, Overview shows a first-run screen with **Import an agent** and **Explore Artifact Library** instead of empty charts.
+
+## TokenOps
+
+The TokenOps screen is the cost view. Every filter on it reloads the whole screen.
+
+### Filter bar
+
+Alongside **Period**, **Time range** and **Org unit**:
+
+| Filter | Scope |
+| --- | --- |
+| **Agent** | One agent, including a registered coding agent |
+| **Provider** | One provider from the [LLM router catalog](/models/providers) |
+| **Model** | One model id |
+
+Picking a month makes the month the window. Picking a time range after that returns to a range anchored on now.
+
+### KPI strip
+
+| Tile | What it shows |
+| --- | --- |
+| **Total AI spend** | Spend for the window. The tooltip shows how much of it is estimated and how many operations had unknown pricing confidence. |
+| **Total tokens** | Tokens across all agents |
+| **Cost / operation** | Spend divided by operations; the tooltip adds agent hours |
+| **Avg latency** | Average latency; the tooltip shows how many agents were active |
+
+A tile with no previous window to compare against shows no chip, rather than a misleading 0%.
+
+<Tip>
+  An estimated figure is a real cost priced at a fallback rate, not a guess at usage. See [how prices are determined](/tokenops/pricing) for when a call is marked estimated.
+</Tip>
+
+### Spend over time
+
+Spend (left axis) and operation count (right axis) per bucket. Buckets are hourly for short windows and daily for longer ones.
+
+### Spend concentration
+
+A day grid for the selected month sits above an hourly chart for one day. Click a day to drill into it.
+
+- Each hour's bar is stacked by that day's top four agents, plus **Others**.
+- The dashed line is the day's average hourly spend, also written under the chart ("Averaging $3.20/hour on 2026-09-14").
+- The legend lists the top agents with their spend for the day.
+
+The day picker follows the **Period** select: a past month opens on its last day, the current month on today. It ignores **Time range**, but honors the **Agent**, **Provider** and **Model** filters. Future days are disabled.
+
+### Attributions
+
+Toggle **Agent** or **Workflow** to attribute spend to deployed agents or to [MAF workflows](/build/workflows).
+
+| View | Columns |
+| --- | --- |
+| **Agent** | Agent, Spend, Tokens, Output, Input, Operations, Avg cost/op, Agent hours, Avg latency |
+| **Workflow** | Workflow, Spend, Tokens, Operations, Avg latency |
+
+Search by name, and sort by **Highest spend**, **Most tokens**, **Most operations**, **Slowest**, **Most agent hours** (agent view) or **Name**.
+
+A `~approx` badge marks a very high-volume agent whose figures are approximate and may undercount.
+
+The split between **Input** and **Output** is the practical cost lever. A high input share usually means context is being resent; see [reduce cost](/tokenops/reduce-cost). A high output share usually means verbose answers, which a cheaper model or a brevity directive can address.
+
+## Export
+
+**Export report** downloads the attributions table as CSV: `overview.csv` from Overview, `tokenops.csv` from TokenOps. The file follows the current filters, view and sort order. On TokenOps it includes every row in the window, not only rows matching the table's search box.
+
+## Where the numbers come from
+
+Every model call routed through the [LLM router](/models/llm-router), every orchestrator call, and every reporting [coding agent session](/coding-agents/session-reporting) records its token counts. Nothing is added to your agent code. Costs apply those counts to the price in effect when the call happened, so a later price change never re-costs last month.
+
+- [Cost attribution](/tokenops/attribution) explains the dimensions and why every call is attributed.
+- [Pricing](/tokenops/pricing) explains where rates come from.
+
+<Note>
+  The routing engine's agent-selection call is metered as its own line, not folded into the agent it picked, so routing never inflates an agent's numbers.
+</Note>
+
+<Tip>
+  For a short written summary instead of raw figures, `POST /api/observability/finops/insights` returns up to three insight bullets over a KPI snapshot you send it. Useful for a weekly digest. See the [API table](/tokenops/attribution#tokenops-api).
+</Tip>
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Cost attribution" icon="coins" href="/tokenops/attribution">
+    One cost schema across vendors, harnesses and teams.
+  </Card>
+  <Card title="Reduce cost" icon="scissors" href="/tokenops/reduce-cost">
+    Compression, context budgets and cheaper models.
+  </Card>
+  <Card title="Sessions and traces" icon="chart-line" href="/dashboard/sessions-and-traces">
+    Drill from a cost figure into the traces behind it.
+  </Card>
+  <Card title="LLM router" icon="route" href="/models/llm-router">
+    Change which models your agents are routed to.
+  </Card>
+</CardGroup>

@@ -12,12 +12,12 @@ The **control plane** is the single server that runs the whole platform: it depl
 containers, terminates all incoming HTTPS traffic, enforces authentication and rate limits, routes
 user queries to an agent, proxies every agent-to-agent call, and exposes the APIs behind the web UI
 and CLI. There's no separate gateway process in front of it — the control plane is the sole
-ingress. See the [architecture overview](/architecture/overview) for the full request-flow
+ingress. See the [architecture overview](architecture-overview.md) for the full request-flow
 diagram.
 
 ## Agent
 
-An **agent** is a container that speaks the [A2A protocol](/adlc/a2a-agents) —
+An **agent** is a container that speaks the A2A protocol —
 it accepts a task, does work (often by calling an LLM and tools), and returns a result. Agents are
 the unit of deployment: each one is built as a standalone container image and deployed
 independently. Agents never receive a public IP or DNS name; the only way to reach one is through
@@ -29,7 +29,7 @@ A **session** is one end-to-end query from a user, identified by the A2A `contex
 that happens while answering that query — the routing decision, the chosen agent's own LLM calls,
 any agents it calls in turn — is recorded as spans on a single trace. A session is what you see as
 one row in the observability dashboard's session list, and drilling into it shows every hop that
-contributed to the answer. See [observability](/platform/observability) for how sessions, traces,
+contributed to the answer. See [observability internals](observability-internals.md) for how sessions, traces,
 and cost data connect.
 
 ## Flow
@@ -59,18 +59,16 @@ assume they're all the same mechanism:
 - The **routing engine** is a selection mechanism: given a query and a fleet of candidate agents, a
   three-stage pipeline (shortlist → rerank → select) picks one. It does not run an agentic loop
   itself — it's a selection step, not an execution step. Today it's invoked specifically to
-  auto-assign an agent to a [MAF](/platform/maf) workflow step that doesn't name one explicitly. See
-  [the routing engine](/platform/orchestrator) for the pipeline itself.
+  auto-assign an agent to a MAF workflow step that doesn't name one explicitly. See
+  [orchestrator internals](orchestrator-internals.md) for the pipeline itself.
 - The **orchestrator** is what actually handles a live chat query that doesn't name a specific
   agent: a multi-turn ReAct loop that exposes every agent you can access as a callable tool and lets
   an LLM decide which one (or several) to call, across as many as ten turns. It doesn't use the
-  routing engine's pipeline — no shortlist or rerank happens here. See [how Nasiko dispatches to
-  agents](/adlc/a2a-agents#how-nasiko-dispatches-to-agents) for the full picture.
+  routing engine's pipeline — no shortlist or rerank happens here.
 - **Orchestration** (or **multi-agent flow**, MAF) refers to running a pre-defined, ordered workflow
   across multiple agents — planning steps, executing them in sequence, and synthesizing a final
   answer. This is a different mechanism from both of the above: it's not a live, LLM-directed loop,
-  it's a workflow you define once and run repeatably. See [MAF](/platform/maf) and [the MAF platform
-  page](/platform/maf).
+  it's a workflow you define once and run repeatably. See [MAF internals](maf-internals.md).
 
 In short: the routing engine answers "which one agent should get this MAF step?" The orchestrator
 answers "which agent(s) should handle this chat message, live?" MAF answers "how do several agents
@@ -90,7 +88,7 @@ Nasiko separates two independent access-control questions, and both are enforced
 
 These two mechanisms are independent by design — a user having access to an agent doesn't
 automatically let that agent call every other agent, and vice versa. See
-[access control](/onboarding/acl/overview) for how to configure both.
+[access control internals](acl-internals.md) for how to configure both.
 
 ## Build and deploy artifact model
 
@@ -104,22 +102,12 @@ container registries generally. Nasiko has two ways to get an agent's image onto
 
 Either way, the image is the deployment artifact: once it's in the registry, deploying it wires up
 networking, injects secrets, and instruments it for observability with no changes to your agent's
-code. See [the agent development lifecycle](/adlc/overview) for the full build-to-deploy
+code. See [agent-runtime internals](agent-runtime-internals.md) for the full build-to-deploy
 walkthrough.
 
 ## Where to go next
 
-<CardGroup cols={2}>
-  <Card title="Architecture overview" href="/architecture/overview">
-    The system diagram and request-flow diagram these concepts fit into.
-  </Card>
-  <Card title="Routing engine" href="/platform/orchestrator">
-    How agent selection actually works, stage by stage.
-  </Card>
-  <Card title="Access control" href="/onboarding/acl/overview">
-    Configuring user-to-agent grants and agent-to-agent allowlists.
-  </Card>
-  <Card title="Secrets" href="/platform/secret-manager/overview">
-    How per-agent secrets are encrypted and injected at deploy time.
-  </Card>
-</CardGroup>
+- [Architecture overview](architecture-overview.md)
+- [Orchestrator internals](orchestrator-internals.md)
+- [ACL internals](acl-internals.md)
+

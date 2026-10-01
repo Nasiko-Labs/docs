@@ -1,0 +1,15 @@
+---
+title: "Coding agents API"
+description: "Register a harness identity and ingest session-turn telemetry."
+---
+
+`POST /api/agents/coding-integrations` is in the generated OpenAPI spec. Batch ingest is not.
+
+| Method | Path | Auth | Purpose |
+| --- | --- | --- | --- |
+| `POST` | `/api/agents/coding-integrations` | Session JWT | Register Claude / Codex / OpenCode / Cursor for this user. Idempotent. Body `{ "integration_id": "claude" }` (or `codex`, `opencode`, `cursor`) |
+| `POST` | `/api/telemetry/coding-agent/events/batch` | Session JWT bound to the install | Up to 100 queued turns. Replay is safe |
+
+The CLI is what calls these (`nasiko agents install`, `nasiko agents sync`). Don't send turns from a different user or cluster than the install binding — `sync` refuses that locally; the server still requires a valid login.
+
+Related: [Discover](/coding-agents/discover), [Session reporting](/coding-agents/session-reporting).

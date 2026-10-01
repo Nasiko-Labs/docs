@@ -1,136 +1,143 @@
 ---
 title: "Quickstart"
-description: "Deploy your first agent to the Nasiko control plane."
+description: "Find the coding agents already running on your machine, see what each one costs, and route one to the model you choose."
 ---
 
-Scaffold an agent, run it locally, deploy it, and see it under governance.
+In about ten minutes you'll install the CLI, discover the coding agents on your machine, start reporting their sessions to a Nasiko cluster, and see their spend in TokenOps. Routing a harness to a different model is an optional last step.
 
-Nasiko has two surfaces. Neither requires the other.
+Nothing about how you use your harnesses changes. Claude Code, Codex, OpenCode and the Cursor CLI keep running exactly as they do today.
 
-|  | What it's for | How you get in |
-| --- | --- | --- |
-| **CLI** (`nasiko`) | Build agents — scaffold, run, test, deploy, version. | `cargo install --path cli --force`. See [Setup Your CLI](/cli/setup). |
-| **Dashboard** | Govern your tenant — registry, access, traces, cost, secrets. | Sign in at your control plane URL. |
-
-Steps 1–4 use the CLI. Step 5 uses the dashboard. To govern agents someone else deployed, skip to step 5.
+<Tip>
+  Want to build and deploy your own agent instead? Follow [Quickstart: deploy an agent](/quickstart-deploy).
+</Tip>
 
 ## Prerequisites
 
-- Docker
-- An account with deploy permission — see [ACL](/onboarding/acl/overview)
-- A model provider API key (`OPENAI_API_KEY` or similar)
+- [Rust](https://rustup.rs) to install the CLI
+- [Docker](https://docs.docker.com/get-docker/) with Compose, to run a local Nasiko cluster — or the URL of your organization's cluster and an account on it
+- At least one supported coding agent installed: Claude Code, Codex, OpenCode or the Cursor CLI
 
-<Warning>
-  This one key actually needs to go in three separate places, and each is independent of the
-  others — having it in one doesn't mean it's set for the rest:
-
-  1. **Your project's own `.env`** — read by `nasiko run .` for local testing (step 3 below).
-  2. **A per-agent secret** — `nasiko secrets set OPENAI_API_KEY <key> --agent <name>`, read by
-     `nasiko deploy .`/`nasiko upload .` (step 4). Deploy does *not* read your project's `.env` —
-     skip this and the deployed agent chats with a 502/empty error and no explanation. See
-     [managing agent secrets](/platform/secret-manager/user-secrets).
-  3. **The control plane's own environment** — needed for the routing engine and orchestrator chat
-     (`nasiko chat "..."` with no agent name). If you're running `nasiko up` locally, answer its
-     setup wizard prompt for `OPENAI_API_KEY` rather than pressing Enter past it — see
-     [Setup Your CLI](/cli/setup) for the wizard and what happens if you skip it.
-</Warning>
-
-## Get started
+## Find and measure your coding agents
 
 <Steps>
-  <Step title="Install and authenticate the CLI">
+  <Step title="Install the CLI">
     ```bash
-    git clone https://github.com/Nasiko-Labs/nasiko-rs.git && cd nasiko-rs
+    git clone https://github.com/Nasiko-Labs/nasiko.git && cd nasiko
     cargo install --path cli --force
-    nasiko up
-    nasiko auth login
     ```
 
-    `nasiko up` starts a local control plane and connects the CLI to it as cluster `local`. `auth login` stores your token in `~/.nasiko/config.json`. Options: [Setup Your CLI](/cli/setup).
+    This installs `nasiko` into `~/.cargo/bin`. Use `--force` when you update: every build reports version `0.1.0`, so the version number alone won't tell you whether you have the latest commands.
   </Step>
 
-  <Step title="Scaffold an agent">
+  <Step title="Discover what's already running">
     ```bash
-    nasiko new openai my-first-agent
-    cd my-first-agent
-    ```
-
-    Writes an `AgentCard.json`, a `Dockerfile`, and starter source. Run `nasiko new` with no arguments for a wizard. Templates: [Sample Agents](/artifact-registry/sample-agents).
-  </Step>
-
-  <Step title="Run it locally">
-    ```bash
-    nasiko run .
+    nasiko agents discover
     ```
 
     ```text
-    ✓ built my-first-agent (local)
-    → running on localhost:8000
+    AGENT      DETECTED   CONNECTED   VERSION              CONFIG
+    ----------------------------------------------------------------------------------------
+    claude     yes        no          -                    ~/.claude
+    codex      yes        no          -                    ~/.codex
+    opencode   -          no          -                    ~/.config/opencode
+    cursor     yes        no          -                    ~/.cursor
     ```
 
-    ```bash
-    nasiko chat http://localhost:8000 "Customer says their invoice is wrong"
-    ```
-
-    Local runs use the same router and access checks as production. More: [Build, Run, and Test Locally](/adlc/build-run-test).
+    Discovery reads your machine, prints one row per supported harness, and exits. It changes no settings, needs no account, and sends nothing off the machine. **Detected** means the harness binary is on your `PATH` or its config directory exists. **Connected** means session reporting is installed, and **Version** is the version of the Nasiko reporting hook.
   </Step>
 
-  <Step title="Deploy to the control plane">
-    ```bash
-    nasiko deploy .
-    ```
+  <Step title="Start or connect to a Nasiko cluster">
+    <Tabs>
+      <Tab title="Local (Docker Compose)">
+        From the `nasiko` repo you cloned:
 
-    Builds the image, pushes it to the embedded registry, then registers and starts the agent. Writes `.nasiko/agent.json` bound to the deployed agent's ID.
+        ```bash
+        cp .env.example .env
+        ```
 
-    No local Docker? Use `nasiko upload .` and the control plane builds it. See [Deploy and Manage](/adlc/deploy).
+        Edit `.env` and set:
 
-    <Warning>
-      The deployed container does **not** inherit your project's local `.env` — it starts with no
-      model credentials unless you set them as a secret first:
+        - `ADMIN_PASSWORD`: the password for the `admin` account
+        - `OPENAI_API_KEY`: a model provider key
+        - `AGENT_JWT_SECRET`: uncomment it and set a random value (`openssl rand -base64 48`). Model routing in the last step needs it.
 
-      ```bash
-      nasiko secrets set OPENAI_API_KEY <your-key> --agent my-first-agent
-      nasiko restart my-first-agent
-      ```
+        ```bash
+        docker compose up -d
+        nasiko connect http://localhost:8080 --name local
+        ```
 
-      Skip this and `nasiko chat my-first-agent "..."` fails with an unhelpful `agent task
-      failed` or `HTTP 502` — check `nasiko logs my-first-agent` if you see either. See
-      [managing agent secrets](/platform/secret-manager/user-secrets).
-    </Warning>
+        The first build compiles the server inside Docker and takes a few minutes. The dashboard is at [http://localhost:8080](http://localhost:8080). The Compose stack already sets up everything coding-agent cost reporting needs. See [Deploy the stack](/self-hosting/deploy) for details.
+      </Tab>
+      <Tab title="Your organization's cluster">
+        ```bash
+        nasiko connect https://nasiko.example.com --name work
+        ```
+
+        Get the URL and an account from your administrator.
+      </Tab>
+    </Tabs>
   </Step>
 
-  <Step title="See it under governance">
-    Sign in to the dashboard. Your agent is already:
+  <Step title="Sign in — reporting installs itself">
+    ```bash
+    nasiko auth login
+    ```
 
-    - listed in the [Agent Registry](/platform/agent-registry) with status and owner
-    - logging every chat in [Sessions](/product/observability)
-    - reporting spend in [TokenOps](/platform/tokenops)
+    When you sign in, Nasiko installs session reporting for every detected harness that doesn't already have it, and registers each harness with the cluster. Run `nasiko agents discover` again and **Connected** reads `yes`.
 
-    {/*
-<Frame>
-      <img src="/product-images/agent-registry/published-by-you.png" alt="Agent registry Published by you tab listing deployed agents with active status badges and skill tags" />
-    </Frame>
-*/}
+    To install reporting for one harness explicitly, or to leave prompt and response text out of what's reported:
+
+    ```bash
+    nasiko agents install claude
+    nasiko agents install codex --no-content
+    ```
+
+    <Note>
+      Restart OpenCode after reporting is installed so it loads the plugin. Codex asks you to trust the new Nasiko hooks the next time it starts.
+    </Note>
+  </Step>
+
+  <Step title="Work as usual, then look at the spend">
+    Use your harness the way you always do. Each completed turn is queued on your machine and delivered to the cluster in the background. If the cluster is unreachable, turns wait in the queue and the harness is never blocked.
+
+    ```bash
+    nasiko sessions              # every harness session, alongside your other chats
+    nasiko history <session-id>  # the turns in one session
+    ```
+
+    In the dashboard, **Sessions** lists the same conversations. **Overview** and **TokenOps** break down spend by agent — each harness is registered as its own agent — and by model. See [the TokenOps dashboard](/tokenops/dashboard).
+  </Step>
+
+  <Step title="Optional: route a harness to the model you choose">
+    Harnesses arrive tied to a vendor: Claude Code to Anthropic, Codex to OpenAI. Routing gives the model choice back to you. Register a provider key once, then connect a harness to it:
+
+    ```bash
+    nasiko llm-config create --name my-openai --provider openai --model gpt-4o \
+      --api-key-secret OPENAI_API_KEY --secret-value "$OPENAI_API_KEY"
+    nasiko connect claude --config my-openai
+    ```
+
+    Claude Code keeps speaking its own protocol, and Nasiko routes each call to the model in your config. Routing is available for Claude Code, Codex and OpenCode. Undo it at any time with `nasiko disconnect claude`. See [Route models](/coding-agents/routing) for what changes on your machine and how failures behave.
   </Step>
 </Steps>
 
 ## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Manage secrets" icon="key" href="/platform/secret-manager/user-secrets">
-    Move that provider key out of your shell.
+  <Card title="How reporting works" icon="satellite-dish" href="/coding-agents/session-reporting">
+    What's captured, where it's queued, and how delivery is kept safe.
   </Card>
-  <Card title="Set access policy" icon="shield-check" href="/onboarding/acl/overview">
-    Control who can invoke, edit, and promote this agent.
+  <Card title="Cost attribution" icon="coins" href="/tokenops/attribution">
+    One cost schema across every harness and vendor.
   </Card>
-  <Card title="Connect tools over MCP" icon="plug" href="/mcp-hub/external-mcp-server">
-    Give the agent systems to act on.
+  <Card title="Per-harness guides" icon="terminal" href="/coding-agents/claude-code">
+    Claude Code, Codex, OpenCode and Cursor specifics.
   </Card>
-  <Card title="Compose multiple agents" icon="diagram-project" href="/adlc/a2a-agents">
-    Wire agents together across frameworks.
+  <Card title="Deploy an agent" icon="rocket" href="/quickstart-deploy">
+    Build and run your own agent on the same cluster.
   </Card>
 </CardGroup>
 
 <Tip>
-  Stuck? Ask in [Discord](https://discord.gg/a4aU2kcAyy) or email [support@nasiko.com](mailto:support@nasiko.com).
+  Stuck? See [Troubleshooting](/coding-agents/troubleshooting), ask in [Discord](https://discord.com/invite/HmnfkTfjFv), or email [support@nasiko.com](mailto:support@nasiko.com).
 </Tip>

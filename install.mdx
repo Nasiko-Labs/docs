@@ -1,0 +1,211 @@
+---
+title: "Install and connect"
+description: "Install the Nasiko CLI, get a Nasiko cluster to connect to, and sign in."
+---
+
+You need three things: the `nasiko` CLI, a Nasiko cluster to connect it to, and an account on that cluster. Coding-agent discovery (`nasiko agents discover`) works with just the CLI.
+
+Nasiko ships two command-line tools, both standalone Rust binaries:
+
+| CLI | Binary | For |
+| --- | --- | --- |
+| Developer CLI | `nasiko` | Discovering and routing coding agents; building, deploying and chatting with agents |
+| Admin CLI | `nasiko-ee` | Provisioning clusters and managing organizations, teams and grants. Enterprise only |
+
+## Install the CLI
+
+```bash
+git clone https://github.com/Nasiko-Labs/nasiko.git
+cd nasiko
+cargo install --path cli --force
+nasiko --help
+```
+
+This installs to `~/.cargo/bin`. Reinstall with `--force` to update. Every build reports version `0.1.0`, so `nasiko --version` can't tell you whether a newer command is present.
+
+<Tip>
+  The dashboard has the same steps with copy buttons: click **Set up CLI** to open a walkthrough covering install, connecting a cluster, creating your first agent, and deploying it.
+</Tip>
+
+## Get a cluster
+
+<Tabs>
+  <Tab title="Your organization's cluster">
+    Get the URL and an account from your administrator. An administrator creates your account and gives you either a username and password, or an access key and secret. The secret is shown once, so save it.
+  </Tab>
+  <Tab title="Docker Compose (recommended locally)">
+    Runs the full stack — server, Postgres, Redis, S3 storage, and the trace and log backends — in Docker:
+
+    ```bash
+    cp .env.example .env     # set ADMIN_PASSWORD, OPENAI_API_KEY and AGENT_JWT_SECRET
+    docker compose up -d
+    ```
+
+    The dashboard is at [http://localhost:8080](http://localhost:8080). See [Deploy the stack](/self-hosting/deploy).
+  </Tab>
+  <Tab title="nasiko up">
+    Starts the infrastructure in Docker and runs the Nasiko server as a local process:
+
+    ```bash
+    nasiko up
+    ```
+
+    `nasiko up` shows the settings it will use from `~/.nasiko/.env` and lets you edit them before starting. Answer the `OPENAI_API_KEY` prompt — the orchestrator and agent-card generation need it. When the server is healthy, the CLI connects to it as cluster `local`. Stop everything with `nasiko down`. See the troubleshooting section below for the settings `nasiko up` doesn't set for you.
+  </Tab>
+</Tabs>
+
+## Connect and sign in
+
+<Steps>
+  <Step title="Register the cluster">
+    ```bash
+    nasiko connect https://nasiko.example.com --name work
+    ```
+
+    The CLI checks the cluster's health endpoint, saves it, and makes it the active cluster. `nasiko up` does this step for you.
+  </Step>
+  <Step title="Pick the active cluster">
+    ```bash
+    nasiko clusters       # list registered clusters
+    nasiko use work       # switch the active one
+    ```
+
+    Every command runs against the active cluster.
+  </Step>
+  <Step title="Sign in">
+    ```bash
+    nasiko auth login     # username and password, or access key and secret
+    nasiko auth whoami
+    ```
+
+    Your token is stored in `~/.nasiko/config.json`. Check it with `nasiko auth status`. Sign out with `nasiko auth logout`.
+
+    Signing in (and `connect` or `use` while signed in) also installs session reporting for any detected coding agent that doesn't have it yet. See [Discover and register](/coding-agents/discover).
+  </Step>
+</Steps>
+
+The dashboard and the CLI use the same account. Sign in to the dashboard at your cluster URL.
+
+## Troubleshooting `nasiko up`
+
+<AccordionGroup>
+  <Accordion title="missing required env var: ADMIN_PASSWORD, or JWT_SECRET must be set">
+    The server needs `ADMIN_PASSWORD` and `JWT_SECRET` at startup, and `nasiko up` doesn't set them. Export them in the shell you run it from:
+
+    ```bash
+    export ADMIN_PASSWORD=choose-a-password
+    export JWT_SECRET=$(openssl rand -base64 48)
+    nasiko up
+    ```
+
+    Then sign in as `admin` with the password you chose.
+  </Accordion>
+
+  <Accordion title="Routing a coding agent fails with an authentication error">
+    Model routing needs `AGENT_JWT_SECRET` on the server, and `nasiko up` doesn't set it. Without it, the server refuses to issue routing credentials. Deployed agents also need `LLM_GATEWAY_BASE_URL` to be routed through Nasiko. Export both before starting:
+
+    ```bash
+    export AGENT_JWT_SECRET=$(openssl rand -base64 48)
+    export LLM_GATEWAY_BASE_URL=http://localhost:8080
+    nasiko up
+    ```
+  </Accordion>
+
+  <Accordion title="Sessions show up, but traces, tokens and cost stay empty">
+    `nasiko up` doesn't set `TEMPO_URL`, `LOKI_URL` or `CODING_AGENT_OTLP_ENDPOINT`, so the server starts with observability off even though Tempo and Loki are running. Export them before starting:
+
+    ```bash
+    export TEMPO_URL=http://localhost:3200
+    export LOKI_URL=http://localhost:3100
+    export CODING_AGENT_OTLP_ENDPOINT=http://localhost:4318
+    nasiko up
+    ```
+
+    Or use Docker Compose, which sets all of these.
+  </Accordion>
+
+  <Accordion title="Pulling the server image fails">
+    `nasiko up` pulls `nasiko/cp:latest` from Docker Hub (or `<DOCKERHUB_USER>/cp:latest` if you set `DOCKERHUB_USER`) and extracts the server binary to `~/.nasiko/bin/nasiko-cp`. It only pulls when that file doesn't exist. If the pull fails, build the server from source and put it there:
+
+    ```bash
+    cargo build --release -p nasiko-server
+    mkdir -p ~/.nasiko/bin
+    cp target/release/nasiko-server ~/.nasiko/bin/nasiko-cp
+    ```
+  </Accordion>
+
+  <Accordion title="The server stops when you close the terminal">
+    The infrastructure containers run detached, but the server is a child process of the shell you ran `nasiko up` in. Closing that terminal stops it. Keep the terminal open, or use Docker Compose, which runs the server as a container.
+  </Accordion>
+</AccordionGroup>
+
+## Admin CLI (`nasiko-ee`)
+
+<Info>
+  **Enterprise.** Everything in this section applies to the Enterprise edition only.
+</Info>
+
+<Tabs>
+  <Tab title="Install script">
+    ```bash
+    curl -fsSL https://get.nasiko.dev/ee | bash
+    ```
+
+    Anonymous download, no login. Installs to `~/.local/bin`, never uses `sudo`, and never edits your shell rc files — it prints the `PATH` line to add.
+
+    | Variable | Default | Purpose |
+    | --- | --- | --- |
+    | `NASIKO_EE_VERSION` | `latest` | Pin a version, for example `v0.1.0` |
+    | `NASIKO_INSTALL_DIR` | `~/.local/bin` | Install destination |
+    | `NASIKO_REGISTRY` | `registry.nasiko.dev` | Registry host, for mirrors or air-gapped installs |
+
+    If piping `curl` into `bash` is disallowed at your organization, download and review the script first.
+  </Tab>
+  <Tab title="Build from source">
+    Three variants, identical except for cluster provisioning:
+
+    | Variant | Command | Binary | Provisioning commands |
+    | --- | --- | --- | --- |
+    | Default | `cargo install --path ee/cli --force` | `nasiko-ee` | Full |
+    | Full, as `nasiko` | `just install-cli-enterprise` | `nasiko` | Full |
+    | Lightweight | `just install-cli-enterprise-subset` | `nasiko` | Stubbed |
+
+    The lightweight variant stubs `cluster create` and `init --agent-runtime kubernetes`; everything else behaves identically.
+
+    <Warning>
+      Installing under the `nasiko` name **replaces** the developer CLI in `~/.cargo/bin`. Switch back with `cargo install --path cli --force`.
+    </Warning>
+  </Tab>
+</Tabs>
+
+Verify with `nasiko-ee --version`.
+
+### Provision a cluster
+
+```bash
+nasiko-ee init --setup
+```
+
+This creates `~/.nasiko/.ee.env` with a template for cloud credentials (AWS, DigitalOcean, Azure or GCP), your Docker Hub org, and optional keys such as `OPENAI_API_KEY`. Fill it in, then:
+
+```bash
+nasiko-ee init \
+  --provider do \
+  --region blr1 \
+  --domain nasiko.example.com \
+  --admin-password <password>
+```
+
+Next: [set up your organization](/governance/organizations).
+
+### Registry access
+
+The Enterprise server image comes from a private registry. Save the read-only pull token Nasiko provides:
+
+```bash
+nasiko-ee activate <token>
+```
+
+This writes `~/.nasiko/registry-values.json`, which the cluster install commands use to authenticate pulls.
+
+All `nasiko-ee` commands: [Enterprise CLI reference](/reference/cli/enterprise).

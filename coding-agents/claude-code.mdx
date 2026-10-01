@@ -1,0 +1,83 @@
+---
+title: "Claude Code"
+description: "Discover Claude Code, report its sessions, and route its model calls through Nasiko."
+---
+
+Nasiko treats Claude Code as a coding harness. Discovery and session reporting use Claude Code's own hooks. Model routing uses Claude Code's own `apiKeyHelper` and `ANTHROPIC_BASE_URL`. No wrapper, no SDK in your code.
+
+| | |
+| --- | --- |
+| Binary | `claude` |
+| Config directory | `$CLAUDE_CONFIG_DIR` for routing; `~/.claude` for session reporting |
+| Session reporting | Yes (`Stop` hook, hook version v3) |
+| Model routing | Yes (Anthropic Messages protocol in, any provider out) |
+
+## Discover and report
+
+```bash
+nasiko agents discover
+nasiko agents install claude
+nasiko agents install claude --no-content   # tokens and tools only, no prompt text
+```
+
+Install writes a `Stop` command hook into `~/.claude/settings.json` and a launcher under `~/.claude/`. Existing hooks stay. Uninstall removes only the Nasiko entries.
+
+Session reporting always uses `~/.claude`, even when `$CLAUDE_CONFIG_DIR` is set.
+
+After install, use `claude` the way you always do. Each completed turn is queued under `~/.nasiko/integrations/queue/` and delivered in the background. See [Session reporting](/coding-agents/session-reporting).
+
+## Route models
+
+```bash
+nasiko llm-config create --name my-openai --provider openai --model gpt-4o \
+  --api-key-secret OPENAI_API_KEY --secret-value "$OPENAI_API_KEY"
+nasiko connect claude --config my-openai
+nasiko status claude
+```
+
+`connect claude` edits `~/.claude/settings.json`:
+
+- `apiKeyHelper` runs `nasiko __claude-token`, which mints a one-hour JWT from your cluster.
+- `env.ANTHROPIC_BASE_URL` points at the cluster. Claude Code keeps sending Anthropic-format `/v1/messages` requests; Nasiko translates and routes them.
+
+Claude Code sends the JWT as `x-api-key`. The router accepts that header and `Authorization: Bearer`.
+
+Connection state is stored in `~/.nasiko/integrations/claude.json`.
+
+<Warning>
+  `~/.claude/settings.json` is per-user and global. Connecting Claude Code affects every `claude` process on the machine.
+</Warning>
+
+If routing is configured under `$CLAUDE_CONFIG_DIR`, that directory is what `connect` and `disconnect` edit. Reporting still uses `~/.claude`.
+
+### One-shot, no settings change
+
+```bash
+nasiko claude --agent <name-or-uuid> --config my-openai -- -p "Explain this diff"
+```
+
+Environment is injected for that process only. `--agent` is required.
+
+## Disconnect and uninstall
+
+```bash
+nasiko disconnect claude          # restore provider settings; --force if claude is running
+nasiko agents uninstall claude    # remove the reporting hook
+```
+
+The two are independent. Disconnecting leaves reporting in place.
+
+## Identity in Nasiko
+
+Registration creates a coding-agent identity named `<username>-claude-code`, labelled **Claude Code (`<your email>`)** in the dashboard. Reported sessions and routed calls are both attributed to it.
+
+## Troubleshooting
+
+| Symptom | What to check |
+| --- | --- |
+| `DETECTED` is `-` | `claude` is not on `PATH` and `~/.claude` does not exist. |
+| Routing fails with authentication error | `AGENT_JWT_SECRET` is unset on the server, or `nasiko auth status` shows an expired login. |
+| Settings look connected but calls still go to Anthropic | Restart Claude Code so it reloads `settings.json`. Confirm `ANTHROPIC_BASE_URL` in `~/.claude/settings.json`. |
+| Turns never appear | Run `nasiko agents sync`. Check `~/.nasiko/integrations/report.log` and `rejected/`. |
+
+More: [Troubleshooting](/coding-agents/troubleshooting) and [Route models](/coding-agents/routing).

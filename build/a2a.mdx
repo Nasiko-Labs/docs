@@ -1,0 +1,179 @@
+---
+title: "A2A agents and frameworks"
+description: "What your container must expose to run on Nasiko, and how the platform talks to it."
+---
+
+Nasiko runs containers that speak [A2A](https://a2a-protocol.org), an open JSON-RPC protocol for agentic applications. Implement the contract below and your container runs on Nasiko regardless of language, framework, or model.
+
+A2A treats each agent as an opaque peer: you send it a message, it works on a task, it returns artifacts. The platform never inspects an agent's prompts, tools, or reasoning.
+
+## The agent contract
+
+A container must do three things:
+
+1. **Serve an agent card** — JSON describing name, skills, and capabilities, over unauthenticated GET at `/.well-known/agent-card.json` (the legacy `/.well-known/agent.json` also works).
+2. **Implement A2A JSON-RPC** — at minimum `message/send`. Add `message/stream` for token-by-token SSE responses.
+3. **Respond to health checks** — HTTP 200 on the same endpoint.
+
+Nasiko doesn't enforce internal implementation or response quality. Whether an agent's declared skills work is on you.
+
+### Agent card
+
+```json
+{
+  "name": "Paper Research Agent",
+  "description": "Searches arXiv and Semantic Scholar for academic papers",
+  "version": "1.0.0",
+  "supportedInterfaces": [
+    {
+      "url": "http://localhost:8000/jsonrpc",
+      "protocolBinding": "JSONRPC",
+      "protocolVersion": "1.0"
+    }
+  ],
+  "capabilities": {
+    "streaming": true,
+    "pushNotifications": false
+  },
+  "defaultInputModes": ["text/plain"],
+  "defaultOutputModes": ["text/plain"],
+  "skills": [
+    {
+      "id": "paper-search",
+      "name": "Paper Search",
+      "description": "Search academic databases for papers by topic, author, or keywords",
+      "tags": ["research", "papers", "arxiv", "academic"]
+    }
+  ]
+}
+```
+
+| Field | Required | Description |
+| --- | --- | --- |
+| `name`, `description`, `version` | Yes | Identity — `version` should track your image tag |
+| `supportedInterfaces` | Yes | Transport endpoints (URL + protocol binding) |
+| `capabilities` | Yes | `streaming`, `pushNotifications` |
+| `defaultInputModes` / `defaultOutputModes` | Yes | Accepted and produced MIME types |
+| `skills` | Yes | What other agents and the routing engine reason about |
+| `provider`, `securitySchemes`, `documentationUrl`, `iconUrl` | No | Optional metadata |
+
+The platform reads the card once at deploy time. Changing what an agent can do means changing its source and redeploying, not editing metadata.
+
+### Wire format
+
+A2A is JSON-RPC 2.0 over HTTP. A minimal `message/send`:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "req-001",
+  "method": "message/send",
+  "params": {
+    "message": {
+      "messageId": "msg-abc123",
+      "role": "user",
+      "parts": [{ "text": "Find papers about transformer architectures" }]
+    }
+  }
+}
+```
+
+The non-streaming response wraps the result in a `Task`:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "req-001",
+  "result": {
+    "task": {
+      "id": "task-xyz789",
+      "contextId": "ctx-def456",
+      "status": { "state": "completed" },
+      "artifacts": [
+        { "artifactId": "art-001", "parts": [{ "text": "Here are the top papers..." }] }
+      ]
+    }
+  }
+}
+```
+
+`message/stream` returns the same envelope as SSE: a `working` status, artifact chunks, then a terminal `completed` status.
+
+`contextId` ties a multi-turn conversation together. It's also what a Nasiko *session* groups in [observability](/governance/flow-limits).
+
+<Note>
+  Official A2A SDKs exist for several languages, and the [sample agents](/build/registry/sample-agents) are working examples you can copy from.
+</Note>
+
+## How Nasiko dispatches to agents
+
+| Request shape | What happens |
+| --- | --- |
+| `agent_id` names an agent | **Direct dispatch** — proxied to that agent's container |
+| No `agent_id`, or `agent_id: "orchestrator"` | **Routed dispatch** — the platform picks an agent |
+
+```json
+// Direct
+{
+  "jsonrpc": "2.0",
+  "method": "message/send",
+  "params": {
+    "message": { "role": "user", "parts": [{ "text": "Review this PR" }] },
+    "metadata": { "agent_id": "code-reviewer" }
+  }
+}
+```
+
+```json
+// Routed
+{
+  "jsonrpc": "2.0",
+  "method": "message/send",
+  "params": {
+    "message": { "role": "user", "parts": [{ "text": "Review this PR" }] }
+  }
+}
+```
+
+Routed dispatch runs a multi-turn ReAct loop: the orchestrator exposes every agent you can access as a callable tool, then an LLM decides across up to ten turns which agents to call and in what order.
+
+This is not the [routing engine](/governance/flow-limits)'s three-stage shortlist/rerank/select pipeline — no shortlisting or reranking happens here, and the orchestrator can call several agents per query. The routing engine is used elsewhere, to auto-assign agents to [MAF workflow](/build/workflows) steps.
+
+Either way, every hop is an ordinary A2A call proxied through the platform. An agent can't tell whether it was called directly or by the orchestrator.
+
+<Tip>
+  Agent identifiers accept a name or a UUID almost everywhere — except the agent proxy, which requires a UUID. If you're calling `/api/agents/{id}` directly, resolve the name first.
+</Tip>
+
+## Frameworks and languages
+
+| Language | Frameworks |
+| --- | --- |
+| Python | OpenAI Agents SDK, Anthropic SDK, CrewAI, LangChain/LangGraph, Google ADK, or a plain LLM SDK call |
+| Rust | Direct A2A server implementations |
+| Go | Direct A2A server implementations |
+
+If none fit, implement the three-item contract in any language that serves HTTP and SSE. There's no SDK requirement. See [scaffolding](/build/scaffold) for the template library.
+
+## Version compatibility
+
+A2A response shapes differ subtly across versions — older responses put artifacts directly under `result`, newer ones under `result.task`. Nasiko's client tries current method names and dialects first, then falls back through older forms rather than hard-failing.
+
+Implement against current `message/send`/`message/stream` and the task-wrapped shape above. You don't need to special-case older dialects.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Agents in the dashboard" href="/dashboard/agents">
+    Deploy and manage from the web app.
+  </Card>
+  <Card title="Routing and flow limits" href="/governance/flow-limits">
+    The ReAct loop and the MAF assignment pipeline.
+  </Card>
+  <Card title="Sample agents" href="/build/registry/sample-agents">
+    Reference agents to copy from.
+  </Card>
+  <Card title="Scaffolding" href="/build/scaffold">
+    Generate a new project from a template.
+  </Card>
+</CardGroup>

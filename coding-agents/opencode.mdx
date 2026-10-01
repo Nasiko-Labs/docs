@@ -1,0 +1,72 @@
+---
+title: "OpenCode"
+description: "Discover OpenCode, report its sessions, and route its model calls through Nasiko."
+---
+
+Nasiko treats OpenCode as a coding harness. Discovery and session reporting use an OpenCode plugin. Model routing installs a second plugin that registers Nasiko as a provider. No wrapper, no SDK in your code.
+
+| | |
+| --- | --- |
+| Binary | `opencode` |
+| Config directory | `$OPENCODE_CONFIG_DIR`, else `$XDG_CONFIG_HOME/opencode`, else `~/.config/opencode` |
+| Session reporting | Yes (`session.idle` plugin, hook version v4) |
+| Model routing | Yes (`nasiko/router` provider for new sessions) |
+
+## Discover and report
+
+```bash
+nasiko agents discover
+nasiko agents install opencode
+nasiko agents install opencode --no-content
+```
+
+Install writes `plugins/nasiko-session-report.js` into the OpenCode config directory.
+
+<Note>
+  Restart OpenCode after install so it loads the plugin.
+</Note>
+
+The plugin waits at most 8 seconds for the reporting hook and swallows errors, so OpenCode is never blocked if Nasiko is down. See [Session reporting](/coding-agents/session-reporting).
+
+## Route models
+
+```bash
+nasiko llm-config create --name my-openai --provider openai --model gpt-4o \
+  --api-key-secret OPENAI_API_KEY --secret-value "$OPENAI_API_KEY"
+nasiko connect opencode --config my-openai
+nasiko status opencode
+```
+
+`connect opencode` installs `plugins/nasiko-llm-router.js`, registers a `nasiko` provider, and makes `nasiko/router` the default model for **new** OpenCode sessions. The plugin calls `nasiko __coding-agent-token opencode` for a JWT. If the helper times out or returns invalid JSON, OpenCode gets an error — the plugin never forges a token.
+
+Connection state is stored in `~/.nasiko/integrations/opencode-router.json`.
+
+<Warning>
+  OpenCode's config is per-user and global. Connecting it affects every OpenCode process on the machine.
+</Warning>
+
+OpenCode fixes a session's model at creation time in its own database. Resuming an existing session will **not** route it. Start a new session, or pick **Nasiko Router** explicitly.
+
+## Disconnect and uninstall
+
+```bash
+nasiko disconnect opencode        # remove the router plugin; --force if OpenCode is running
+nasiko agents uninstall opencode  # remove the reporting plugin
+```
+
+Restart OpenCode after either command so plugins reload.
+
+## Identity in Nasiko
+
+Registration creates a coding-agent identity named `<username>-opencode`, labelled **OpenCode (`<your email>`)** in the dashboard.
+
+## Troubleshooting
+
+| Symptom | What to check |
+| --- | --- |
+| `DETECTED` is `-` | `opencode` is not on `PATH` and no OpenCode config directory exists. |
+| Plugin never loads | Restart OpenCode. Confirm `plugins/nasiko-session-report.js` (and the router plugin, if connected) exist in the config directory. |
+| Old sessions still hit the vendor | Expected. OpenCode pins the model per session. Start a new one. |
+| Routing helper errors | `nasiko auth status`, then `AGENT_JWT_SECRET` on the server. |
+
+More: [Troubleshooting](/coding-agents/troubleshooting) and [Route models](/coding-agents/routing).

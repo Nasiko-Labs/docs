@@ -1,0 +1,75 @@
+---
+title: "Troubleshooting coding agents"
+sidebarTitle: "Troubleshooting"
+description: "Discovery, reporting, routing, and cluster-binding problems."
+---
+
+Work through the matching section. Commands and log paths are the same on every harness.
+
+## Discovery
+
+**`nasiko agents discover` is missing from `--help`.** Reinstall with `cargo install --path cli --force`. Every build reports version `0.1.0`, so `--version` cannot tell you whether you have the latest commands.
+
+**A harness shows `DETECTED` as `-`.** The binary is not on `PATH` and the config directory does not exist. For Cursor, the binary is `cursor-agent`, not the Cursor editor.
+
+**`CONNECTED` is `yes` but I never ran `install`.** `nasiko auth login`, `nasiko connect <url>`, and `nasiko use` install reporting automatically for every detected harness that has no install record yet.
+
+**Version column says `v2 -> v3` or `v3 (state v2)`.** The hook is out of date, or the hook and the saved install record disagree. Run `nasiko agents install <agent>` again.
+
+## Session reporting
+
+**Turns never appear in Sessions or TokenOps.**
+
+1. Confirm **Connected** is `yes` with `nasiko agents discover`.
+2. Finish a turn in the harness (Claude Code `Stop`, OpenCode `session.idle`, Codex/Cursor `Stop` / `stop`).
+3. Run `nasiko agents sync`.
+4. Read `~/.nasiko/integrations/report.log`.
+5. Files in `~/.nasiko/integrations/rejected/` will not be retried. The `last_error` field says why.
+6. Codex: trust the hooks with `/hooks`. OpenCode: restart so the plugin loads.
+
+**Sessions appear, but traces, tokens, and cost stay empty.** Set `CODING_AGENT_OTLP_ENDPOINT` on the Nasiko server to an OTLP/HTTP endpoint (Compose sets `http://otel-collector:4318`). Without it, ingested turns still create sessions, but no coding-agent traces reach Tempo. See [Server configuration](/self-hosting/configuration).
+
+**`--no-content` sessions have no transcript.** Expected. Token counts, models, and tool metadata are still exported as traces when OTLP is configured.
+
+**I switched clusters and old turns vanished.** They didn't. Each install is bound to the cluster and user active at install time. `sync` refuses to deliver if that cluster's URL changed, you are logged in as a different user, or the login expired. Re-login to the original cluster, or reinstall while the new cluster is active — that rebinds *future* turns only. Queued turns stay bound to their original destination.
+
+**The harness feels slow or blocked.** Reporting is designed not to do that. The hook always exits successfully, does no network work, and finishes within a 10-second timeout. Delivery is a background `nasiko agents sync`. If a harness is waiting, it is not waiting on Nasiko reporting.
+
+## Model routing
+
+**`nasiko connect cursor` fails.** Cursor CLI has no model routing. Reporting only. See [Cursor CLI](/coding-agents/cursor).
+
+**Connect succeeds, calls still hit the vendor.**
+
+- Restart the harness so it reloads settings or plugins.
+- OpenCode: start a **new** session. Existing sessions keep the model they were created with.
+- Claude Code: confirm `ANTHROPIC_BASE_URL` in `~/.claude/settings.json` (or `$CLAUDE_CONFIG_DIR`).
+- Codex: confirm `model_provider = "nasiko"` in `config.toml`.
+
+**Authentication error on every routed call.**
+
+- `nasiko auth status` — login must be current on the cluster routing is bound to.
+- `AGENT_JWT_SECRET` must be set on the server. Empty means every router request is rejected with `401`. `nasiko up` does not set it; Docker Compose leaves it commented in `.env.example`.
+- Routing **fails closed**. The harness will not fall back to the vendor. That is intentional.
+
+**`disconnect` refuses because the agent is running.** Stop the harness, or pass `--force`.
+
+**I disconnected but reporting is still on.** Expected. `disconnect` only restores routing settings. Use `nasiko agents uninstall <agent>` to remove reporting.
+
+## Cluster and login
+
+**`install` says I am not logged in.** `nasiko connect <url>` then `nasiko auth login`. Automatic install is skipped when there is no current login.
+
+**`nasiko up` routing or traces don't work.** `nasiko up` does not set `AGENT_JWT_SECRET`, `TEMPO_URL`, `LOKI_URL`, or `CODING_AGENT_OTLP_ENDPOINT`. Export them or use Docker Compose. See [Install and connect](/install#troubleshooting-nasiko-up).
+
+## Logs and state to inspect
+
+| Path | What it is |
+| --- | --- |
+| `~/.nasiko/integrations/config.json` | Install records and cluster binding |
+| `~/.nasiko/integrations/queue/` | Turns waiting for delivery |
+| `~/.nasiko/integrations/rejected/` | Turns that will not be delivered |
+| `~/.nasiko/integrations/report.log` | Hook diagnostics |
+| `~/.nasiko/config.json` | Clusters, active cluster, login token |
+
+`nasiko agents sync` is always safe to re-run. Replaying a turn the server already stored is a no-op.

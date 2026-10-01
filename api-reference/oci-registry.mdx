@@ -1,0 +1,21 @@
+---
+title: "OCI registry API"
+description: "Embedded OCI Distribution v2 used by nasiko push, deploy, and agent pulls."
+---
+
+Not in the generated OpenAPI spec. The Nasiko server serves `/v2/*` with S3-backed blobs. This is the **image** registry for deployed agents, not the Enterprise artifact catalog.
+
+Auth: OCI bearer, agent pull token, or build-push token.
+
+| Method | Path |
+| --- | --- |
+| `GET` | `/v2/` |
+| `GET` | `/v2/_catalog` |
+| `GET` `PUT` `DELETE` | `/v2/{owner}/{repo}/manifests/{reference}` |
+| `GET` | `/v2/{owner}/{repo}/referrers/{digest}` |
+| `GET` `HEAD` `DELETE` | `/v2/{owner}/{repo}/blobs/{digest}` |
+| `POST` | `/v2/{owner}/{repo}/blobs/uploads/` |
+| `PATCH` `PUT` `GET` `DELETE` | `/v2/{owner}/{repo}/blobs/uploads/{uuid}` |
+| `GET` | `/v2/{owner}/{repo}/tags/list` |
+
+Import from an external host uses `POST /api/import/registry` (in the generated spec). That host must be in `REGISTRY_IMPORT_ALLOWED_HOSTS`. See [Operate](/build/operate) and [Agent hosting](/self-hosting/agent-hosting).

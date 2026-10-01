@@ -1,87 +1,46 @@
 # Internal documentation
 
-**Not published.** Everything in this folder is excluded from the live docs site by
-`.mintignore` at the repo root. Do not link to these pages from any file outside
-`internal/` — a customer-facing page linking here produces a broken link on the
-published site.
+**Not published.** Excluded by `.mintignore`. Do not link here from any file outside `internal/`.
 
 ## Why this folder exists
 
-The customer-facing docs describe *what the platform does and how to use it*. This
-folder holds the material that was previously mixed into those pages but shouldn't
-ship to customers:
+Customer-facing docs describe behavior. This folder holds source-level internals, storage layout,
+unshipped controls, and the old architecture/core-concepts pages.
 
-| Category | Examples |
+Published docs must not use the words "architecture" or "core concepts" as page roles. If a
+customer page needs session/flow/cluster, define it inline. Public vocabulary: OpenRuntime, never
+control plane (see `../AGENTS.md`). Internals may still say control plane to match the source.
+
+## Published counterparts (after the 2026-09 restructure)
+
+| Internals | Public page |
 | --- | --- |
-| Source-level internals | Rust trait definitions and method tables, type names, `tokio::spawn` behavior, wrapper structs |
-| Storage layout | Database table and column names, Redis key formats, stream and consumer-group names |
-| Unshipped or incomplete controls | Checks that are deliberately deferred, bypasses that exist today, "not load-bearing yet" |
-| Roadmap and design intent | "This is the seam we extend for X", planned-but-absent capability |
-| Internal test scaffolding | Benchmark and conformance fixture agents |
-| System design and vocabulary pages | The architecture overview and core-concepts pages — see below |
-
-## The architecture pages
-
-`architecture-overview.md` and `core-concepts.md` were previously published. They are internal by
-explicit decision: **the words "architecture" and "core concepts" are not used with customers.**
-
-Do not reintroduce them, or a page like them, to the published site. If a customer-facing page needs
-a concept these define (session, flow, control plane), explain it inline on that page in product
-terms rather than linking to a definitions page.
-
-## What deliberately stayed customer-facing
-
-The audience includes self-hosting enterprise customers, so these are **not** internal
-and remain on the published site:
-
-- Environment-variable configuration tables — operators need them to run a control plane
-- HTTP API endpoint tables — customers integrate against them
-- Infrastructure topology (Postgres, Redis, S3/MinIO, Tempo, Loki) and backup guidance
-- The `nasiko-ee` admin CLI, Helm charts, and cluster provisioning
-- Behavior-level security posture (secrets are AES-256-GCM encrypted at rest; uploaded
-  MCP servers run hardened and network-segmented; agent-to-agent access is default-deny)
-
-The rule of thumb: **a customer needs to know how it behaves and how to configure it.
-They do not need to know what it's called in the source tree or where it falls short.**
+| Observability routes, `OTEL_*` / Tempo / Loki | [dashboard/sessions-and-traces.mdx](../dashboard/sessions-and-traces.mdx), [self-hosting/configuration.mdx](../self-hosting/configuration.mdx) |
+| MCP `/api/mcp/*` | [build/mcp/overview.mdx](../build/mcp/overview.mdx) |
+| Flow-guard env | [governance/flow-limits.mdx](../governance/flow-limits.mdx) |
+| ACL | [governance/access-control/reference.mdx](../governance/access-control/reference.mdx) |
+| Container hosting | [self-hosting/agent-hosting.mdx](../self-hosting/agent-hosting.mdx) |
 
 ## Contents
 
-| Page | Extracted from |
+| Page | Notes |
 | --- | --- |
-| [architecture-overview.md](architecture-overview.md) | was `architecture/overview.mdx` (whole page) |
-| [core-concepts.md](core-concepts.md) | was `architecture/core-concepts.mdx` (whole page) |
-| [orchestrator-internals.md](orchestrator-internals.md) | `platform/orchestrator.mdx` |
-| [acl-internals.md](acl-internals.md) | `platform/acl.mdx` |
-| [mcp-gateway-internals.md](mcp-gateway-internals.md) | was `platform/mcp-gateway.mdx` (whole page) |
-| [observability-internals.md](observability-internals.md) | was `platform/observability.mdx` (whole page) |
-| [agent-runtime-internals.md](agent-runtime-internals.md) | `platform/agent-registry.mdx` |
-| [maf-internals.md](maf-internals.md) | `platform/maf.mdx` |
+| [architecture-overview.md](architecture-overview.md) | Topology. Coding-agent telemetry is additional ingress via CLI hooks, not a new process |
+| [core-concepts.md](core-concepts.md) | Internal vocabulary |
+| [orchestrator-internals.md](orchestrator-internals.md) | RoutingEngine trait, stats lag |
+| [acl-internals.md](acl-internals.md) | Grants tables |
+| [mcp-gateway-internals.md](mcp-gateway-internals.md) | Permission graph; deploy-time `MCP_GATEWAY_TOKEN` (not user delegation mint-per-request) |
+| [observability-internals.md](observability-internals.md) | OTEL pipeline, coding-agent OTLP outbox |
+| [agent-runtime-internals.md](agent-runtime-internals.md) | ContainerRuntime |
+| [maf-internals.md](maf-internals.md) | Planner/executor gaps |
 
-## The two reference pages
-
-`platform/observability.mdx` and `platform/mcp-gateway.mdx` were removed from the published
-site outright — "Observability reference" and "MCP gateway reference" were judged too
-implementation-level for customers. Each page's content was absorbed into the internals file
-above that already covered its subject; neither has a customer-facing reference page anymore.
-
-Two tables from each were **kept published** rather than moved here, per the rule below —
-operators and API integrators need them:
-
-| Moved from | Moved to |
-| --- | --- |
-| observability `/api/observability/*` route table, `OTEL_*` / `TEMPO_URL` / `LOKI_URL` config | `product/observability.mdx` |
-| MCP gateway management route table (`/api/mcp/*`) | `mcp-hub/overview.mdx` |
-
-Remaining `platform/` pages that are still reference-shaped and are the next candidates if
-this trimming continues: `orchestrator.mdx` (stage-degradation behavior, flow-guard env
-vars), `acl.mdx`, and `agent-registry.mdx`.
-
-## Known gaps disclosed here, not publicly
-
-Consolidated for awareness — each is explained in context on the page listed:
+## Known gaps (not public)
 
 - **MAF steps bypass both the flow guard and agent-to-agent ACL** — [maf-internals.md](maf-internals.md)
 - **A MAF step created with an explicit agent id is not re-checked against the creator's access to that agent** — [maf-internals.md](maf-internals.md)
 - **The per-connector secret token injected into uploaded MCP servers is generated but never verified** — [mcp-gateway-internals.md](mcp-gateway-internals.md)
-- **`GET /api/orchestrator/stats` can lag by up to an hour** (materialized view refreshed hourly) — [orchestrator-internals.md](orchestrator-internals.md)
-- **In-progress registry blob uploads are held in memory and sticky to one control-plane instance** — `architecture/overview.mdx` (stated publicly as a scaling caveat, which is appropriate)
+- **`GET /api/orchestrator/stats` can lag by up to an hour** — [orchestrator-internals.md](orchestrator-internals.md)
+- **In-progress registry blob uploads are held in memory and sticky to one instance** — [architecture-overview.md](architecture-overview.md)
+- **Cursor has no model routing** — public docs state this; do not promise it internally as shipped
+- **Routing credentials fail closed; telemetry delivery fails open** — public docs; do not describe routing as fail-open
+- **Spend caps/alerts, org-wide discovered-vs-reporting coverage, and a named local-to-org "crossing" are not product surfaces**
